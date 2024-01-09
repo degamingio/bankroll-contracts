@@ -7,14 +7,18 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract GameRoll {
    
     address public manager;
-    uint256 public totalSupply;
+    uint256 public totalShares;
+    uint256 public totalBalance;
     uint256 public constant DENOMINATOR = 10_000;
     IERC20 public immutable ERC20;
+    mapping(address investor => uint256 shares) public sharesOf;
     mapping(address investor => uint256 deposited) public depositedOf;
-    mapping(address investor => uint256 balance) public balanceOf;
 
     event FundsDeposited(uint256 amount);
     event FundsWithdrawn(uint256 amount);
+    event PaidWinner(address player, uint256 amount);
+
+    error FORBIDDEN();
 
     constructor(address _manager, address _ERC20) {
         manager = _manager; 
@@ -30,17 +34,20 @@ contract GameRoll {
     function depositFunds(uint256 _amount) external {
         uint256 shares;
 
-        if (totalSupply == 0) {
+        if (totalShares == 0) {
             shares = _amount;
         } else {
-            shares = (_amount * totalSupply) / ERC20.balanceOf(address(this));
+            shares = (_amount * totalShares) / totalBalance;
         }
 
         // mint shares to the user
         _mint(msg.sender, shares);
 
         // track deposited amount
-        depositedOf[msg.sender] = depositedOf[msg.sender] + _amount;
+        depositedOf[msg.sender] += _amount;
+
+        // track total balance
+        totalBalance += _amount;
 
         // transfer ERC20 from the user to the vault
         ERC20.transferFrom(msg.sender, address(this), _amount);
@@ -48,12 +55,28 @@ contract GameRoll {
         emit FundsDeposited(_amount);
     }
 
-     function withdrawAll() external onlyOwner {
-        _withdraw(balanceOf[msg.sender]);
+     function withdrawAll() external {
+
+        // Zero investment tracking
+        depositedOf[msg.sender] = 0;
+
+        _withdraw(sharesOf[msg.sender]);
+    }
+
+    function payWinner(address _player, uint256 _amount) external {
+        if(msg.sender != manager) revert FORBIDDEN();
+
+        // track total balance
+        totalBalance -= _amount;
+        
+        // transfer ERC20 from the vault to the winner
+        ERC20.transfer(_player, _amount);
+
+        emit PaidWinner(_player, _amount);
     }
 
     function setManager(address _manager) external {
-        require(msg.sender == manager, "only manager can set manager");
+        if(msg.sender != manager) revert FORBIDDEN();
         manager = _manager;
     }
 
@@ -64,7 +87,7 @@ contract GameRoll {
     //  |___/_/\___/|__/|__/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
     function getAmount(uint256 _shares) external view returns (uint256 _amount) {
-        _amount = (_shares * ERC20.balanceOf(address(this))) / totalSupply;
+        _amount = (_shares * totalBalance) / totalShares;
     }
 
     //      ____      __                        __   ______                 __  _
@@ -75,32 +98,32 @@ contract GameRoll {
 
     function _mint(address _to, uint256 _shares) internal {
         // Increment the total supply
-        totalSupply += _shares;
+        totalShares += _shares;
 
         // Increment the share balance of the recipient
-        balanceOf[_to] += _shares;
+        sharesOf[_to] += _shares;
     }
 
     function _burn(address _from, uint256 _shares) internal {
         // Decrement the total supply
-        totalSupply -= _shares;
+        totalShares -= _shares;
 
         // Decrement the share balance of the target
-        balanceOf[_from] -= _shares;
+        sharesOf[_from] -= _shares;
     }
 
     function _withdraw(uint256 _shares) internal {
         // Calculate the amount of ERC20 worth of shares
-        uint256 amount = (_shares * ERC20.balanceOf(address(this))) / totalSupply;
+        uint256 amount = (_shares * totalBalance) / totalShares;
 
         // Burn the shares from the caller
         _burn(msg.sender, _shares);
 
         // Transfer ERC20 to the caller
-        USDC.transfer(msg.sender, amount);
+        ERC20.transfer(msg.sender, amount);
 
-        // Zero investment tracking
-        depositedOf[msg.sender] = 0;
+        // track total balance
+        totalBalance -= amount;
 
         emit FundsWithdrawn(amount);
     }
