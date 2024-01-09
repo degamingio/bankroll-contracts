@@ -7,8 +7,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract GameRoll {
    
     address public manager;
-    uint256 public totalShares;
-    uint256 public totalBalance;
+    uint256 public totalSupply;
     uint256 public constant DENOMINATOR = 10_000;
     IERC20 public immutable ERC20;
     mapping(address investor => uint256 shares) public sharesOf;
@@ -16,7 +15,7 @@ contract GameRoll {
 
     event FundsDeposited(uint256 amount);
     event FundsWithdrawn(uint256 amount);
-    event PaidWinner(address player, uint256 amount);
+    event Debit(address player, uint256 amount);
 
     error FORBIDDEN();
 
@@ -34,10 +33,10 @@ contract GameRoll {
     function depositFunds(uint256 _amount) external {
         uint256 shares;
 
-        if (totalShares == 0) {
+        if (totalSupply == 0) {
             shares = _amount;
         } else {
-            shares = (_amount * totalShares) / totalBalance;
+            shares = (_amount * totalSupply) / ERC20.balanceOf(address(this));
         }
 
         // mint shares to the user
@@ -45,9 +44,6 @@ contract GameRoll {
 
         // track deposited amount
         depositedOf[msg.sender] += _amount;
-
-        // track total balance
-        totalBalance += _amount;
 
         // transfer ERC20 from the user to the vault
         ERC20.transferFrom(msg.sender, address(this), _amount);
@@ -63,16 +59,13 @@ contract GameRoll {
         _withdraw(sharesOf[msg.sender]);
     }
 
-    function playerWon(address _player, uint256 _amount) external {
+    function debit(address _player, uint256 _amount) external {
         if(msg.sender != manager) revert FORBIDDEN();
-
-        // track total balance
-        totalBalance -= _amount;
         
         // transfer ERC20 from the vault to the winner
         ERC20.transfer(_player, _amount);
 
-        emit PaidWinner(_player, _amount);
+        emit Debit(_player, _amount);
     }
 
     function setManager(address _manager) external {
@@ -88,7 +81,7 @@ contract GameRoll {
 
     function getAmount(address _investor) external view returns (uint256 _amount) {
         uint256 _shares = sharesOf[_investor];
-        _amount = (_shares * totalBalance) / totalShares;
+        _amount = (_shares * ERC20.balanceOf(address(this))) / totalSupply;
     }
 
     //      ____      __                        __   ______                 __  _
@@ -99,7 +92,7 @@ contract GameRoll {
 
     function _mint(address _to, uint256 _shares) internal {
         // Increment the total supply
-        totalShares += _shares;
+        totalSupply += _shares;
 
         // Increment the share balance of the recipient
         sharesOf[_to] += _shares;
@@ -107,7 +100,7 @@ contract GameRoll {
 
     function _burn(address _from, uint256 _shares) internal {
         // Decrement the total supply
-        totalShares -= _shares;
+        totalSupply -= _shares;
 
         // Decrement the share balance of the target
         sharesOf[_from] -= _shares;
@@ -115,16 +108,13 @@ contract GameRoll {
 
     function _withdraw(uint256 _shares) internal {
         // Calculate the amount of ERC20 worth of shares
-        uint256 amount = (_shares * totalBalance) / totalShares;
+        uint256 amount = (_shares * ERC20.balanceOf(address(this))) / totalSupply;
 
         // Burn the shares from the caller
         _burn(msg.sender, _shares);
 
         // Transfer ERC20 to the caller
         ERC20.transfer(msg.sender, amount);
-
-        // track total balance
-        totalBalance -= amount;
 
         emit FundsWithdrawn(amount);
     }
