@@ -63,7 +63,7 @@ contract GameRoll {
         _withdraw(sharesOf[msg.sender]);
     }
 
-    function payWinner(address _player, uint256 _amount) external {
+    function playerWon(address _player, uint256 _amount) external {
         if(msg.sender != manager) revert FORBIDDEN();
 
         // track total balance
@@ -86,7 +86,8 @@ contract GameRoll {
     //  | |/ / /  __/ |/ |/ /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
     //  |___/_/\___/|__/|__/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
-    function getAmount(uint256 _shares) external view returns (uint256 _amount) {
+    function getAmount(address _investor) external view returns (uint256 _amount) {
+        uint256 _shares = sharesOf[_investor];
         _amount = (_shares * totalBalance) / totalShares;
     }
 

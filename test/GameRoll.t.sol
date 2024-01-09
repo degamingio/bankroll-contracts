@@ -19,6 +19,7 @@ contract GameRollTest is Test {
         manager = address(0x1);
         investorOne = address(0x2);
         investorTwo = address(0x3);
+        player = address(0x4);
         token = new MockToken("token", "MTK");
         gameRoll = new GameRoll(manager, address(token));
 
@@ -74,5 +75,24 @@ contract GameRollTest is Test {
         assertEq(token.balanceOf(address(gameRoll)), 1000_000);
         assertEq(token.balanceOf(address(investorOne)), 1000_000);
         assertEq(token.balanceOf(address(investorTwo)), 0);
+    }
+
+    function test_playerWon() public {
+
+        vm.startPrank(investorOne);
+        token.approve(address(gameRoll), 1000_000);
+        gameRoll.depositFunds(1000_000);
+        vm.stopPrank();
+
+        vm.prank(manager);
+        gameRoll.playerWon(player, 500_000);
+
+        assertEq(token.balanceOf(address(gameRoll)), 500_000);
+        assertEq(token.balanceOf(address(player)), 500_000);
+        assertEq(token.balanceOf(address(investorOne)), 0);
+
+        assertEq(gameRoll.sharesOf(address(investorOne)), 1000_000);
+        assertEq(gameRoll.getAmount(address(investorOne)), 500_000);
+
     }
 }
