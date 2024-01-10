@@ -1,2 +1,4 @@
-# gameroll-contracts
-GameRoll Contracts
+# Bankroll-contracts
+
+## Operator Bankroll
+## Game Bankroll
