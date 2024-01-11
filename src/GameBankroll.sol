@@ -5,7 +5,6 @@ pragma solidity ^0.8.13;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract GameBankroll {
-   
     address public manager;
     uint256 public totalSupply;
     uint256 public constant DENOMINATOR = 10_000;
@@ -20,7 +19,7 @@ contract GameBankroll {
     error FORBIDDEN();
 
     constructor(address _manager, address _ERC20) {
-        manager = _manager; 
+        manager = _manager;
         ERC20 = IERC20(_ERC20);
     }
 
@@ -51,8 +50,7 @@ contract GameBankroll {
         emit FundsDeposited(_amount);
     }
 
-     function withdrawAll() external {
-
+    function withdrawAll() external {
         // Zero investment tracking
         depositedOf[msg.sender] = 0;
 
@@ -60,8 +58,8 @@ contract GameBankroll {
     }
 
     function debit(address _player, uint256 _amount) external {
-        if(msg.sender != manager) revert FORBIDDEN();
-        
+        if (msg.sender != manager) revert FORBIDDEN();
+
         // transfer ERC20 from the vault to the winner
         ERC20.transfer(_player, _amount);
 
@@ -69,7 +67,7 @@ contract GameBankroll {
     }
 
     function setManager(address _manager) external {
-        if(msg.sender != manager) revert FORBIDDEN();
+        if (msg.sender != manager) revert FORBIDDEN();
         manager = _manager;
     }
 
@@ -79,9 +77,14 @@ contract GameBankroll {
     //  | |/ / /  __/ |/ |/ /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
     //  |___/_/\___/|__/|__/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
-    function getAmount(address _investor) external view returns (uint256 _amount) {
+    //TODO: Reverts is no investmet
+    function getAmount(
+        address _investor
+    ) external view returns (uint256 _amount) {
         uint256 _shares = sharesOf[_investor];
-        _amount = (_shares * ERC20.balanceOf(address(this))) / totalSupply;
+        _amount = _shares == 0
+            ? 0
+            : (_shares * ERC20.balanceOf(address(this))) / totalSupply;
     }
 
     //      ____      __                        __   ______                 __  _
@@ -108,7 +111,8 @@ contract GameBankroll {
 
     function _withdraw(uint256 _shares) internal {
         // Calculate the amount of ERC20 worth of shares
-        uint256 amount = (_shares * ERC20.balanceOf(address(this))) / totalSupply;
+        uint256 amount = (_shares * ERC20.balanceOf(address(this))) /
+            totalSupply;
 
         // Burn the shares from the caller
         _burn(msg.sender, _shares);
@@ -119,4 +123,3 @@ contract GameBankroll {
         emit FundsWithdrawn(amount);
     }
 }
-
