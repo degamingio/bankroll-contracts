@@ -11,7 +11,9 @@ contract GameBankroll {
     IERC20 public immutable ERC20;
     mapping(address manager => bool authorized) public managers;
     mapping(address investor => uint256 shares) public sharesOf;
-    mapping(address investor => uint256 deposited) public depositedOf;
+    mapping(address investor => uint256 investment) public investmentOf;
+    mapping(address investor => bool authorized) public investorWhitelist;
+    bool public isPublic = true;
 
     event FundsDeposited(uint256 amount);
     event FundsWithdrawn(uint256 amount);
@@ -19,8 +21,6 @@ contract GameBankroll {
     event RevenueClaimed(address manager, uint256 amount);
 
     error FORBIDDEN();
-
-    //TODO: Enable and disable whitelisting
 
     constructor(address _admin, address _ERC20) {
         admin = _admin;
@@ -34,8 +34,9 @@ contract GameBankroll {
     //  /_____/_/|_|\__/\___/_/  /_/ /_/\__,_/_/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
     function depositFunds(uint256 _amount) external {
-        uint256 shares;
+        if (!isPublic && !investorWhitelist[msg.sender]) revert FORBIDDEN();
 
+        uint256 shares;
         if (totalSupply == 0) {
             shares = _amount;
         } else {
@@ -46,7 +47,7 @@ contract GameBankroll {
         _mint(msg.sender, shares);
 
         // track deposited amount
-        depositedOf[msg.sender] += _amount;
+        investmentOf[msg.sender] += _amount;
 
         // transfer ERC20 from the user to the vault
         ERC20.transferFrom(msg.sender, address(this), _amount);
@@ -56,7 +57,7 @@ contract GameBankroll {
 
     function withdrawAll() external {
         // Zero investment tracking
-        depositedOf[msg.sender] = 0;
+        investmentOf[msg.sender] = 0;
 
         _withdraw(sharesOf[msg.sender]);
     }
@@ -84,6 +85,14 @@ contract GameBankroll {
         emit RevenueClaimed(msg.sender, _amount);
     }
 
+    function setInvestorWhitelist(
+        address _investor,
+        bool _isAuthorized
+    ) external {
+        if (msg.sender != admin) revert FORBIDDEN();
+        investorWhitelist[_investor] = _isAuthorized;
+    }
+
     function setAdmin(address _admin) external {
         if (msg.sender != admin) revert FORBIDDEN();
         admin = _admin;
@@ -94,13 +103,17 @@ contract GameBankroll {
         managers[_manager] = isAuthorized;
     }
 
+    function setPublic(bool _isPublic) external {
+        if (msg.sender != admin) revert FORBIDDEN();
+        isPublic = _isPublic;
+    }
+
     //   _    ___                 ______                 __  _
     //  | |  / (_)__ _      __   / ____/_  ______  _____/ /_(_)___  ____  _____
     //  | | / / / _ \ | /| / /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
     //  | |/ / /  __/ |/ |/ /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
     //  |___/_/\___/|__/|__/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
-    //TODO: Reverts is no investmet
     function getAmount(
         address _investor
     ) external view returns (uint256 _amount) {

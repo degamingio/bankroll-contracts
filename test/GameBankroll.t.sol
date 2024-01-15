@@ -39,7 +39,7 @@ contract GameBankrollTest is Test {
         vm.startPrank(investorOne);
         token.approve(address(gameBankroll), 1000_000);
         gameBankroll.depositFunds(1000_000);
-        assertEq(gameBankroll.depositedOf(address(investorOne)), 1000_000);
+        assertEq(gameBankroll.investmentOf(address(investorOne)), 1000_000);
         assertEq(gameBankroll.sharesOf(address(investorOne)), 1000_000);
         vm.stopPrank();
 
@@ -50,12 +50,35 @@ contract GameBankrollTest is Test {
         vm.startPrank(investorTwo);
         token.approve(address(gameBankroll), 1000_000);
         gameBankroll.depositFunds(1000_000);
-        assertEq(gameBankroll.depositedOf(address(investorTwo)), 1000_000);
+        assertEq(gameBankroll.investmentOf(address(investorTwo)), 1000_000);
         assertEq(gameBankroll.sharesOf(address(investorTwo)), 1000_000);
         vm.stopPrank();
 
         assertEq(gameBankroll.totalSupply(), 2000_000);
         assertEq(token.balanceOf(address(gameBankroll)), 2000_000);
+    }
+
+    function test_depositFundsWithInvestorWhitelist() public {
+        vm.prank(admin);
+        gameBankroll.setPublic(false);
+
+        // investor one deposits 1000_000
+        vm.startPrank(investorOne);
+        token.approve(address(gameBankroll), 1000_000);
+        vm.expectRevert(0xdaf9dbc0); //FORBIDDEN()
+        gameBankroll.depositFunds(1000_000);
+        vm.stopPrank();
+
+        vm.prank(admin);
+        gameBankroll.setInvestorWhitelist(investorOne, true);
+
+        vm.startPrank(investorOne);
+        gameBankroll.depositFunds(1000_000);
+
+        assertEq(gameBankroll.investmentOf(address(investorOne)), 1000_000);
+        assertEq(gameBankroll.sharesOf(address(investorOne)), 1000_000);
+
+        vm.stopPrank();
     }
 
     function test_withdrawAll() public {
@@ -139,6 +162,15 @@ contract GameBankrollTest is Test {
         assertEq(gameBankroll.getAmount(address(investorOne)), 1500_000);
     }
 
+    function test_setInvestorWhitelist() public {
+        assertEq(gameBankroll.investorWhitelist(investorOne), false);
+
+        vm.prank(admin);
+        gameBankroll.setInvestorWhitelist(investorOne, true);
+
+        assertEq(gameBankroll.investorWhitelist(investorOne), true);
+    }
+
     function test_setAdmin() public {
         assertEq(gameBankroll.admin(), admin);
 
@@ -161,5 +193,14 @@ contract GameBankrollTest is Test {
         gameBankroll.setManager(manager, false);
 
         assertEq(gameBankroll.managers(manager), false);
+    }
+
+    function test_setPublic() public {
+        assertEq(gameBankroll.isPublic(), true);
+
+        vm.prank(admin);
+        gameBankroll.setPublic(false);
+
+        assertEq(gameBankroll.isPublic(), false);
     }
 }
