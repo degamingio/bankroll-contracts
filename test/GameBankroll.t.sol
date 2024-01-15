@@ -6,6 +6,7 @@ import "../src/GameBankroll.sol";
 import "../test/mock/MockToken.sol";
 
 contract GameBankrollTest is Test {
+    address admin;
     address manager;
     address investorOne;
     address investorTwo;
@@ -15,16 +16,20 @@ contract GameBankrollTest is Test {
     MockToken token;
 
     function setUp() public {
-        manager = address(0x1);
-        investorOne = address(0x2);
-        investorTwo = address(0x3);
-        player = address(0x4);
+        admin = address(0x1);
+        manager = address(0x2);
+        investorOne = address(0x3);
+        investorTwo = address(0x4);
+        player = address(0x5);
         token = new MockToken("token", "MTK");
-        gameBankroll = new GameBankroll(manager, address(token));
+        gameBankroll = new GameBankroll(admin, address(token));
 
         token.mint(investorOne, 1000_000);
         token.mint(investorTwo, 1000_000);
         token.mint(manager, 1000_000);
+
+        vm.prank(admin);
+        gameBankroll.setManager(manager, true);
     }
 
     function test_depositFunds() public {
@@ -132,5 +137,29 @@ contract GameBankrollTest is Test {
 
         assertEq(gameBankroll.sharesOf(address(investorOne)), 1000_000);
         assertEq(gameBankroll.getAmount(address(investorOne)), 1500_000);
+    }
+
+    function test_setAdmin() public {
+        assertEq(gameBankroll.admin(), admin);
+
+        vm.prank(admin);
+        gameBankroll.setAdmin(investorOne);
+
+        assertEq(gameBankroll.admin(), investorOne);
+    }
+
+    function test_setManager() public {
+        assertEq(gameBankroll.managers(manager), true);
+
+        vm.prank(admin);
+        gameBankroll.setManager(investorOne, true);
+
+        assertEq(gameBankroll.managers(investorOne), true);
+        assertEq(gameBankroll.managers(manager), true);
+
+        vm.prank(admin);
+        gameBankroll.setManager(manager, false);
+
+        assertEq(gameBankroll.managers(manager), false);
     }
 }

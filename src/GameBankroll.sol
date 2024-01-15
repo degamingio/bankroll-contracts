@@ -5,10 +5,11 @@ pragma solidity ^0.8.13;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract GameBankroll {
-    address public manager;
+    address public admin;
     uint256 public totalSupply;
     uint256 public constant DENOMINATOR = 10_000;
     IERC20 public immutable ERC20;
+    mapping(address manager => bool authorized) public managers;
     mapping(address investor => uint256 shares) public sharesOf;
     mapping(address investor => uint256 deposited) public depositedOf;
 
@@ -19,8 +20,10 @@ contract GameBankroll {
 
     error FORBIDDEN();
 
-    constructor(address _manager, address _ERC20) {
-        manager = _manager;
+    //TODO: Enable and disable whitelisting
+
+    constructor(address _admin, address _ERC20) {
+        admin = _admin;
         ERC20 = IERC20(_ERC20);
     }
 
@@ -59,7 +62,7 @@ contract GameBankroll {
     }
 
     function debit(address _player, uint256 _amount) external {
-        if (msg.sender != manager) revert FORBIDDEN();
+        if (!managers[msg.sender]) revert FORBIDDEN();
 
         // pay what is left if amount is bigger than amount
         uint256 balance = ERC20.balanceOf(address(this));
@@ -73,7 +76,7 @@ contract GameBankroll {
     }
 
     function claimRevenue(uint256 _amount) external {
-        if (msg.sender != manager) revert FORBIDDEN();
+        if (!managers[msg.sender]) revert FORBIDDEN();
 
         // transfer ERC20 from the vault to the manager
         ERC20.transfer(msg.sender, _amount);
@@ -81,9 +84,14 @@ contract GameBankroll {
         emit RevenueClaimed(msg.sender, _amount);
     }
 
-    function setManager(address _manager) external {
-        if (msg.sender != manager) revert FORBIDDEN();
-        manager = _manager;
+    function setAdmin(address _admin) external {
+        if (msg.sender != admin) revert FORBIDDEN();
+        admin = _admin;
+    }
+
+    function setManager(address _manager, bool isAuthorized) external {
+        if (msg.sender != admin) revert FORBIDDEN();
+        managers[_manager] = isAuthorized;
     }
 
     //   _    ___                 ______                 __  _
