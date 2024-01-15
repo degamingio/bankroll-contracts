@@ -15,6 +15,7 @@ contract GameBankroll {
     event FundsDeposited(uint256 amount);
     event FundsWithdrawn(uint256 amount);
     event Debit(address player, uint256 amount);
+    event RevenueClaimed(address manager, uint256 amount);
 
     error FORBIDDEN();
 
@@ -60,10 +61,24 @@ contract GameBankroll {
     function debit(address _player, uint256 _amount) external {
         if (msg.sender != manager) revert FORBIDDEN();
 
+        // pay what is left if amount is bigger than amount
+        uint256 balance = ERC20.balanceOf(address(this));
+        if (_amount > balance) {
+            _amount = balance;
+        }
         // transfer ERC20 from the vault to the winner
         ERC20.transfer(_player, _amount);
 
         emit Debit(_player, _amount);
+    }
+
+    function claimRevenue(uint256 _amount) external {
+        if (msg.sender != manager) revert FORBIDDEN();
+
+        // transfer ERC20 from the vault to the manager
+        ERC20.transfer(msg.sender, _amount);
+
+        emit RevenueClaimed(msg.sender, _amount);
     }
 
     function setManager(address _manager) external {
@@ -90,7 +105,8 @@ contract GameBankroll {
     //      ____      __                        __   ______                 __  _
     //     /  _/___  / /____  _________  ____ _/ /  / ____/_  ______  _____/ /_(_)___  ____  _____
     //     / // __ \/ __/ _ \/ ___/ __ \/ __ `/ /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
-    //   _/ // / / / /_/  __/ /  / / / / /_/ / /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
+    //   _/
+    // / / / /_/  __/ /  / / / / /_/ / /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
     //  /___/_/ /_/\__/\___/_/  /_/ /_/\__,_/_/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
     function _mint(address _to, uint256 _shares) internal {

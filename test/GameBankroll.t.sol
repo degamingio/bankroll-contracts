@@ -6,7 +6,6 @@ import "../src/GameBankroll.sol";
 import "../test/mock/MockToken.sol";
 
 contract GameBankrollTest is Test {
-
     address manager;
     address investorOne;
     address investorTwo;
@@ -29,7 +28,6 @@ contract GameBankrollTest is Test {
     }
 
     function test_depositFunds() public {
-
         assertEq(token.balanceOf(address(gameBankroll)), 0);
 
         // investor one deposits 1000_000
@@ -55,7 +53,7 @@ contract GameBankrollTest is Test {
         assertEq(token.balanceOf(address(gameBankroll)), 2000_000);
     }
 
-     function test_withdrawAll() public {
+    function test_withdrawAll() public {
         vm.startPrank(investorOne);
         token.approve(address(gameBankroll), 1000_000);
         gameBankroll.depositFunds(1000_000);
@@ -72,14 +70,13 @@ contract GameBankrollTest is Test {
 
         vm.prank(investorOne);
         gameBankroll.withdrawAll();
-        
+
         assertEq(token.balanceOf(address(gameBankroll)), 1000_000);
         assertEq(token.balanceOf(address(investorOne)), 1000_000);
         assertEq(token.balanceOf(address(investorTwo)), 0);
     }
 
     function test_debit() public {
-
         vm.startPrank(investorOne);
         token.approve(address(gameBankroll), 1000_000);
         gameBankroll.depositFunds(1000_000);
@@ -96,11 +93,28 @@ contract GameBankrollTest is Test {
 
         assertEq(gameBankroll.sharesOf(address(investorOne)), 1000_000);
         assertEq(gameBankroll.getAmount(address(investorOne)), 500_000);
+    }
 
+    function test_debitInsufficientFunds() public {
+        vm.startPrank(investorOne);
+        token.approve(address(gameBankroll), 1000_000);
+        gameBankroll.depositFunds(1000_000);
+        vm.stopPrank();
+
+        assertEq(token.balanceOf(address(gameBankroll)), 1000_000);
+
+        vm.prank(manager);
+        gameBankroll.debit(player, 5000_000);
+
+        assertEq(token.balanceOf(address(gameBankroll)), 0);
+        assertEq(token.balanceOf(address(player)), 1000_000);
+        assertEq(token.balanceOf(address(investorOne)), 0);
+
+        assertEq(gameBankroll.sharesOf(address(investorOne)), 1000_000);
+        assertEq(gameBankroll.getAmount(address(investorOne)), 0);
     }
 
     function test_credit() public {
-
         vm.startPrank(investorOne);
         token.approve(address(gameBankroll), 1000_000);
         gameBankroll.depositFunds(1000_000);
@@ -118,6 +132,5 @@ contract GameBankrollTest is Test {
 
         assertEq(gameBankroll.sharesOf(address(investorOne)), 1000_000);
         assertEq(gameBankroll.getAmount(address(investorOne)), 1500_000);
-
     }
 }
