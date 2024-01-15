@@ -120,7 +120,10 @@ contract BankrollTest is Test {
         assertEq(token.balanceOf(address(investorOne)), 0);
 
         assertEq(bankroll.sharesOf(address(investorOne)), 1000_000);
-        assertEq(bankroll.getAmount(address(investorOne)), 500_000);
+        assertEq(
+            bankroll.getInvestorAvailableAmount(address(investorOne)),
+            500_000
+        );
     }
 
     function test_debitInsufficientFunds() public {
@@ -139,7 +142,7 @@ contract BankrollTest is Test {
         assertEq(token.balanceOf(address(investorOne)), 0);
 
         assertEq(bankroll.sharesOf(address(investorOne)), 1000_000);
-        assertEq(bankroll.getAmount(address(investorOne)), 0);
+        assertEq(bankroll.getInvestorAvailableAmount(address(investorOne)), 0);
     }
 
     function test_credit() public {
@@ -157,7 +160,10 @@ contract BankrollTest is Test {
         assertEq(token.balanceOf(address(investorOne)), 0);
 
         assertEq(bankroll.sharesOf(address(investorOne)), 1000_000);
-        assertEq(bankroll.getAmount(address(investorOne)), 1500_000);
+        assertEq(
+            bankroll.getInvestorAvailableAmount(address(investorOne)),
+            1500_000
+        );
     }
 
     function test_setInvestorWhitelist() public {

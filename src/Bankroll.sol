@@ -18,6 +18,7 @@ contract Bankroll {
     event FundsDeposited(uint256 amount);
     event FundsWithdrawn(uint256 amount);
     event Debit(address player, uint256 amount);
+    event Credit(uint256 amount);
     event RevenueClaimed(address manager, uint256 amount);
 
     error FORBIDDEN();
@@ -77,6 +78,17 @@ contract Bankroll {
         emit Debit(_player, _amount);
     }
 
+    function credit(uint256 _amount) external {
+        if (!managers[msg.sender]) revert FORBIDDEN();
+
+        //TODO: increment a global revenue counter
+
+        // transfer ERC20 from the manager to the vault
+        ERC20.transferFrom(msg.sender, address(this), _amount);
+
+        emit Credit(_amount);
+    }
+
     function claimRevenue(uint256 _amount) external {
         if (!managers[msg.sender]) revert FORBIDDEN();
 
@@ -115,7 +127,7 @@ contract Bankroll {
     //  | |/ / /  __/ |/ |/ /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
     //  |___/_/\___/|__/|__/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
-    function getAmount(
+    function getInvestorAvailableAmount(
         address _investor
     ) external view returns (uint256 _amount) {
         uint256 _shares = sharesOf[_investor];
