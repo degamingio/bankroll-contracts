@@ -65,7 +65,7 @@ contract GameBankrollTest is Test {
         // investor one deposits 1000_000
         vm.startPrank(investorOne);
         token.approve(address(gameBankroll), 1000_000);
-        vm.expectRevert(0xdaf9dbc0); //FORBIDDEN()
+        vm.expectRevert(0xdaf9dbc0); //reverts: FORBIDDEN()
         gameBankroll.depositFunds(1000_000);
         vm.stopPrank();
 
@@ -147,8 +147,6 @@ contract GameBankrollTest is Test {
         token.approve(address(gameBankroll), 1000_000);
         gameBankroll.depositFunds(1000_000);
         vm.stopPrank();
-
-        // player lost 500_000
 
         vm.startPrank(manager);
         token.approve(address(gameBankroll), 500_000);

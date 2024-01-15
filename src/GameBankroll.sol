@@ -5,15 +5,15 @@ pragma solidity ^0.8.13;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract GameBankroll {
-    address public admin;
-    uint256 public totalSupply;
+    address public admin; // admin address
+    uint256 public totalSupply; // total amount of shares
     uint256 public constant DENOMINATOR = 10_000;
-    IERC20 public immutable ERC20;
-    mapping(address manager => bool authorized) public managers;
-    mapping(address investor => uint256 shares) public sharesOf;
-    mapping(address investor => uint256 investment) public investmentOf;
-    mapping(address investor => bool authorized) public investorWhitelist;
-    bool public isPublic = true;
+    IERC20 public immutable ERC20; // bankroll liquidity token
+    mapping(address manager => bool authorized) public managers; // managers that are allowed to operate this bankroll
+    mapping(address investor => uint256 shares) public sharesOf; // amount of shares per investor
+    mapping(address investor => uint256 investment) public investmentOf; // amount of ERC20 deposited per investor
+    mapping(address investor => bool authorized) public investorWhitelist; // allowed addresses to deposit
+    bool public isPublic = true; // if false, only whitelisted investors can deposit
 
     event FundsDeposited(uint256 amount);
     event FundsWithdrawn(uint256 amount);
@@ -34,6 +34,7 @@ contract GameBankroll {
     //  /_____/_/|_|\__/\___/_/  /_/ /_/\__,_/_/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
     function depositFunds(uint256 _amount) external {
+        // check if the user is allowed to deposit if the bankroll is not public
         if (!isPublic && !investorWhitelist[msg.sender]) revert FORBIDDEN();
 
         uint256 shares;
@@ -126,8 +127,7 @@ contract GameBankroll {
     //      ____      __                        __   ______                 __  _
     //     /  _/___  / /____  _________  ____ _/ /  / ____/_  ______  _____/ /_(_)___  ____  _____
     //     / // __ \/ __/ _ \/ ___/ __ \/ __ `/ /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
-    //   _/
-    // / / / /_/  __/ /  / / / / /_/ / /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
+    //   / / /_/  __/ /  / / / / /_/ / /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
     //  /___/_/ /_/\__/\___/_/  /_/ /_/\__,_/_/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
     function _mint(address _to, uint256 _shares) internal {
