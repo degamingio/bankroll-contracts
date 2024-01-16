@@ -166,10 +166,6 @@ contract BankrollTest is Test {
         // available balance + totalProfit = actual balance
         assertEq(availableBalance + uint(totalProfit), actualBalance);
 
-        uint256 fee = bankroll.fee();
-        uint256 DENOMINATOR = bankroll.DENOMINATOR();
-        uint256 bankrollProfit = (uint(totalProfit) * fee) / DENOMINATOR;
-
         // available balance is 1500_000 - bankrollProfit
         assertEq(bankroll.balance(), (1500_000 - uint(totalProfit)));
     }

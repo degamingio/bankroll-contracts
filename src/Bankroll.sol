@@ -18,8 +18,8 @@ contract Bankroll {
     IERC20 public immutable ERC20; // bankroll liquidity token
     bool public isPublic = true; // if false, only whitelisted investors can deposit
 
-    event FundsDeposited(uint256 amount);
-    event FundsWithdrawn(uint256 amount);
+    event FundsDeposited(address investor, uint256 amount);
+    event FundsWithdrawn(address investor, uint256 amount);
     event Debit(address manager, address player, uint256 amount);
     event Credit(address manager, uint256 amount);
     event ProfitClaimed(address manager, uint256 amount);
@@ -59,7 +59,7 @@ contract Bankroll {
         // transfer ERC20 from the user to the vault
         ERC20.transferFrom(msg.sender, address(this), _amount);
 
-        emit FundsDeposited(_amount);
+        emit FundsDeposited(msg.sender, _amount);
     }
 
     function withdrawAll() external {
@@ -199,6 +199,6 @@ contract Bankroll {
         // Transfer ERC20 to the caller
         ERC20.transfer(msg.sender, amount);
 
-        emit FundsWithdrawn(amount);
+        emit FundsWithdrawn(msg.sender, amount);
     }
 }
