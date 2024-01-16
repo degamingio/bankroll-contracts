@@ -166,6 +166,39 @@ contract BankrollTest is Test {
         );
     }
 
+    // function test_claimRevenue() public {
+    //     vm.startPrank(investorOne);
+    //     token.approve(address(bankroll), 1000_000);
+    //     bankroll.depositFunds(1000_000);
+    //     vm.stopPrank();
+
+    //     vm.startPrank(manager);
+    //     token.approve(address(bankroll), 500_000);
+    //     token.transfer(address(bankroll), 500_000);
+    //     vm.stopPrank();
+
+    //     assertEq(token.balanceOf(address(bankroll)), 1500_000);
+    //     assertEq(token.balanceOf(address(investorOne)), 0);
+
+    //     assertEq(bankroll.sharesOf(address(investorOne)), 1000_000);
+    //     assertEq(
+    //         bankroll.getInvestorAvailableAmount(address(investorOne)),
+    //         1500_000
+    //     );
+
+    //     vm.prank(investorOne);
+    //     bankroll.claimRevenue();
+
+    //     assertEq(token.balanceOf(address(bankroll)), 1500_000);
+    //     assertEq(token.balanceOf(address(investorOne)), 1500_000);
+
+    //     assertEq(bankroll.sharesOf(address(investorOne)), 1000_000);
+    //     assertEq(
+    //         bankroll.getInvestorAvailableAmount(address(investorOne)),
+    //         1500_000
+    //     );
+    // }
+
     function test_setInvestorWhitelist() public {
         assertEq(bankroll.investorWhitelist(investorOne), false);
 
@@ -206,5 +239,14 @@ contract BankrollTest is Test {
         bankroll.setPublic(false);
 
         assertEq(bankroll.isPublic(), false);
+    }
+
+    function test_setFee() public {
+        assertEq(bankroll.fee(), 65);
+
+        vm.prank(admin);
+        bankroll.setFee(10);
+
+        assertEq(bankroll.fee(), 10);
     }
 }

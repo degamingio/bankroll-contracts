@@ -5,23 +5,27 @@ pragma solidity ^0.8.13;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Bankroll {
+    uint8 public fee = 65; // 6.5% bankroll fee of profit
     address public admin; // admin address
     uint256 public totalSupply; // total amount of shares
+    int256 public totalProfit; // total profit minus bankroll fee meaning not available for LPs to withdraw
     uint256 public constant DENOMINATOR = 10_000;
-    IERC20 public immutable ERC20; // bankroll liquidity token
+    mapping(address manager => int256 profit) public profitOf; // profit per manager
     mapping(address manager => bool authorized) public managers; // managers that are allowed to operate this bankroll
     mapping(address investor => uint256 shares) public sharesOf; // amount of shares per investor
     mapping(address investor => uint256 investment) public investmentOf; // amount of ERC20 deposited per investor
     mapping(address investor => bool authorized) public investorWhitelist; // allowed addresses to deposit
+    IERC20 public immutable ERC20; // bankroll liquidity token
     bool public isPublic = true; // if false, only whitelisted investors can deposit
 
     event FundsDeposited(uint256 amount);
     event FundsWithdrawn(uint256 amount);
     event Debit(address player, uint256 amount);
     event Credit(uint256 amount);
-    event RevenueClaimed(address manager, uint256 amount);
+    event ProfitClaimed(address manager, uint256 amount);
 
     error FORBIDDEN();
+    error NO_PROFIT();
 
     constructor(address _admin, address _ERC20) {
         admin = _admin;
@@ -42,7 +46,7 @@ contract Bankroll {
         if (totalSupply == 0) {
             shares = _amount;
         } else {
-            shares = (_amount * totalSupply) / ERC20.balanceOf(address(this));
+            shares = (_amount * totalSupply) / balance();
         }
 
         // mint shares to the user
@@ -67,11 +71,15 @@ contract Bankroll {
     function debit(address _player, uint256 _amount) external {
         if (!managers[msg.sender]) revert FORBIDDEN();
 
-        // pay what is left if amount is bigger than amount
-        uint256 balance = ERC20.balanceOf(address(this));
-        if (_amount > balance) {
-            _amount = balance;
+        // pay what is left if amount is bigger than bankroll balance
+        uint256 _balance = balance();
+        if (_amount > _balance) {
+            _amount = _balance;
         }
+
+        totalProfit -= int(_amount);
+        profitOf[msg.sender] -= int(_amount);
+
         // transfer ERC20 from the vault to the winner
         ERC20.transfer(_player, _amount);
 
@@ -81,7 +89,8 @@ contract Bankroll {
     function credit(uint256 _amount) external {
         if (!managers[msg.sender]) revert FORBIDDEN();
 
-        //TODO: increment a global revenue counter
+        totalProfit += int(_amount);
+        profitOf[msg.sender] += int(_amount);
 
         // transfer ERC20 from the manager to the vault
         ERC20.transferFrom(msg.sender, address(this), _amount);
@@ -89,13 +98,24 @@ contract Bankroll {
         emit Credit(_amount);
     }
 
-    function claimRevenue(uint256 _amount) external {
+    function claimProfit() external {
         if (!managers[msg.sender]) revert FORBIDDEN();
 
-        // transfer ERC20 from the vault to the manager
-        ERC20.transfer(msg.sender, _amount);
+        // substract the bankroll fee and leave it in the this contract
+        int256 _profit = profitOf[msg.sender];
+        uint256 _fee = (uint(_profit) * fee) / DENOMINATOR;
+        _profit -= int(_fee);
 
-        emit RevenueClaimed(msg.sender, _amount);
+        // check if there is profit to claim
+        if (_profit <= 0) revert NO_PROFIT();
+
+        profitOf[msg.sender] = 0;
+        totalProfit -= _profit + int(_fee);
+
+        // transfer ERC20 from the vault to the manager
+        ERC20.transfer(msg.sender, uint256(_profit));
+
+        emit ProfitClaimed(msg.sender, uint256(_profit));
     }
 
     function setInvestorWhitelist(
@@ -121,19 +141,27 @@ contract Bankroll {
         isPublic = _isPublic;
     }
 
+    function setFee(uint8 _fee) external {
+        if (msg.sender != admin) revert FORBIDDEN();
+        fee = _fee;
+    }
+
     //   _    ___                 ______                 __  _
     //  | |  / (_)__ _      __   / ____/_  ______  _____/ /_(_)___  ____  _____
     //  | | / / / _ \ | /| / /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
     //  | |/ / /  __/ |/ |/ /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
     //  |___/_/\___/|__/|__/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
+    function balance() public view returns (uint256 _balance) {
+        uint _totalProfit = totalProfit > 0 ? uint(totalProfit) : 0;
+        _balance = ERC20.balanceOf(address(this)) - _totalProfit;
+    }
+
     function getInvestorAvailableAmount(
         address _investor
     ) external view returns (uint256 _amount) {
         uint256 _shares = sharesOf[_investor];
-        _amount = _shares == 0
-            ? 0
-            : (_shares * ERC20.balanceOf(address(this))) / totalSupply;
+        _amount = _shares == 0 ? 0 : (_shares * balance()) / totalSupply;
     }
 
     //      ____      __                        __   ______                 __  _
@@ -160,8 +188,7 @@ contract Bankroll {
 
     function _withdraw(uint256 _shares) internal {
         // Calculate the amount of ERC20 worth of shares
-        uint256 amount = (_shares * ERC20.balanceOf(address(this))) /
-            totalSupply;
+        uint256 amount = (_shares * balance()) / totalSupply;
 
         // Burn the shares from the caller
         _burn(msg.sender, _shares);
