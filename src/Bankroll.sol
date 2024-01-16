@@ -103,11 +103,12 @@ contract Bankroll {
 
         // substract the bankroll fee and leave it in the this contract
         int256 _profit = profitOf[msg.sender];
-        uint256 _fee = (uint(_profit) * fee) / DENOMINATOR;
-        _profit -= int(_fee);
 
         // check if there is profit to claim
         if (_profit <= 0) revert NO_PROFIT();
+
+        uint256 _fee = (uint(_profit) * fee) / DENOMINATOR;
+        _profit -= int(_fee);
 
         profitOf[msg.sender] = 0;
         totalProfit -= _profit + int(_fee);
