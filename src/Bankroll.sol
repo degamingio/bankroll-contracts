@@ -20,9 +20,10 @@ contract Bankroll {
 
     event FundsDeposited(uint256 amount);
     event FundsWithdrawn(uint256 amount);
-    event Debit(address player, uint256 amount);
-    event Credit(uint256 amount);
+    event Debit(address manager, address player, uint256 amount);
+    event Credit(address manager, uint256 amount);
     event ProfitClaimed(address manager, uint256 amount);
+    event BankrollSwept(address player, uint256 amount);
 
     error FORBIDDEN();
     error NO_PROFIT();
@@ -75,6 +76,7 @@ contract Bankroll {
         uint256 _balance = balance();
         if (_amount > _balance) {
             _amount = _balance;
+            emit BankrollSwept(_player, _amount);
         }
 
         totalProfit -= int(_amount);
@@ -83,7 +85,7 @@ contract Bankroll {
         // transfer ERC20 from the vault to the winner
         ERC20.transfer(_player, _amount);
 
-        emit Debit(_player, _amount);
+        emit Debit(msg.sender, _player, _amount);
     }
 
     function credit(uint256 _amount) external {
@@ -95,7 +97,7 @@ contract Bankroll {
         // transfer ERC20 from the manager to the vault
         ERC20.transferFrom(msg.sender, address(this), _amount);
 
-        emit Credit(_amount);
+        emit Credit(msg.sender, _amount);
     }
 
     function claimProfit() external {
