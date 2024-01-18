@@ -291,4 +291,27 @@ contract BankrollTest is Test {
 
         assertEq(bankroll.fee(), 10);
     }
+
+    function test_getInvestorStake() public {
+        vm.startPrank(investorOne);
+        token.approve(address(bankroll), 10_000);
+        bankroll.depositFunds(10_000);
+        vm.stopPrank();
+
+        vm.startPrank(investorTwo);
+        token.approve(address(bankroll), 10_000);
+        bankroll.depositFunds(10_000);
+        vm.stopPrank();
+
+        assertEq(bankroll.getInvestorStake(address(investorOne)), 5000);
+        assertEq(bankroll.getInvestorStake(address(investorTwo)), 5000);
+
+        vm.startPrank(investorOne);
+        token.approve(address(bankroll), 10_000);
+        bankroll.depositFunds(10_000);
+        vm.stopPrank();
+
+        assertEq(bankroll.getInvestorStake(address(investorOne)), 6666);
+        assertEq(bankroll.getInvestorStake(address(investorTwo)), 3333);
+    }
 }

@@ -167,6 +167,13 @@ contract Bankroll {
         _amount = _shares == 0 ? 0 : (_shares * balance()) / totalSupply;
     }
 
+    function getInvestorStake(
+        address _investor
+    ) external view returns (uint256 _stake) {
+        uint256 _shares = sharesOf[_investor];
+        _stake = _shares == 0 ? 0 : (_shares * DENOMINATOR) / totalSupply;
+    }
+
     //      ____      __                        __   ______                 __  _
     //     /  _/___  / /____  _________  ____ _/ /  / ____/_  ______  _____/ /_(_)___  ____  _____
     //     / // __ \/ __/ _ \/ ___/ __ \/ __ `/ /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
