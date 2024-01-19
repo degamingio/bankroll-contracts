@@ -1,15 +1,5 @@
 # Bankroll Contracts
 
-## Address Registry :
-
-Latest deployed contract address
-
-### XDC APOTHEM:
-
-| Contract           | Address                                     | Explorer                                                                             |
-| ------------------ | ------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Aviatrix      | 0x66D2eFDf57127e7187F1A13598bB2B3ecba87C9E | https://explorer.apothem.network/address/xdc66D2eFDf57127e7187F1A13598bB2B3ecba87C9E |
-
 ## Foundry Installation
 
 ```sh
