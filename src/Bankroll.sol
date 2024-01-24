@@ -112,9 +112,9 @@ contract Bankroll {
         if (_profit <= 0) revert NO_PROFIT();
 
         uint256 _fee = (uint(_profit) * fee) / DENOMINATOR;
-        totalProfit -= _profit;
         _profit -= int(_fee);
 
+        totalProfit -= _profit;
         profitOf[msg.sender] = 0;
 
         // transfer ERC20 from the vault to the manager
@@ -174,11 +174,13 @@ contract Bankroll {
         address _investor
     ) public view returns (uint256 _profit) {
         uint256 _shares = sharesOf[_investor];
-        uint _totalProfit = totalProfit > 0 ? uint(totalProfit) : 0;
+        // If totalProfit is more than 0, 
+        uint _totalProfit = uint(totalProfit) > 0 ? uint(totalProfit) : 0;
         uint256 grossProfit = _shares == 0
             ? 0
             : (_shares * _totalProfit) / totalSupply;
         _profit = (grossProfit * (1000 - fee)) / 1000;
+        _profit = _totalProfit;
     }
 
     function getInvestorStake(
