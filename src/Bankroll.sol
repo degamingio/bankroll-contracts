@@ -173,17 +173,6 @@ contract Bankroll {
     function getInvestorProfit(
         address _investor
     ) public view returns (int256 _profit) {
-        //uint256 _shares = sharesOf[_investor];
-        // If totalProfit is more than 0, 
-        //uint _totalProfit = totalProfit > 0 ? uint(totalProfit) : 0;
-        //uint256 grossProfit = _shares == 0
-        //    ? 0
-        //    : (_shares * _totalProfit) / totalSupply;
-        //_profit = (grossProfit * (1000 - fee)) / 1000;
-        //int256 tokenBalance = int(ERC20.balanceOf(address(this)));
-        //int256 investorSharesInt = int(sharesOf[_investor]);
-        //int256 totalSupplyInt = int(totalSupply);
-
         _profit = (int(ERC20.balanceOf(address(this))) * int(sharesOf[_investor]) / int(totalSupply)) - int(depositOf[_investor]);
     }
 
