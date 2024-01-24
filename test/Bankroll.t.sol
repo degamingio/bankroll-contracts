@@ -201,7 +201,7 @@ contract BankrollTest is Test {
         // left in the bankroll as liquid assets is the initial investment
         assertEq(bankroll.liquidity(), 100_000);
 
-        // left in the bankroll as liquid assets is the initial investment + brankroll fee
+        // left in the bankroll is the initial investment + brankroll fee
         assertEq(token.balanceOf(address(bankroll)), 100_000 + bankrollProfit);
 
         // total profit is is equal to the profit gained from fees
