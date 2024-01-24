@@ -164,23 +164,27 @@ contract Bankroll {
 
     function getInvestorValue(
         address _investor
-    ) external view returns (uint256 _amount) {
-        uint256 _deposited = depositOf[_investor];
-        uint256 _profit = getInvestorProfit(_investor);
+    ) external view returns (int256 _amount) {
+        int256 _deposited = int(depositOf[_investor]);
+        int256 _profit = getInvestorProfit(_investor);
         _amount = _deposited + _profit;
     }
 
     function getInvestorProfit(
         address _investor
-    ) public view returns (uint256 _profit) {
-        uint256 _shares = sharesOf[_investor];
+    ) public view returns (int256 _profit) {
+        //uint256 _shares = sharesOf[_investor];
         // If totalProfit is more than 0, 
-        uint _totalProfit = uint(totalProfit) > 0 ? uint(totalProfit) : 0;
-        uint256 grossProfit = _shares == 0
-            ? 0
-            : (_shares * _totalProfit) / totalSupply;
-        _profit = (grossProfit * (1000 - fee)) / 1000;
-        _profit = _totalProfit;
+        //uint _totalProfit = totalProfit > 0 ? uint(totalProfit) : 0;
+        //uint256 grossProfit = _shares == 0
+        //    ? 0
+        //    : (_shares * _totalProfit) / totalSupply;
+        //_profit = (grossProfit * (1000 - fee)) / 1000;
+        //int256 tokenBalance = int(ERC20.balanceOf(address(this)));
+        //int256 investorSharesInt = int(sharesOf[_investor]);
+        //int256 totalSupplyInt = int(totalSupply);
+
+        _profit = (int(ERC20.balanceOf(address(this))) * int(sharesOf[_investor]) / int(totalSupply)) - int(depositOf[_investor]);
     }
 
     function getInvestorStake(
