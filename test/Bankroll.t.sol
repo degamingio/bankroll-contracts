@@ -201,13 +201,16 @@ contract BankrollTest is Test {
         // left in the bankroll is the initial investment + brankroll fee
         assertEq(bankroll.liquidity(), 100_000 + bankrollProfit);
 
-        // // total profit is 0
-        // assertEq(bankroll.totalProfit(), 0);
 
-        // // investor one has the initial investment + bankrollProfit
+        // total profit is 0
+        assertEq(bankroll.totalProfit(), 0);
+
+        console.log(bankroll.getInvestorValue(address(investorOne)));
+
+        // investor one has the initial investment + bankrollProfit
         // assertEq(
-        //     bankroll.getInvestorValue(address(investorOne)),
-        //     100_000 + bankrollProfit
+            // bankroll.getInvestorValue(address(investorOne)),
+            // 100_000 + bankrollProfit
         // );
     }
 

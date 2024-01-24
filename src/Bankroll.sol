@@ -112,10 +112,10 @@ contract Bankroll {
         if (_profit <= 0) revert NO_PROFIT();
 
         uint256 _fee = (uint(_profit) * fee) / DENOMINATOR;
+        totalProfit -= _profit;
         _profit -= int(_fee);
 
         profitOf[msg.sender] = 0;
-        totalProfit -= _profit;
 
         // transfer ERC20 from the vault to the manager
         ERC20.transfer(msg.sender, uint256(_profit));
