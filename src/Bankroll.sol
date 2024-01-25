@@ -75,8 +75,12 @@ contract Bankroll {
         // Remove the initial deposit from total deposit
         totalDeposit -= depositOf[msg.sender];
         
+        int256 investorProfit = getExpectedInvestorProfit(msg.sender);
+
+        lpProfit -= uint(investorProfit);
+
         // Zero investment tracking
-        depositOf[msg.sender] = 0;        
+        depositOf[msg.sender] = 0;
 
         _withdraw(sharesOf[msg.sender], msg.sender);
     }
@@ -194,7 +198,7 @@ contract Bankroll {
     function getInvestorProfit(
         address _investor
     ) public view returns (int256 _profit) {
-        _profit = (int(liquidity()) * int(sharesOf[_investor]) / int(totalSupply));
+        _profit = (int(liquidity()) * int(sharesOf[_investor]) / int(totalSupply)) - int(depositOf[_investor]);
     }
 
     function getExpectedInvestorProfit(
@@ -233,11 +237,15 @@ contract Bankroll {
     }
 
     function _withdraw(uint256 _shares, address _sender) internal {
+        uint256 liq = uint(expectedLiquidityProfit()) + totalDeposit; 
+        
         // Calculate the amount of ERC20 worth of shares
-        uint256 amount = (_shares * liquidity()) / totalSupply;
+        uint256 amount = (_shares * liq) / totalSupply;
+
+        uint256 investorProfit = amount - depositOf[_sender];
 
         // Remove only profit
-        lpProfit -= uint(getInvestorProfit(_sender));
+        //if (investorProfit > 0) lpProfit -= investorProfit;
 
         // Burn the shares from the caller
         _burn(msg.sender, _shares);
