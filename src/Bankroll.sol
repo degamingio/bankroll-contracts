@@ -69,7 +69,7 @@ contract Bankroll {
 
     function withdrawAll() external {
         // Zero investment tracking
-        depositOf[msg.sender] = 0;        
+        depositOf[msg.sender] = 0;
 
         _withdraw(sharesOf[msg.sender], msg.sender);
     }
@@ -117,9 +117,9 @@ contract Bankroll {
         if (_profit <= 0) revert NO_PROFIT();
 
         uint256 _fee = (uint(_profit) * fee) / DENOMINATOR;
-        
+
         lpProfit += _fee;
-        
+
         currentProfit -= _profit;
         //totalProfit -= _profit;
         profitOf[msg.sender] = 0;
@@ -173,7 +173,10 @@ contract Bankroll {
     }
 
     function expectedLiquidity() public view returns (int256 _balance) {
-        _balance = int(lpProfit) + (currentProfit * int16(fee)) / int(DENOMINATOR);
+        _balance =
+            int(lpProfit) +
+            (currentProfit * int16(fee)) /
+            int(DENOMINATOR);
     }
 
     function getInvestorValue(
@@ -187,7 +190,8 @@ contract Bankroll {
     function getInvestorProfit(
         address _investor
     ) public view returns (int256 _profit) {
-        _profit = (int(liquidity()) * int(sharesOf[_investor]) / int(totalSupply));t 
+        _profit = ((int(liquidity()) * int(sharesOf[_investor])) /
+            int(totalSupply));
     }
 
     function getInvestorStake(
