@@ -220,7 +220,10 @@ contract BankrollTest is Test {
         assertEq(bankroll.liquidity(), bankrollProfit);
 
         console.log(uint(bankroll.getInvestorValue(investorOne)));
-        console.log(uint(bankroll.getInvestorProfit(investorOne)));
+        //console.log(uint(bankroll.getInvestorProfit(investorOne)));
+
+        emit log_int(bankroll.getInvestorProfit(investorOne));
+
 
         // // investor one has the initial investment + bankrollProfit
         // assertEq(

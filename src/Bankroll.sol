@@ -187,7 +187,7 @@ contract Bankroll {
     function getInvestorProfit(
         address _investor
     ) public view returns (int256 _profit) {
-        _profit = (int(liquidity()) * int(sharesOf[_investor]) / int(totalSupply)) - int(depositOf[_investor]);
+        _profit = (int(liquidity()) * int(sharesOf[_investor]) / int(totalSupply));t 
     }
 
     function getInvestorStake(
