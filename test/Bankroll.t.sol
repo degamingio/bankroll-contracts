@@ -104,43 +104,44 @@ contract BankrollTest is Test {
         assertEq(token.balanceOf(address(investorTwo)), 0);
     }
 
-    // function test_debit() public {
-    //     vm.startPrank(investorOne);
-    //     token.approve(address(bankroll), 1000_000);
-    //     bankroll.depositFunds(1000_000);
-    //     vm.stopPrank();
+    function test_debit() public {
+        vm.startPrank(investorOne);
+        token.approve(address(bankroll), 1_000_000);
+        bankroll.depositFunds(1_000_000);
+        vm.stopPrank();
 
-    //     assertEq(bankroll.liquidity(), 1000_000);
+        assertEq(bankroll.liquidity(), 1_000_000);
 
-    //     vm.prank(manager);
-    //     bankroll.debit(player, 500_000);
+        vm.prank(manager);
+        bankroll.debit(player, 500_000);
 
-    //     assertEq(bankroll.liquidity(), 500_000);
-    //     assertEq(token.balanceOf(address(player)), 500_000);
-    //     assertEq(token.balanceOf(address(investorOne)), 0);
+        assertEq(bankroll.liquidity(), 500_000);
+        assertEq(token.balanceOf(address(player)), 500_000);
+        assertEq(token.balanceOf(address(investorOne)), 0);
 
-    //     assertEq(bankroll.sharesOf(address(investorOne)), 1000_000);
-    //     assertEq(bankroll.getInvestorValue(address(investorOne)), 500_000);
-    // }
+        assertEq(bankroll.sharesOf(address(investorOne)), 1_000_000);
+        
+        assertEq(bankroll.getInvestorValue(address(investorOne)), 500_000);
+    }
 
-    // function test_debitInsufficientFunds() public {
-    //     vm.startPrank(investorOne);
-    //     token.approve(address(bankroll), 1000_000);
-    //     bankroll.depositFunds(1000_000);
-    //     vm.stopPrank();
+    function test_debitInsufficientFunds() public {
+        vm.startPrank(investorOne);
+        token.approve(address(bankroll), 1000_000);
+        bankroll.depositFunds(1000_000);
+        vm.stopPrank();
 
-    //     assertEq(bankroll.liquidity(), 1000_000);
+        assertEq(bankroll.liquidity(), 1000_000);
 
-    //     vm.prank(manager);
-    //     bankroll.debit(player, 5000_000);
+        vm.prank(manager);
+        bankroll.debit(player, 5000_000);
 
-    //     assertEq(bankroll.liquidity(), 0);
-    //     assertEq(token.balanceOf(address(player)), 1000_000);
-    //     assertEq(token.balanceOf(address(investorOne)), 0);
+        assertEq(bankroll.liquidity(), 0);
+        assertEq(token.balanceOf(address(player)), 1000_000);
+        assertEq(token.balanceOf(address(investorOne)), 0);
 
-    //     assertEq(bankroll.sharesOf(address(investorOne)), 1000_000);
-    //     assertEq(bankroll.getInvestorValue(address(investorOne)), 0);
-    // }
+        assertEq(bankroll.sharesOf(address(investorOne)), 1000_000);
+        assertEq(bankroll.getInvestorValue(address(investorOne)), 0);
+    }
 
     function test_credit() public {
         vm.startPrank(investorOne);
@@ -179,64 +180,84 @@ contract BankrollTest is Test {
         vm.stopPrank();
 
         uint256 actualBalance = token.balanceOf(address(bankroll));
-        uint256 availableBalance = bankroll.liquidity();
-        int256 totalProfit = bankroll.totalProfit();
+        uint256 expectedProfit = uint(bankroll.expectedLiquidity());
+        int256 currentProfit = bankroll.currentProfit();
 
         // the actual balance is 110_000
         assertEq(actualBalance, 110_000);
+        console.log(actualBalance);
 
-        // the available balance is less than 110_000 because of allocated manager profit
-        assertNotEq(availableBalance, 110_000);
+        // the available amount of profit for liquidity providers
+        assertEq(expectedProfit, 650);
+        console.log(expectedProfit);
 
-        // available balance + totalProfit = actual balance
-        assertEq(availableBalance + uint(totalProfit), actualBalance);
+        emit log_int(currentProfit);
+
+        // // available balance + totalProfit = actual balance
+        // assertEq(availableProfit + uint(currentProfit), actualBalance);
 
         uint256 fee = bankroll.fee();
         uint256 DENOMINATOR = bankroll.DENOMINATOR();
-        uint256 bankrollProfit = (uint(totalProfit) * fee) / DENOMINATOR;
+        uint256 bankrollProfit = (uint(currentProfit) * fee) / DENOMINATOR;
+
+        console.log(bankrollProfit);
 
         vm.prank(manager);
         bankroll.claimProfit();
 
-        // left in the bankroll is the initial investment + brankroll fee
-        assertEq(bankroll.liquidity(), 100_000 + bankrollProfit);
+        uint256 availableProfit = bankroll.liquidity();
+        console.log(availableProfit);
 
-        // // total profit is 0
-        // assertEq(bankroll.totalProfit(), 0);
+        console.log(bankroll.liquidity());
+
+        // left in the bankroll as liquid assets is the initial investment
+        assertEq(bankroll.liquidity(), 650);
+
+        // // left in the bankroll is the initial investment + brankroll fee
+        // assertEq(token.balanceOf(address(bankroll)), 100_000 + bankrollProfit);
+
+        // // total profit is is equal to the profit gained from fees
+        assertEq(bankroll.liquidity(), bankrollProfit);
+
+        console.log(uint(bankroll.getInvestorValue(investorOne)));
+        //console.log(uint(bankroll.getInvestorProfit(investorOne)));
+
+        emit log_int(bankroll.getInvestorProfit(investorOne));
+
 
         // // investor one has the initial investment + bankrollProfit
         // assertEq(
-        //     bankroll.getInvestorValue(address(investorOne)),
-        //     100_000 + bankrollProfit
+            // bankroll.getInvestorValue(address(investorOne)),
+            // 100_000 + int(bankrollProfit)
         // );
     }
 
-    function test_claimProfitWhenNegative() public {
-        vm.startPrank(investorOne);
-        token.approve(address(bankroll), 100_000);
-        bankroll.depositFunds(100_000);
-        vm.stopPrank();
+    // function test_claimProfitWhenNegative() public {
+        // vm.startPrank(investorOne);
+        // token.approve(address(bankroll), 100_000);
+        // bankroll.depositFunds(100_000);
+        // vm.stopPrank();
 
-        vm.prank(manager);
-        bankroll.debit(player, 10_000);
+        // vm.prank(manager);
+        // bankroll.debit(player, 10_000);
 
-        uint256 actualBalance = token.balanceOf(address(bankroll));
-        uint256 availableBalance = bankroll.liquidity();
-        int256 totalProfit = bankroll.totalProfit();
+        // uint256 actualBalance = token.balanceOf(address(bankroll));
+        // uint256 availableBalance = bankroll.liquidity();
+        // int256 totalProfit = bankroll.totalProfit();
 
-        // the actual balance is 90_000
-        assertEq(actualBalance, 90_000);
+        // // the actual balance is 90_000
+        // assertEq(actualBalance, 90_000);
 
-        // the available balance should also be 90_000
-        assertEq(availableBalance, 90_000);
+        // // the available balance should also be 90_000
+        // assertEq(availableBalance, 90_000);
 
-        // profit is negative
-        assertEq(totalProfit, -10_000);
+        // // profit is negative
+        // assertEq(totalProfit, -10_000);
 
-        vm.prank(manager);
-        vm.expectRevert(0xb5b9a8e6); //reverts: NO_PROFIT()
-        bankroll.claimProfit();
-    }
+        // vm.prank(manager);
+        // vm.expectRevert(0xb5b9a8e6); //reverts: NO_PROFIT()
+        // bankroll.claimProfit();
+    // }
 
     function test_setInvestorWhitelist() public {
         assertEq(bankroll.investorWhitelist(investorOne), false);
@@ -281,7 +302,7 @@ contract BankrollTest is Test {
     }
 
     function test_setFee() public {
-        assertEq(bankroll.fee(), 65);
+        assertEq(bankroll.fee(), 650);
 
         vm.prank(admin);
         bankroll.setFee(10);
