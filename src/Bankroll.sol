@@ -76,7 +76,7 @@ contract Bankroll {
         totalDeposit -= depositOf[msg.sender];
         
         // Zero investment tracking
-        depositOf[msg.sender] = 0;        
+        depositOf[msg.sender] = 0;
 
         _withdraw(sharesOf[msg.sender], msg.sender);
     }
@@ -124,9 +124,9 @@ contract Bankroll {
         if (_profit <= 0) revert NO_PROFIT();
 
         uint256 _fee = (uint(_profit) * fee) / DENOMINATOR;
-        
+
         lpProfit += _fee;
-        
+
         currentProfit -= _profit;
         //totalProfit -= _profit;
         profitOf[msg.sender] = 0;
