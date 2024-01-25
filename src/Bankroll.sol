@@ -9,9 +9,10 @@ contract Bankroll {
     address public admin; // admin address
     uint256 public totalSupply; // total amount of shares
     // Remove totalProfit
-    int256 public totalProfit; // the total profit of the bankroll allocated for managers and LPs
+    // int256 public totalProfit; // the total profit of the bankroll allocated for managers and LPs
     int256 public currentProfit;
     uint256 public lpProfit;
+    uint256 public totalDeposit;
     uint256 public constant DENOMINATOR = 10_000;
     mapping(address manager => int256 profit) public profitOf; // profit per manager
     mapping(address manager => bool authorized) public managers; // managers that are allowed to operate this bankroll
@@ -61,6 +62,9 @@ contract Bankroll {
         // track deposited amount
         depositOf[msg.sender] += _amount;
 
+        // track total deposit
+        totalDeposit += _amount;
+
         // transfer ERC20 from the user to the vault
         ERC20.transferFrom(msg.sender, address(this), _amount);
 
@@ -68,6 +72,9 @@ contract Bankroll {
     }
 
     function withdrawAll() external {
+        // Remove the initial deposit from total deposit
+        totalDeposit -= depositOf[msg.sender];
+        
         // Zero investment tracking
         depositOf[msg.sender] = 0;        
 
@@ -169,10 +176,10 @@ contract Bankroll {
     function liquidity() public view returns (uint256 _balance) {
         //uint _totalProfit = totalProfit > 0 ? uint(totalProfit) : 0;
         //_balance = ERC20.balanceOf(address(this)) - _totalProfit;
-        _balance = lpProfit;
+        _balance = lpProfit + totalDeposit;
     }
 
-    function expectedLiquidity() public view returns (int256 _balance) {
+    function expectedLiquidityProfit() public view returns (int256 _balance) {
         _balance = int(lpProfit) + (currentProfit * int16(fee)) / int(DENOMINATOR);
     }
 
@@ -187,7 +194,13 @@ contract Bankroll {
     function getInvestorProfit(
         address _investor
     ) public view returns (int256 _profit) {
-        _profit = (int(liquidity()) * int(sharesOf[_investor]) / int(totalSupply));t 
+        _profit = (int(liquidity()) * int(sharesOf[_investor]) / int(totalSupply));
+    }
+
+    function getExpectedInvestorProfit(
+        address _investor
+    ) public view returns (int256 _profit) {
+        _profit = (expectedLiquidityProfit() * int(sharesOf[_investor]) / int(totalSupply));
     }
 
     function getInvestorStake(
@@ -223,7 +236,7 @@ contract Bankroll {
         // Calculate the amount of ERC20 worth of shares
         uint256 amount = (_shares * liquidity()) / totalSupply;
 
-        // Remove only profit here !!!!
+        // Remove only profit
         lpProfit -= uint(getInvestorProfit(_sender));
 
         // Burn the shares from the caller
