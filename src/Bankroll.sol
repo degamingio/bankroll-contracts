@@ -128,9 +128,9 @@ contract Bankroll {
         if (_profit <= 0) revert NO_PROFIT();
 
         uint256 _fee = (uint(_profit) * fee) / DENOMINATOR;
-        
+
         lpProfit += _fee;
-        
+
         currentProfit -= _profit;
         //totalProfit -= _profit;
         profitOf[msg.sender] = 0;
