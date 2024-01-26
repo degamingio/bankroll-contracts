@@ -209,6 +209,7 @@ contract BankrollTest is Test {
         assertEq(bankroll.liquidity(), 1006_500);
         assertEq(bankroll.getLpValue(lpOne), 1006_500);
 
+        // widthdraw all funds
         vm.prank(lpOne);
         bankroll.withdrawAll();
 
@@ -218,32 +219,25 @@ contract BankrollTest is Test {
         assertEq(bankroll.getLpValue(address(lpOne)), 0);
     }
 
-    // // function test_claimProfitWhenNegative() public {
-    // // vm.startPrank(lpOne);
-    // // token.approve(address(bankroll), 100_000);
-    // // bankroll.depositFunds(100_000);
-    // // vm.stopPrank();
+    function test_claimProfitWhenNegative() public {
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 100_000);
+        bankroll.depositFunds(100_000);
+        vm.stopPrank();
 
-    // // vm.prank(manager);
-    // // bankroll.debit(player, 10_000);
+        vm.prank(manager);
+        bankroll.debit(player, 10_000);
 
-    // // uint256 actualBalance = token.balanceOf(address(bankroll));
-    // // uint256 availableBalance = bankroll.liquidity();
-    // // int256 totalProfit = bankroll.totalProfit();
+        // manager cannot claim profit when negative
+        vm.prank(manager);
+        vm.expectRevert(0xb5b9a8e6); //reverts: NO_PROFIT()
+        bankroll.claimProfit();
 
-    // // // the actual balance is 90_000
-    // // assertEq(actualBalance, 90_000);
-
-    // // // the available balance should also be 90_000
-    // // assertEq(availableBalance, 90_000);
-
-    // // // profit is negative
-    // // assertEq(totalProfit, -10_000);
-
-    // // vm.prank(manager);
-    // // vm.expectRevert(0xb5b9a8e6); //reverts: NO_PROFIT()
-    // // bankroll.claimProfit();
-    // // }
+        // lpOne investment should have decreased
+        assertEq(bankroll.getLpStake(address(lpOne)), 10_000);
+        assertEq(bankroll.getLpProfit(address(lpOne)), -10_000);
+        assertEq(bankroll.getLpValue(address(lpOne)), 90_000);
+    }
 
     // function test_setInvestorWhitelist() public {
     //     assertEq(bankroll.lpWhitelist(lpOne), false);
