@@ -157,7 +157,7 @@ contract Bankroll {
         isPublic = _isPublic;
     }
 
-    function setFee(uint16 _lpFee) external {
+    function setLpFee(uint16 _lpFee) external {
         if (msg.sender != admin) revert FORBIDDEN();
         lpFee = _lpFee;
     }

@@ -239,77 +239,77 @@ contract BankrollTest is Test {
         assertEq(bankroll.getLpValue(address(lpOne)), 90_000);
     }
 
-    // function test_setInvestorWhitelist() public {
-    //     assertEq(bankroll.lpWhitelist(lpOne), false);
+    function test_setInvestorWhitelist() public {
+        assertEq(bankroll.lpWhitelist(lpOne), false);
 
-    //     vm.prank(admin);
-    //     bankroll.setInvestorWhitelist(lpOne, true);
+        vm.prank(admin);
+        bankroll.setInvestorWhitelist(lpOne, true);
 
-    //     assertEq(bankroll.lpWhitelist(lpOne), true);
-    // }
+        assertEq(bankroll.lpWhitelist(lpOne), true);
+    }
 
-    // function test_setAdmin() public {
-    //     assertEq(bankroll.admin(), admin);
+    function test_setAdmin() public {
+        assertEq(bankroll.admin(), admin);
 
-    //     vm.prank(admin);
-    //     bankroll.setAdmin(lpOne);
+        vm.prank(admin);
+        bankroll.setAdmin(lpOne);
 
-    //     assertEq(bankroll.admin(), lpOne);
-    // }
+        assertEq(bankroll.admin(), lpOne);
+    }
 
-    // function test_setManager() public {
-    //     assertEq(bankroll.managers(manager), true);
+    function test_setManager() public {
+        assertEq(bankroll.managers(manager), true);
 
-    //     vm.prank(admin);
-    //     bankroll.setManager(lpOne, true);
+        vm.prank(admin);
+        bankroll.setManager(lpOne, true);
 
-    //     assertEq(bankroll.managers(lpOne), true);
-    //     assertEq(bankroll.managers(manager), true);
+        assertEq(bankroll.managers(lpOne), true);
+        assertEq(bankroll.managers(manager), true);
 
-    //     vm.prank(admin);
-    //     bankroll.setManager(manager, false);
+        vm.prank(admin);
+        bankroll.setManager(manager, false);
 
-    //     assertEq(bankroll.managers(manager), false);
-    // }
+        assertEq(bankroll.managers(manager), false);
+    }
 
-    // function test_setPublic() public {
-    //     assertEq(bankroll.isPublic(), true);
+    function test_setPublic() public {
+        assertEq(bankroll.isPublic(), true);
 
-    //     vm.prank(admin);
-    //     bankroll.setPublic(false);
+        vm.prank(admin);
+        bankroll.setPublic(false);
 
-    //     assertEq(bankroll.isPublic(), false);
-    // }
+        assertEq(bankroll.isPublic(), false);
+    }
 
-    // function test_setFee() public {
-    //     assertEq(bankroll.fee(), 650);
+    function test_setFee() public {
+        assertEq(bankroll.lpFee(), 650);
 
-    //     vm.prank(admin);
-    //     bankroll.setFee(10);
+        vm.prank(admin);
+        bankroll.setLpFee(10);
 
-    //     assertEq(bankroll.fee(), 10);
-    // }
+        assertEq(bankroll.lpFee(), 10);
+    }
 
-    // function test_getLpStake() public {
-    //     vm.startPrank(lpOne);
-    //     token.approve(address(bankroll), 10_000);
-    //     bankroll.depositFunds(10_000);
-    //     vm.stopPrank();
+    function test_getLpStake() public {
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 10_000);
+        bankroll.depositFunds(10_000);
+        vm.stopPrank();
 
-    //     vm.startPrank(lpTwo);
-    //     token.approve(address(bankroll), 10_000);
-    //     bankroll.depositFunds(10_000);
-    //     vm.stopPrank();
+        vm.startPrank(lpTwo);
+        token.approve(address(bankroll), 10_000);
+        bankroll.depositFunds(10_000);
+        vm.stopPrank();
 
-    //     assertEq(bankroll.getLpStake(address(lpOne)), 5000);
-    //     assertEq(bankroll.getLpStake(address(lpTwo)), 5000);
+        assertEq(bankroll.getLpStake(address(lpOne)), 5000);
+        assertEq(bankroll.getLpStake(address(lpTwo)), 5000);
 
-    //     vm.startPrank(lpOne);
-    //     token.approve(address(bankroll), 10_000);
-    //     bankroll.depositFunds(10_000);
-    //     vm.stopPrank();
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 10_000);
+        bankroll.depositFunds(10_000);
+        vm.stopPrank();
 
-    //     assertEq(bankroll.getLpStake(address(lpOne)), 6666);
-    //     assertEq(bankroll.getLpStake(address(lpTwo)), 3333);
-    // }
+        assertEq(bankroll.getLpStake(address(lpOne)), 6666);
+        assertEq(bankroll.getLpStake(address(lpTwo)), 3333);
+    }
 }
