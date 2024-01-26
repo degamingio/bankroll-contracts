@@ -8,8 +8,8 @@ import "../test/mock/MockToken.sol";
 contract BankrollTest is Test {
     address admin;
     address manager;
-    address investorOne;
-    address investorTwo;
+    address lpOne;
+    address lpTwo;
     address player;
 
     Bankroll bankroll;
@@ -18,14 +18,14 @@ contract BankrollTest is Test {
     function setUp() public {
         admin = address(0x1);
         manager = address(0x2);
-        investorOne = address(0x3);
-        investorTwo = address(0x4);
+        lpOne = address(0x3);
+        lpTwo = address(0x4);
         player = address(0x5);
         token = new MockToken("token", "MTK");
         bankroll = new Bankroll(admin, address(token));
 
-        token.mint(investorOne, 1_000_000);
-        token.mint(investorTwo, 1_000_000);
+        token.mint(lpOne, 1_000_000);
+        token.mint(lpTwo, 1_000_000);
         token.mint(manager, 1_000_000);
 
         vm.prank(admin);
@@ -35,23 +35,23 @@ contract BankrollTest is Test {
     function test_depositFunds() public {
         assertEq(bankroll.liquidity(), 0);
 
-        // investor one deposits 1000_000
-        vm.startPrank(investorOne);
+        // lp one deposits 1000_000
+        vm.startPrank(lpOne);
         token.approve(address(bankroll), 1_000_000);
         bankroll.depositFunds(1_000_000);
-        assertEq(bankroll.depositOf(address(investorOne)), 1_000_000);
-        assertEq(bankroll.sharesOf(address(investorOne)), 1_000_000);
+        assertEq(bankroll.depositOf(address(lpOne)), 1_000_000);
+        assertEq(bankroll.sharesOf(address(lpOne)), 1_000_000);
         vm.stopPrank();
 
         assertEq(bankroll.totalSupply(), 1_000_000);
         assertEq(bankroll.liquidity(), 1_000_000);
 
-        // investor two deposits 1000_000
-        vm.startPrank(investorTwo);
+        // lp two deposits 1000_000
+        vm.startPrank(lpTwo);
         token.approve(address(bankroll), 1_000_000);
         bankroll.depositFunds(1_000_000);
-        assertEq(bankroll.depositOf(address(investorTwo)), 1_000_000);
-        assertEq(bankroll.sharesOf(address(investorTwo)), 1_000_000);
+        assertEq(bankroll.depositOf(address(lpTwo)), 1_000_000);
+        assertEq(bankroll.sharesOf(address(lpTwo)), 1_000_000);
         vm.stopPrank();
 
         assertEq(bankroll.totalSupply(), 2_000_000);
@@ -62,61 +62,61 @@ contract BankrollTest is Test {
         vm.prank(admin);
         bankroll.setPublic(false);
 
-        // investor one deposits 1000_000
-        vm.startPrank(investorOne);
+        // lp one deposits 1000_000
+        vm.startPrank(lpOne);
         token.approve(address(bankroll), 1_000_000);
         vm.expectRevert(0xdaf9dbc0); //reverts: FORBIDDEN()
         bankroll.depositFunds(1_000_000);
         vm.stopPrank();
 
         vm.prank(admin);
-        bankroll.setInvestorWhitelist(investorOne, true);
+        bankroll.setInvestorWhitelist(lpOne, true);
 
-        vm.startPrank(investorOne);
+        vm.startPrank(lpOne);
         bankroll.depositFunds(1_000_000);
 
-        assertEq(bankroll.depositOf(address(investorOne)), 1_000_000);
-        assertEq(bankroll.sharesOf(address(investorOne)), 1_000_000);
+        assertEq(bankroll.depositOf(address(lpOne)), 1_000_000);
+        assertEq(bankroll.sharesOf(address(lpOne)), 1_000_000);
 
         vm.stopPrank();
     }
 
     function test_withdrawAll() public {
-        vm.startPrank(investorOne);
+        vm.startPrank(lpOne);
         token.approve(address(bankroll), 1_000_000);
         bankroll.depositFunds(1_000_000);
         vm.stopPrank();
 
-        vm.startPrank(investorTwo);
+        vm.startPrank(lpTwo);
         token.approve(address(bankroll), 1_000_000);
         bankroll.depositFunds(1_000_000);
         vm.stopPrank();
 
         // funds have been deposited
         assertEq(bankroll.liquidity(), 2_000_000);
-        assertEq(token.balanceOf(address(investorOne)), 0);
-        assertEq(token.balanceOf(address(investorTwo)), 0);
+        assertEq(token.balanceOf(address(lpOne)), 0);
+        assertEq(token.balanceOf(address(lpTwo)), 0);
 
         // initial deposit
-        assertEq(bankroll.depositOf(address(investorOne)), 1_000_000);
-        assertEq(bankroll.depositOf(address(investorTwo)), 1_000_000);
+        assertEq(bankroll.depositOf(address(lpOne)), 1_000_000);
+        assertEq(bankroll.depositOf(address(lpTwo)), 1_000_000);
 
         // zero in profits because no fees have been collected
-        assertEq(bankroll.getInvestorProfit(address(investorOne)), 0);
-        assertEq(bankroll.getInvestorProfit(address(investorTwo)), 0);
+        assertEq(bankroll.getLpProfit(address(lpOne)), 0);
+        assertEq(bankroll.getLpProfit(address(lpTwo)), 0);
 
-        vm.startPrank(investorOne);
+        vm.startPrank(lpOne);
         bankroll.withdrawAll();
         vm.stopPrank();
 
         // funds have been deposited
         assertEq(bankroll.liquidity(), 1_000_000);
-        assertEq(token.balanceOf(address(investorOne)), 1_000_000);
-        assertEq(token.balanceOf(address(investorTwo)), 0);
+        assertEq(token.balanceOf(address(lpOne)), 1_000_000);
+        assertEq(token.balanceOf(address(lpTwo)), 0);
     }
 
     function test_debit() public {
-        vm.startPrank(investorOne);
+        vm.startPrank(lpOne);
         token.approve(address(bankroll), 1_000_000);
         bankroll.depositFunds(1_000_000);
         vm.stopPrank();
@@ -125,9 +125,9 @@ contract BankrollTest is Test {
         assertEq(token.balanceOf(address(bankroll)), 1_000_000);
         assertEq(bankroll.liquidity(), 1_000_000);
 
-        // investorOne has 1_000_000 shares
-        assertEq(token.balanceOf(address(investorOne)), 0);
-        assertEq(bankroll.sharesOf(address(investorOne)), 1_000_000);
+        // lpOne has 1_000_000 shares
+        assertEq(token.balanceOf(address(lpOne)), 0);
+        assertEq(bankroll.sharesOf(address(lpOne)), 1_000_000);
 
         // pay player 500_000
         vm.prank(manager);
@@ -139,12 +139,12 @@ contract BankrollTest is Test {
         // player now has 500_000
         assertEq(token.balanceOf(address(player)), 500_000);
 
-        // investorOne now has shares worth only 500_000
-        assertEq(bankroll.getLpValue(address(investorOne)), 500_000);
+        // lpOne now has shares worth only 500_000
+        assertEq(bankroll.getLpValue(address(lpOne)), 500_000);
     }
 
     function test_debitInsufficientFunds() public {
-        vm.startPrank(investorOne);
+        vm.startPrank(lpOne);
         token.approve(address(bankroll), 1000_000);
         bankroll.depositFunds(1000_000);
         vm.stopPrank();
@@ -156,14 +156,14 @@ contract BankrollTest is Test {
 
         assertEq(bankroll.liquidity(), 0);
         assertEq(token.balanceOf(address(player)), 1000_000);
-        assertEq(token.balanceOf(address(investorOne)), 0);
+        assertEq(token.balanceOf(address(lpOne)), 0);
 
-        assertEq(bankroll.sharesOf(address(investorOne)), 1000_000);
-        assertEq(bankroll.getLpValue(address(investorOne)), 0);
+        assertEq(bankroll.sharesOf(address(lpOne)), 1000_000);
+        assertEq(bankroll.getLpValue(address(lpOne)), 0);
     }
 
     function test_credit() public {
-        vm.startPrank(investorOne);
+        vm.startPrank(lpOne);
         token.approve(address(bankroll), 1000_000);
         bankroll.depositFunds(1000_000);
         vm.stopPrank();
@@ -180,7 +180,7 @@ contract BankrollTest is Test {
     }
 
     function test_claimProfit() public {
-        vm.startPrank(investorOne);
+        vm.startPrank(lpOne);
         token.approve(address(bankroll), 1000_000);
         bankroll.depositFunds(1000_000);
         vm.stopPrank();
@@ -207,19 +207,19 @@ contract BankrollTest is Test {
         // profit is NOW available for LPs
         assertEq(bankroll.lpsProfit(), 6_500);
         assertEq(bankroll.liquidity(), 1006_500);
-        assertEq(bankroll.getLpValue(investorOne), 1006_500);
+        assertEq(bankroll.getLpValue(lpOne), 1006_500);
 
-        vm.prank(investorOne);
+        vm.prank(lpOne);
         bankroll.withdrawAll();
 
-        // investorOne should have claimed profit
-        assertEq(bankroll.getInvestorStake(address(investorOne)), 0);
-        assertEq(bankroll.getInvestorProfit(address(investorOne)), 0);
-        assertEq(bankroll.getLpValue(address(investorOne)), 0);
+        // lpOne should have claimed profit
+        assertEq(bankroll.getLpStake(address(lpOne)), 0);
+        assertEq(bankroll.getLpProfit(address(lpOne)), 0);
+        assertEq(bankroll.getLpValue(address(lpOne)), 0);
     }
 
     // // function test_claimProfitWhenNegative() public {
-    // // vm.startPrank(investorOne);
+    // // vm.startPrank(lpOne);
     // // token.approve(address(bankroll), 100_000);
     // // bankroll.depositFunds(100_000);
     // // vm.stopPrank();
@@ -246,30 +246,30 @@ contract BankrollTest is Test {
     // // }
 
     // function test_setInvestorWhitelist() public {
-    //     assertEq(bankroll.investorWhitelist(investorOne), false);
+    //     assertEq(bankroll.lpWhitelist(lpOne), false);
 
     //     vm.prank(admin);
-    //     bankroll.setInvestorWhitelist(investorOne, true);
+    //     bankroll.setInvestorWhitelist(lpOne, true);
 
-    //     assertEq(bankroll.investorWhitelist(investorOne), true);
+    //     assertEq(bankroll.lpWhitelist(lpOne), true);
     // }
 
     // function test_setAdmin() public {
     //     assertEq(bankroll.admin(), admin);
 
     //     vm.prank(admin);
-    //     bankroll.setAdmin(investorOne);
+    //     bankroll.setAdmin(lpOne);
 
-    //     assertEq(bankroll.admin(), investorOne);
+    //     assertEq(bankroll.admin(), lpOne);
     // }
 
     // function test_setManager() public {
     //     assertEq(bankroll.managers(manager), true);
 
     //     vm.prank(admin);
-    //     bankroll.setManager(investorOne, true);
+    //     bankroll.setManager(lpOne, true);
 
-    //     assertEq(bankroll.managers(investorOne), true);
+    //     assertEq(bankroll.managers(lpOne), true);
     //     assertEq(bankroll.managers(manager), true);
 
     //     vm.prank(admin);
@@ -296,26 +296,26 @@ contract BankrollTest is Test {
     //     assertEq(bankroll.fee(), 10);
     // }
 
-    // function test_getInvestorStake() public {
-    //     vm.startPrank(investorOne);
+    // function test_getLpStake() public {
+    //     vm.startPrank(lpOne);
     //     token.approve(address(bankroll), 10_000);
     //     bankroll.depositFunds(10_000);
     //     vm.stopPrank();
 
-    //     vm.startPrank(investorTwo);
+    //     vm.startPrank(lpTwo);
     //     token.approve(address(bankroll), 10_000);
     //     bankroll.depositFunds(10_000);
     //     vm.stopPrank();
 
-    //     assertEq(bankroll.getInvestorStake(address(investorOne)), 5000);
-    //     assertEq(bankroll.getInvestorStake(address(investorTwo)), 5000);
+    //     assertEq(bankroll.getLpStake(address(lpOne)), 5000);
+    //     assertEq(bankroll.getLpStake(address(lpTwo)), 5000);
 
-    //     vm.startPrank(investorOne);
+    //     vm.startPrank(lpOne);
     //     token.approve(address(bankroll), 10_000);
     //     bankroll.depositFunds(10_000);
     //     vm.stopPrank();
 
-    //     assertEq(bankroll.getInvestorStake(address(investorOne)), 6666);
-    //     assertEq(bankroll.getInvestorStake(address(investorTwo)), 3333);
+    //     assertEq(bankroll.getLpStake(address(lpOne)), 6666);
+    //     assertEq(bankroll.getLpStake(address(lpTwo)), 3333);
     // }
 }

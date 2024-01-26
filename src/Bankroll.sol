@@ -14,15 +14,15 @@ contract Bankroll {
     uint256 public constant DENOMINATOR = 10_000;
     mapping(address manager => int256 profit) public profitOf; // profit per manager
     mapping(address manager => bool authorized) public managers; // managers that are allowed to operate this bankroll
-    mapping(address investor => uint256 shares) public sharesOf; // amount of shares per investor
-    mapping(address investor => uint256 deposit) public depositOf; // amount of ERC20 deposited per investor
-    mapping(address investor => bool authorized) public investorWhitelist; // allowed addresses to deposit
+    mapping(address lp => uint256 shares) public sharesOf; // amount of shares per lp
+    mapping(address lp => uint256 deposit) public depositOf; // amount of ERC20 deposited per lp
+    mapping(address lp => bool authorized) public lpWhitelist; // allowed addresses to deposit
     IERC20 public immutable ERC20; // bankroll liquidity token
-    bool public isPublic = true; // if false, only whitelisted investors can deposit
+    bool public isPublic = true; // if false, only whitelisted lps can deposit
 
     // events
-    event FundsDeposited(address investor, uint256 amount);
-    event FundsWithdrawn(address investor, uint256 amount);
+    event FundsDeposited(address lp, uint256 amount);
+    event FundsWithdrawn(address lp, uint256 amount);
     event Debit(address manager, address player, uint256 amount);
     event Credit(address manager, uint256 amount);
     event ProfitClaimed(address manager, uint256 amount);
@@ -45,7 +45,7 @@ contract Bankroll {
 
     function depositFunds(uint256 _amount) external {
         // check if the user is allowed to deposit if the bankroll is not public
-        if (!isPublic && !investorWhitelist[msg.sender]) revert FORBIDDEN();
+        if (!isPublic && !lpWhitelist[msg.sender]) revert FORBIDDEN();
 
         uint256 shares;
         if (totalSupply == 0) {
@@ -73,9 +73,9 @@ contract Bankroll {
         // Remove the initial deposit from total deposit
         totalDeposit -= depositOf[msg.sender];
 
-        int256 investorProfit = getInvestorProfit(msg.sender);
+        int256 lpProfit = getLpProfit(msg.sender);
 
-        lpsProfit -= investorProfit;
+        lpsProfit -= lpProfit;
 
         // Zero investment tracking
         depositOf[msg.sender] = 0;
@@ -137,12 +137,9 @@ contract Bankroll {
         emit ProfitClaimed(msg.sender, uint256(_profit));
     }
 
-    function setInvestorWhitelist(
-        address _investor,
-        bool _isAuthorized
-    ) external {
+    function setInvestorWhitelist(address _lp, bool _isAuthorized) external {
         if (msg.sender != admin) revert FORBIDDEN();
-        investorWhitelist[_investor] = _isAuthorized;
+        lpWhitelist[_lp] = _isAuthorized;
     }
 
     function setAdmin(address _admin) external {
@@ -183,34 +180,29 @@ contract Bankroll {
     //         int(DENOMINATOR);
     // }
 
-    //TODO: rename getInvestment
-    function getLpValue(
-        address _investor
-    ) external view returns (int256 _amount) {
-        int256 _deposited = int(depositOf[_investor]);
-        int256 _profit = getInvestorProfit(_investor);
+    function getLpValue(address _lp) external view returns (int256 _amount) {
+        int256 _deposited = int(depositOf[_lp]);
+        int256 _profit = getLpProfit(_lp);
         _amount = _deposited + _profit;
     }
 
-    function getInvestorProfit(address _investor) public view returns (int256) {
-        uint256 _shares = sharesOf[_investor];
+    function getLpProfit(address _lp) public view returns (int256) {
+        uint256 _shares = sharesOf[_lp];
         if (_shares == 0) return 0;
         return
-            ((int(liquidity()) * int(sharesOf[_investor])) / int(totalSupply)) -
-            int(depositOf[_investor]);
+            ((int(liquidity()) * int(sharesOf[_lp])) / int(totalSupply)) -
+            int(depositOf[_lp]);
     }
 
     // function getExpectedInvestorProfit(
-    //     address _investor
+    //     address _lp
     // ) public view returns (int256 _profit) {
-    //     _profit = ((expectedLiquidityProfit() * int(sharesOf[_investor])) /
+    //     _profit = ((expectedLiquidityProfit() * int(sharesOf[_lp])) /
     //         int(totalSupply));
     // }
 
-    function getInvestorStake(
-        address _investor
-    ) external view returns (uint256 _stake) {
-        uint256 _shares = sharesOf[_investor];
+    function getLpStake(address _lp) external view returns (uint256 _stake) {
+        uint256 _shares = sharesOf[_lp];
         _stake = _shares == 0 ? 0 : (_shares * DENOMINATOR) / totalSupply;
     }
 
@@ -242,10 +234,10 @@ contract Bankroll {
         // Calculate the amount of ERC20 worth of shares
         uint256 amount = (_shares * liquidity()) / totalSupply;
 
-        // uint256 investorProfit = amount - depositOf[_sender];
+        // uint256 lpProfit = amount - depositOf[_sender];
 
         // Remove only profit
-        //if (investorProfit > 0) lpsProfit -= investorProfit;
+        //if (lpProfit > 0) lpsProfit -= lpProfit;
 
         // Burn the shares from the caller
         _burn(msg.sender, _shares);
