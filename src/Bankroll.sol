@@ -4,6 +4,12 @@ pragma solidity ^0.8.13;
 /* Openzeppelin Interfaces */
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+/**
+ * @title Bankroll
+ * @author DeGaming Technical Team
+ * @notice Operator and Game Bankroll Contract
+ *
+ */
 contract Bankroll {
     uint16 public lpFee = 650; // @dev 6.5% bankroll lpFee of profit
     address public admin; // @dev admin address
@@ -39,10 +45,9 @@ contract Bankroll {
     //  \____/\____/_/ /_/____/\__/_/   \__,_/\___/\__/\____/_/
 
     /**
-     * @title Bankroll
-     * @author DeGaming Technical Team
-     * @notice Operator and Game Bankroll Contract
-     *
+     * @notice Bankroll constructor
+     * @param _admin Admin address
+     * @param _ERC20 Bankroll liquidity token address
      */
     constructor(address _admin, address _ERC20) {
         admin = _admin;
