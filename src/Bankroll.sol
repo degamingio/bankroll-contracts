@@ -80,7 +80,7 @@ contract Bankroll {
         // Zero investment tracking
         depositOf[msg.sender] = 0;
 
-        _withdraw(sharesOf[msg.sender], msg.sender);
+        _withdraw(sharesOf[msg.sender]);
     }
 
     function debit(address _player, uint256 _amount) external {
@@ -184,7 +184,7 @@ contract Bankroll {
     // }
 
     //TODO: rename getInvestment
-    function getInvestorValue(
+    function getLpValue(
         address _investor
     ) external view returns (int256 _amount) {
         int256 _deposited = int(depositOf[_investor]);
@@ -236,7 +236,7 @@ contract Bankroll {
         sharesOf[_from] -= _shares;
     }
 
-    function _withdraw(uint256 _shares, address _sender) internal {
+    function _withdraw(uint256 _shares) internal {
         // uint256 liq = uint(expectedLiquidityProfit()) + totalDeposit;
 
         // Calculate the amount of ERC20 worth of shares

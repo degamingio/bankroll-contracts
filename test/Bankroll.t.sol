@@ -105,42 +105,43 @@ contract BankrollTest is Test {
         assertEq(bankroll.getInvestorProfit(address(investorOne)), 0);
         assertEq(bankroll.getInvestorProfit(address(investorTwo)), 0);
 
-        vm.startPrank(investorTwo);
+        vm.startPrank(investorOne);
         bankroll.withdrawAll();
         vm.stopPrank();
 
         // funds have been deposited
-        // assertEq(bankroll.liquidity(), 1_000_000);
-        // assertEq(token.balanceOf(address(investorOne)), 1_000_000);
-        // assertEq(token.balanceOf(address(investorTwo)), 0);
+        assertEq(bankroll.liquidity(), 1_000_000);
+        assertEq(token.balanceOf(address(investorOne)), 1_000_000);
+        assertEq(token.balanceOf(address(investorTwo)), 0);
     }
 
-    // function test_debit() public {
-    //     vm.startPrank(investorOne);
-    //     token.approve(address(bankroll), 1_000_000);
-    //     bankroll.depositFunds(1_000_000);
-    //     vm.stopPrank();
+    function test_debit() public {
+        vm.startPrank(investorOne);
+        token.approve(address(bankroll), 1_000_000);
+        bankroll.depositFunds(1_000_000);
+        vm.stopPrank();
 
-    //     assertEq(token.balanceOf(address(bankroll)), 1_000_000);
-    //     assertEq(bankroll.liquidity(), 1_000_000);
+        // bankroll has 1_000_000
+        assertEq(token.balanceOf(address(bankroll)), 1_000_000);
+        assertEq(bankroll.liquidity(), 1_000_000);
 
-    //     vm.prank(manager);
-    //     bankroll.debit(player, 500_000);
+        // investorOne has 1_000_000 shares
+        assertEq(token.balanceOf(address(investorOne)), 0);
+        assertEq(bankroll.sharesOf(address(investorOne)), 1_000_000);
 
-    //     // assertEq(bankroll.liquidity(), 500_000);
-    //     assertEq(token.balanceOf(address(player)), 500_000);
+        // pay player 500_000
+        vm.prank(manager);
+        bankroll.debit(player, 500_000);
 
-    //     console.log(token.balanceOf(address(player)));
-    //     console.log(token.balanceOf(address(bankroll)));
-    //     console.log(token.balanceOf(address(investorOne)));
-    //     emit log_int(bankroll.expectedLiquidityProfit());
+        // bankroll now has 500_000
+        assertEq(bankroll.liquidity(), 500_000);
 
-    //     assertEq(token.balanceOf(address(investorOne)), 0);
+        // player now has 500_000
+        assertEq(token.balanceOf(address(player)), 500_000);
 
-    //     assertEq(bankroll.sharesOf(address(investorOne)), 1_000_000);
-
-    //     //assertEq(bankroll.getInvestorValue(address(investorOne)), 500_000);
-    // }
+        // investorOne now has shares worth only 500_000
+        assertEq(bankroll.getLpValue(address(investorOne)), 500_000);
+    }
 
     // // function test_debitInsufficientFunds() public {
     // // vm.startPrank(investorOne);
