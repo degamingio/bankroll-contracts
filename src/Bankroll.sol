@@ -192,10 +192,10 @@ contract Bankroll {
         _amount = _deposited + _profit;
     }
 
-    function getInvestorProfit(
-        address _investor
-    ) public view returns (int256 _profit) {
-        _profit =
+    function getInvestorProfit(address _investor) public view returns (int256) {
+        uint256 _shares = sharesOf[_investor];
+        if (_shares == 0) return 0;
+        return
             ((int(liquidity()) * int(sharesOf[_investor])) / int(totalSupply)) -
             int(depositOf[_investor]);
     }
