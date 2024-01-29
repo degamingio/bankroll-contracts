@@ -10,6 +10,12 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @notice Operator and Game Bankroll Contract
  *
  */
+ // ISSUE(hjort): You're making life a bit hard here by keeping track of profits and deposits separately for LPs.
+ //           You could just keep track of the total value of the LPs' shares, and then calculate the profit.
+ //           This would also make it easier to add and remove LPs.
+ //           I think the design of managers profits (can be negative, for example) is basically fine.
+ //           Though it might make more sense to have a hard limit on them only being able to be positive.
+ //           With this design a manager can borrow as much as they want from the bankroll and never pay it back.
 contract Bankroll {
     uint16 public lpFee = 650; // @dev 6.5% bankroll lpFee of profit
     address public admin; // @dev admin address
@@ -257,6 +263,8 @@ contract Bankroll {
      * will not include funds that are reserved for managers profit
      */
     function liquidity() public view returns (uint256 _balance) {
+        // ISSUE(hjort): This is a convoluted implementation. Why not just return ERC20.balanceOf(address(this)) - managersProfit?
+        //               Can manager's profit be negative?
         uint256 _reservedProfit = managersProfit > 0 ? uint(managersProfit) : 0;
         _balance = ERC20.balanceOf(address(this)) - _reservedProfit;
     }
@@ -266,6 +274,8 @@ contract Bankroll {
      * @param _lp Liquidity Provider address
      */
     function getLpValue(address _lp) external view returns (int256 _amount) {
+        // ISSUE(hjort): This will just return the value of your shares, only with extra steps.
+        //       Can simply be: liquidity() * sharesOf[_lp] / totalSupply
         int256 _deposited = int(depositOf[_lp]);
         int256 _profit = getLpProfit(_lp);
         _amount = _deposited + _profit;
@@ -289,6 +299,7 @@ contract Bankroll {
      */
     function getLpStake(address _lp) external view returns (uint256 _stake) {
         uint256 _shares = sharesOf[_lp];
+        // ISSUE(hjort): No need for the tertinary operator here. If _shares == 0, the result will be 0 anyway.
         _stake = _shares == 0 ? 0 : (_shares * DENOMINATOR) / totalSupply;
     }
 
