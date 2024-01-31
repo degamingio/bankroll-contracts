@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
 import {Bankroll} from "src/Bankroll.sol";
-import {MockToken} from "test/mock/MockToken.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract DeployBankroll is Script {
     function run() public {
@@ -26,7 +26,7 @@ contract DeployBankroll is Script {
 
         // Set bankroll max allowance
         vm.startBroadcast(managerPrivateKey);
-        MockToken(token).approve(
+        IERC20(token).approve(
             address(bankroll),
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         ); //max int value
