@@ -5,7 +5,7 @@ pragma solidity ^0.8.13;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
- * @title Bankroll
+ * @title Bankroll V1
  * @author DeGaming Technical Team
  * @notice Operator and Game Bankroll Contract
  *
@@ -270,7 +270,7 @@ contract Bankroll {
      */
     function getLpValue(address _lp) external view returns (uint256 _amount) {
         if (sharesOf[_lp] > 0) {
-            _amount = liquidity() * sharesOf[_lp] / totalSupply;
+            _amount = (liquidity() * sharesOf[_lp]) / totalSupply;
         } else {
             _amount = 0;
         }
@@ -282,8 +282,9 @@ contract Bankroll {
      */
     function getLpProfit(address _lp) public view returns (int256 _profit) {
         if (sharesOf[_lp] > 0) {
-            _profit = ((int(liquidity()) * int(sharesOf[_lp])) / int(totalSupply)) -
-            int(depositOf[_lp]);
+            _profit =
+                ((int(liquidity()) * int(sharesOf[_lp])) / int(totalSupply)) -
+                int(depositOf[_lp]);
         } else {
             _profit = 0;
         }
