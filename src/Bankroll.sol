@@ -120,9 +120,9 @@ contract Bankroll {
         if (!managers[msg.sender]) revert FORBIDDEN();
 
         // pay what is left if amount is bigger than bankroll balance
-        uint256 _balance = liquidity();
-        if (_amount > _balance) {
-            _amount = _balance;
+        uint256 balance = liquidity();
+        if (_amount > balance) {
+            _amount = balance;
             emit BankrollSwept(_player, _amount);
         }
 
@@ -168,30 +168,30 @@ contract Bankroll {
         if (!managers[msg.sender]) revert FORBIDDEN();
 
         // get manager profit
-        int256 _profit = profitOf[msg.sender];
+        int256 profit = profitOf[msg.sender];
 
         // check if there is profit to claim
-        if (_profit < 1) revert NO_PROFIT();
+        if (profit < 1) revert NO_PROFIT();
 
         // calculate LP profit
-        uint256 _lpsProfit = (uint(_profit) * lpFee) / DENOMINATOR;
+        uint256 lpsProfitCurrent = (uint(profit) * lpFee) / DENOMINATOR;
 
         // add to total LP profit
-        lpsProfit += int(_lpsProfit);
+        lpsProfit += int(lpsProfitCurrent);
 
         // substract from total managers profit
-        managersProfit -= _profit;
+        managersProfit -= profit;
 
         // substract from managers profit
-        _profit -= int(_lpsProfit);
+        profit -= int(lpsProfitCurrent);
 
         // zero manager profit
         profitOf[msg.sender] = 0;
 
         // transfer ERC20 from the vault to the manager
-        ERC20.transfer(msg.sender, uint256(_profit));
+        ERC20.transfer(msg.sender, uint256(profit));
 
-        emit ProfitClaimed(msg.sender, uint256(_profit));
+        emit ProfitClaimed(msg.sender, uint256(profit));
     }
 
     /**
@@ -257,30 +257,36 @@ contract Bankroll {
      * will not include funds that are reserved for managers profit
      */
     function liquidity() public view returns (uint256 _balance) {
-        uint256 _reservedProfit = managersProfit > 0 ? uint(managersProfit) : 0;
-        _balance = ERC20.balanceOf(address(this)) - _reservedProfit;
+        if (managersProfit <= 0) {
+            _balance = ERC20.balanceOf(address(this));
+        } else if (managersProfit > 0) {
+            _balance = ERC20.balanceOf(address(this)) - uint(managersProfit);
+        }
     }
 
     /**
      * @notice Returns the current value of the LPs investment (deposit + profit).
      * @param _lp Liquidity Provider address
      */
-    function getLpValue(address _lp) external view returns (int256 _amount) {
-        int256 _deposited = int(depositOf[_lp]);
-        int256 _profit = getLpProfit(_lp);
-        _amount = _deposited + _profit;
+    function getLpValue(address _lp) external view returns (uint256 _amount) {
+        if (sharesOf[_lp] > 0) {
+            _amount = liquidity() * sharesOf[_lp] / totalSupply;
+        } else {
+            _amount = 0;
+        }
     }
 
     /**
      * @notice Returns the current profit of the LPs investment.
      * @param _lp Liquidity Provider address
      */
-    function getLpProfit(address _lp) public view returns (int256) {
-        uint256 _shares = sharesOf[_lp];
-        if (_shares == 0) return 0;
-        return
-            ((int(liquidity()) * int(sharesOf[_lp])) / int(totalSupply)) -
+    function getLpProfit(address _lp) public view returns (int256 _profit) {
+        if (sharesOf[_lp] > 0) {
+            _profit = ((int(liquidity()) * int(sharesOf[_lp])) / int(totalSupply)) -
             int(depositOf[_lp]);
+        } else {
+            _profit = 0;
+        }
     }
 
     /**
@@ -288,8 +294,11 @@ contract Bankroll {
      * @param _lp Liquidity Provider address
      */
     function getLpStake(address _lp) external view returns (uint256 _stake) {
-        uint256 _shares = sharesOf[_lp];
-        _stake = _shares == 0 ? 0 : (_shares * DENOMINATOR) / totalSupply;
+        if (sharesOf[_lp] > 0) {
+            _stake = (sharesOf[_lp] * DENOMINATOR) / totalSupply;
+        } else {
+            _stake = 0;
+        }
     }
 
     //      ____      __                        __   ______                 __  _
@@ -330,14 +339,14 @@ contract Bankroll {
      */
     function _withdraw(uint256 _shares) internal {
         // Calculate the amount of ERC20 worth of shares
-        uint256 _amount = (_shares * liquidity()) / totalSupply;
+        uint256 amount = (_shares * liquidity()) / totalSupply;
 
         // Burn the shares from the caller
         _burn(msg.sender, _shares);
 
         // Transfer ERC20 to the caller
-        ERC20.transfer(msg.sender, _amount);
+        ERC20.transfer(msg.sender, amount);
 
-        emit FundsWithdrawn(msg.sender, _amount);
+        emit FundsWithdrawn(msg.sender, amount);
     }
 }
