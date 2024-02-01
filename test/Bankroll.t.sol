@@ -4,6 +4,7 @@ pragma solidity ^0.8.18;
 import "forge-std/Test.sol";
 import "../src/Bankroll.sol";
 import "../test/mock/MockToken.sol";
+import {DGErrors} from "src/libraries/DGErrors.sol";
 
 contract BankrollTest is Test {
     address admin;
@@ -59,26 +60,26 @@ contract BankrollTest is Test {
     }
 
     function test_depositFundsWithInvestorWhitelist() public {
-        //vm.prank(admin);
-        //bankroll.setPublic(false);
+        vm.prank(admin);
+        bankroll.setPublic(false);
 
-        //// lp one deposits 1000_000
-        //vm.startPrank(lpOne);
-        //token.approve(address(bankroll), 1_000_000);
-        //vm.expectRevert(0xdaf9dbc0); //reverts: FORBIDDEN()
-        //bankroll.depositFunds(1_000_000);
-        //vm.stopPrank();
+        // lp one deposits 1000_000
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000);
+        vm.expectRevert(DGErrors.LP_IS_NOT_WHITELISTED.selector); //reverts: FORBIDDEN()
+        bankroll.depositFunds(1_000_000);
+        vm.stopPrank();
 
-        //vm.prank(admin);
-        //bankroll.setInvestorWhitelist(lpOne, true);
+        vm.prank(admin);
+        bankroll.setInvestorWhitelist(lpOne, true);
 
-        //vm.startPrank(lpOne);
-        //bankroll.depositFunds(1_000_000);
+        vm.startPrank(lpOne);
+        bankroll.depositFunds(1_000_000);
 
-        //assertEq(bankroll.depositOf(address(lpOne)), 1_000_000);
-        //assertEq(bankroll.sharesOf(address(lpOne)), 1_000_000);
+        assertEq(bankroll.depositOf(address(lpOne)), 1_000_000);
+        assertEq(bankroll.sharesOf(address(lpOne)), 1_000_000);
 
-        //vm.stopPrank();
+        vm.stopPrank();
     }
 
     function test_withdrawAll() public {
