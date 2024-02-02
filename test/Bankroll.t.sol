@@ -22,8 +22,9 @@ contract BankrollTest is Test {
         lpOne = address(0x3);
         lpTwo = address(0x4);
         player = address(0x5);
+        uint256 maxRisk = 10_000;
         token = new MockToken("token", "MTK");
-        bankroll = new Bankroll(admin, address(token));
+        bankroll = new Bankroll(admin, address(token), maxRisk);
 
         token.mint(lpOne, 1_000_000);
         token.mint(lpTwo, 1_000_000);

@@ -325,7 +325,7 @@ contract Bankroll {
         }
     }
 
-    function getMaxRisk() external view returns (uint256 _maxRisk) {
+    function getMaxRisk() public view returns (uint256 _maxRisk) {
         uint256 currentLiquidity = liquidity();
         _maxRisk = (currentLiquidity * maxRiskPercentage) / DENOMINATOR;
     }
