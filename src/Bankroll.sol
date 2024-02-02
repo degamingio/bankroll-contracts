@@ -15,21 +15,50 @@ import {DGEvents} from "src/libraries/DGEvents.sol";
  *
  */
 contract Bankroll {
-    uint16 public lpFee = 650; // @dev 6.5% bankroll lpFee of profit
-    address public admin; // @dev admin address
-    uint256 public totalSupply; // @dev total amount of shares
-    int256 public managersProfit; // @dev the current aggregated profit of the bankroll balance allocated for managers
-    int256 public lpsProfit; //  @dev the current aggregated profit of the bankroll balance allocated for lps
-    uint256 public totalDeposit; // @dev total amount of ERC20 deposited by LPs
-    uint256 public constant DENOMINATOR = 10_000; // @dev used to calculate percentages
-    uint256 public maxRiskPercentage; // @dev Max percentage of liquidity risked
-    mapping(address manager => int256 profit) public profitOf; // @dev profit per manager
-    mapping(address manager => bool authorized) public managers; // @dev managers that are allowed to operate this bankroll
-    mapping(address lp => uint256 shares) public sharesOf; // @dev amount of shares per lp
-    mapping(address lp => uint256 deposit) public depositOf; // @dev amount of ERC20 deposited per lp
-    mapping(address lp => bool authorized) public lpWhitelist; // @dev allowed LP addresses
-    IERC20 public immutable ERC20; // @dev bankroll liquidity token
-    bool public isPublic = true; // @dev if false, only whitelisted lps can deposit
+    /// @dev 6.5% bankroll lpFee of profit
+    uint16 public lpFee = 650;
+    
+    /// @dev admin address
+    address public admin; 
+    
+    /// @dev total amount of shares
+    uint256 public totalSupply; 
+    
+    /// @dev the current aggregated profit of the bankroll balance allocated for managers
+    int256 public managersProfit; 
+    
+    ///  @dev the current aggregated profit of the bankroll balance allocated for lps
+    int256 public lpsProfit;
+    
+    /// @dev total amount of ERC20 deposited by LPs
+    uint256 public totalDeposit; 
+    
+    /// @dev used to calculate percentages
+    uint256 public constant DENOMINATOR = 10_000; 
+    
+    /// @dev Max percentage of liquidity risked
+    uint256 public maxRiskPercentage; 
+    
+    /// @dev profit per manager
+    mapping(address manager => int256 profit) public profitOf; 
+    
+    /// @dev managers that are allowed to operate this bankroll
+    mapping(address manager => bool authorized) public managers; 
+    
+    /// @dev amount of shares per lp
+    mapping(address lp => uint256 shares) public sharesOf; 
+    
+    /// @dev amount of ERC20 deposited per lp
+    mapping(address lp => uint256 deposit) public depositOf; 
+    
+    /// @dev allowed LP addresses
+    mapping(address lp => bool authorized) public lpWhitelist; 
+    
+    /// @dev bankroll liquidity token
+    IERC20 public immutable ERC20; 
+    
+    /// @dev if false, only whitelisted lps can deposit
+    bool public isPublic = true; 
 
     //     ______                 __                  __
     //    / ____/___  ____  _____/ /________  _______/ /_____  _____
@@ -114,7 +143,6 @@ contract Bankroll {
         if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
 
         // pay what is left if amount is bigger than bankroll balance
-        //uint256 balance = liquidity();
         uint256 maxRisk = getMaxRisk();
         if (_amount > maxRisk) {
             _amount = maxRisk;
