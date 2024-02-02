@@ -11,6 +11,7 @@ contract DeployBankroll is Script {
         uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
         uint256 adminPrivateKey = vm.envUint("ADMIN_PRIVATE_KEY");
         uint256 managerPrivateKey = vm.envUint("MANAGER_PRIVATE_KEY");
+        uint256 percentageRisk = 10_000;
 
         // Addresses
         address admin = vm.addr(adminPrivateKey);
@@ -24,7 +25,7 @@ contract DeployBankroll is Script {
 
         // Deploy contract
         vm.startBroadcast(deployerPrivateKey);
-        Bankroll bankroll = new Bankroll(admin, token);
+        Bankroll bankroll = new Bankroll(admin, token, percentageRisk);
         vm.stopBroadcast();
 
         // Set manager
