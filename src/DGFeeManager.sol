@@ -9,6 +9,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
 import {DGEvents} from "src/libraries/DGEvents.sol";
+import {DGErrors} from "src/libraries/DGErrors.sol";
 
 contract DGFeeManager is Ownable {
     /// @dev basis points denominator used for percentage calculation
@@ -31,5 +32,24 @@ contract DGFeeManager is Ownable {
         bankrollStatus[_bankroll] = false;
 
         bankrollFees[_bankroll] = DGDataTypes.Fee(0, 0, 0, 0);
+
+        emit DGEvents.FeeUpdated(_bankroll, 0, 0, 0, 0);
+    }
+
+    function setBankrollFees(
+        address _bankroll,
+        uint64 deGamingFee,
+        uint64 bankRollFee,
+        uint64 gameProviderFee,
+        uint64 managerFee
+    ) external onlyOwner {
+        // Ensure that cumulative fees equal 100%
+        if (_deGamingFee + _gameDevFee + _operatorFee + _liquidityProviderFee != DENOMINATOR) {
+            revert DGErrors.INVALID_PARAMETER();
+        }
+
+        bankrollFees[_bankroll] = DGDataTypes.Fee(deGamingFee, bankRollFee, gameProviderFee, managerFee);
+
+        emit DGEvents.FeeUpdated(_bankroll, deGamingFee, bankRollFee, gameProviderFee, managerFee);
     }
 }

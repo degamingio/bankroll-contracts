@@ -12,6 +12,8 @@ library DGErrors {
     error LP_IS_NOT_WHITELISTED();
     
     error SENDER_IS_NOT_AN_ADMIN();
+
+    error INVALID_PARAMETER();
     
     error NO_PROFIT();
 }
