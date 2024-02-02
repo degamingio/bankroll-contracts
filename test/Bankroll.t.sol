@@ -4,6 +4,7 @@ pragma solidity ^0.8.18;
 import "forge-std/Test.sol";
 import "../src/Bankroll.sol";
 import "../test/mock/MockToken.sol";
+import {DGErrors} from "src/libraries/DGErrors.sol";
 
 contract BankrollTest is Test {
     address admin;
@@ -65,7 +66,7 @@ contract BankrollTest is Test {
         // lp one deposits 1000_000
         vm.startPrank(lpOne);
         token.approve(address(bankroll), 1_000_000);
-        vm.expectRevert(0xdaf9dbc0); //reverts: FORBIDDEN()
+        vm.expectRevert(DGErrors.LP_IS_NOT_WHITELISTED.selector); //reverts: FORBIDDEN()
         bankroll.depositFunds(1_000_000);
         vm.stopPrank();
 

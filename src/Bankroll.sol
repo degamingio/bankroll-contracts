@@ -4,6 +4,10 @@ pragma solidity ^0.8.13;
 /* Openzeppelin Interfaces */
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+
+import {DGErrors} from "src/libraries/DGErrors.sol";
+import {DGEvents} from "src/libraries/DGEvents.sol";
+
 /**
  * @title Bankroll V1
  * @author DeGaming Technical Team
@@ -25,18 +29,6 @@ contract Bankroll {
     mapping(address lp => bool authorized) public lpWhitelist; // @dev allowed LP addresses
     IERC20 public immutable ERC20; // @dev bankroll liquidity token
     bool public isPublic = true; // @dev if false, only whitelisted lps can deposit
-
-    // events
-    event FundsDeposited(address lp, uint256 amount);
-    event FundsWithdrawn(address lp, uint256 amount);
-    event Debit(address manager, address player, uint256 amount);
-    event Credit(address manager, uint256 amount);
-    event ProfitClaimed(address manager, uint256 amount);
-    event BankrollSwept(address player, uint256 amount);
-
-    // errors
-    error FORBIDDEN();
-    error NO_PROFIT();
 
     //     ______                 __                  __
     //    / ____/___  ____  _____/ /________  _______/ /_____  _____
@@ -67,7 +59,7 @@ contract Bankroll {
      */
     function depositFunds(uint256 _amount) external {
         // check if the user is allowed to deposit if the bankroll is not public
-        if (!isPublic && !lpWhitelist[msg.sender]) revert FORBIDDEN();
+        if (!isPublic && !lpWhitelist[msg.sender]) revert DGErrors.LP_IS_NOT_WHITELISTED();
 
         // calculate the amount of shares to mint
         uint256 shares;
@@ -89,7 +81,7 @@ contract Bankroll {
         // transfer ERC20 from the user to the vault
         ERC20.transferFrom(msg.sender, address(this), _amount);
 
-        emit FundsDeposited(msg.sender, _amount);
+        emit DGEvents.FundsDeposited(msg.sender, _amount);
     }
 
     /**
@@ -117,13 +109,13 @@ contract Bankroll {
      */
     function debit(address _player, uint256 _amount) external {
         // check if caller is an authorized manager
-        if (!managers[msg.sender]) revert FORBIDDEN();
+        if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
 
         // pay what is left if amount is bigger than bankroll balance
         uint256 balance = liquidity();
         if (_amount > balance) {
             _amount = balance;
-            emit BankrollSwept(_player, _amount);
+            emit DGEvents.BankrollSwept(_player, _amount);
         }
 
         // substract from total managers profit
@@ -135,7 +127,7 @@ contract Bankroll {
         // transfer ERC20 from the vault to the winner
         ERC20.transfer(_player, _amount);
 
-        emit Debit(msg.sender, _player, _amount);
+        emit DGEvents.Debit(msg.sender, _player, _amount);
     }
 
     /**
@@ -145,7 +137,7 @@ contract Bankroll {
      */
     function credit(uint256 _amount) external {
         // check if caller is an authorized manager
-        if (!managers[msg.sender]) revert FORBIDDEN();
+        if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
 
         // add to total managers profit
         managersProfit += int(_amount);
@@ -156,7 +148,7 @@ contract Bankroll {
         // transfer ERC20 from the manager to the vault
         ERC20.transferFrom(msg.sender, address(this), _amount);
 
-        emit Credit(msg.sender, _amount);
+        emit DGEvents.Credit(msg.sender, _amount);
     }
 
     /**
@@ -165,13 +157,13 @@ contract Bankroll {
      */
     function claimProfit() external {
         // check if caller is an authorized manager
-        if (!managers[msg.sender]) revert FORBIDDEN();
+        if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
 
         // get manager profit
         int256 profit = profitOf[msg.sender];
 
         // check if there is profit to claim
-        if (profit < 1) revert NO_PROFIT();
+        if (profit < 1) revert DGErrors.NO_PROFIT();
 
         // calculate LP profit
         uint256 lpsProfitCurrent = (uint(profit) * lpFee) / DENOMINATOR;
@@ -191,7 +183,7 @@ contract Bankroll {
         // transfer ERC20 from the vault to the manager
         ERC20.transfer(msg.sender, uint256(profit));
 
-        emit ProfitClaimed(msg.sender, uint256(profit));
+        emit DGEvents.ProfitClaimed(msg.sender, uint256(profit));
     }
 
     /**
@@ -201,7 +193,7 @@ contract Bankroll {
      * @param _isAuthorized If false, LP will not be able to deposit
      */
     function setInvestorWhitelist(address _lp, bool _isAuthorized) external {
-        if (msg.sender != admin) revert FORBIDDEN();
+        if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
         lpWhitelist[_lp] = _isAuthorized;
     }
 
@@ -211,7 +203,7 @@ contract Bankroll {
      * @param _admin Admin address
      */
     function setAdmin(address _admin) external {
-        if (msg.sender != admin) revert FORBIDDEN();
+        if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
         admin = _admin;
     }
 
@@ -222,7 +214,7 @@ contract Bankroll {
      * @param isAuthorized If false, manager will not be able to operate the bankroll
      */
     function setManager(address _manager, bool isAuthorized) external {
-        if (msg.sender != admin) revert FORBIDDEN();
+        if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
         managers[_manager] = isAuthorized;
     }
 
@@ -232,7 +224,7 @@ contract Bankroll {
      * @param _isPublic If false, only whitelisted lps can deposit
      */
     function setPublic(bool _isPublic) external {
-        if (msg.sender != admin) revert FORBIDDEN();
+        if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
         isPublic = _isPublic;
     }
 
@@ -242,7 +234,7 @@ contract Bankroll {
      * @param _lpFee Liquidity Provider fee
      */
     function setLpFee(uint16 _lpFee) external {
-        if (msg.sender != admin) revert FORBIDDEN();
+        if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
         lpFee = _lpFee;
     }
 
@@ -348,6 +340,6 @@ contract Bankroll {
         // Transfer ERC20 to the caller
         ERC20.transfer(msg.sender, amount);
 
-        emit FundsWithdrawn(msg.sender, amount);
+        emit DGEvents.FundsWithdrawn(msg.sender, amount);
     }
 }
