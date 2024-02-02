@@ -7,7 +7,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /* Openzeppelin Contracts */
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-
+import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
 
 contract DGFeeManager is Ownable {
     /// @dev basis points denominator used for percentage calculation
@@ -18,4 +18,7 @@ contract DGFeeManager is Ownable {
 
     mapping(address bankroll => bool isApproved) public bankrollStatus;
 
+    function approveBankroll(address _bankroll) external onlyOwner {
+        bankrollStatus[_bankroll] = true;
+    }
 }
