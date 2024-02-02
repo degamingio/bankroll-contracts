@@ -22,6 +22,7 @@ contract Bankroll {
     int256 public lpsProfit; //  @dev the current aggregated profit of the bankroll balance allocated for lps
     uint256 public totalDeposit; // @dev total amount of ERC20 deposited by LPs
     uint256 public constant DENOMINATOR = 10_000; // @dev used to calculate percentages
+    uint256 public maxRiskPercentage; // @dev Max percentage of liquidity risked
     mapping(address manager => int256 profit) public profitOf; // @dev profit per manager
     mapping(address manager => bool authorized) public managers; // @dev managers that are allowed to operate this bankroll
     mapping(address lp => uint256 shares) public sharesOf; // @dev amount of shares per lp
@@ -41,9 +42,10 @@ contract Bankroll {
      * @param _admin Admin address
      * @param _ERC20 Bankroll liquidity token address
      */
-    constructor(address _admin, address _ERC20) {
+    constructor(address _admin, address _ERC20, uint256 _maxRiskPercentage) {
         admin = _admin;
         ERC20 = IERC20(_ERC20);
+        maxRiskPercentage = _maxRiskPercentage;
     }
 
     //      ______     __                        __   ______                 __  _
@@ -112,9 +114,10 @@ contract Bankroll {
         if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
 
         // pay what is left if amount is bigger than bankroll balance
-        uint256 balance = liquidity();
-        if (_amount > balance) {
-            _amount = balance;
+        //uint256 balance = liquidity();
+        uint256 maxRisk = getMaxRisk();
+        if (_amount > maxRisk) {
+            _amount = maxRisk;
             emit DGEvents.BankrollSwept(_player, _amount);
         }
 
@@ -292,6 +295,11 @@ contract Bankroll {
         } else {
             _stake = 0;
         }
+    }
+
+    function getMaxRisk() external view returns (uint256 _maxRisk) {
+        uint256 currentLiquidity = liquidity();
+        _maxRisk = (currentLiquidity * maxRiskPercentage) / DENOMINATOR;
     }
 
     //      ____      __                        __   ______                 __  _
