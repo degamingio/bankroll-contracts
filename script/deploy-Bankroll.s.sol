@@ -7,13 +7,21 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract DeployBankroll is Script {
     function run() public {
+        // Private keys
         uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
         uint256 adminPrivateKey = vm.envUint("ADMIN_PRIVATE_KEY");
         uint256 managerPrivateKey = vm.envUint("MANAGER_PRIVATE_KEY");
         uint256 percentageRisk = 10_000;
+
+        // Addresses
+        address admin = vm.addr(adminPrivateKey);
+        address manager = vm.addr(managerPrivateKey);
         address token = vm.envAddress("TOKEN_ADDRESS");
-        address admin = vm.envAddress("ADMIN_ADDRESS");
-        address manager = vm.envAddress("MANAGER_ADDRESS");
+
+        console.log("deployer: ", vm.addr(deployerPrivateKey));
+        console.log("admin:    ", admin);
+        console.log("manager:  ", manager);
+        console.log("token:    ", token);
 
         // Deploy contract
         vm.startBroadcast(deployerPrivateKey);
