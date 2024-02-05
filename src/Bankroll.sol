@@ -287,6 +287,10 @@ contract Bankroll {
         }
     }
 
+    function liquidityForManager() public view returns(uint256 _balance) {
+        _balance = ERC20.balanceOf(address(this)) - liquidity();
+    }
+
     /**
      * @notice Returns the current value of the LPs investment (deposit + profit).
      * @param _lp Liquidity Provider address
@@ -326,7 +330,7 @@ contract Bankroll {
     }
 
     function getMaxRisk() public view returns (uint256 _maxRisk) {
-        uint256 currentLiquidity = liquidity();
+        uint256 currentLiquidity = liquidityForManager();
         _maxRisk = (currentLiquidity * maxRiskPercentage) / DENOMINATOR;
     }
 
