@@ -287,10 +287,6 @@ contract Bankroll {
         }
     }
 
-    function liquidityForManager() public view returns(uint256 _balance) {
-        _balance = ERC20.balanceOf(address(this)) - liquidity();
-    }
-
     /**
      * @notice Returns the current value of the LPs investment (deposit + profit).
      * @param _lp Liquidity Provider address
@@ -329,8 +325,12 @@ contract Bankroll {
         }
     }
 
+    /**
+     * @notice returns the maximum amount that can be taken from the bankroll during debit() call
+     * @param _maxRisk the maximum amount that can be risked
+     */
     function getMaxRisk() public view returns (uint256 _maxRisk) {
-        uint256 currentLiquidity = liquidityForManager();
+        uint256 currentLiquidity = ERC20.balanceOf(address(this));
         _maxRisk = (currentLiquidity * maxRiskPercentage) / DENOMINATOR;
     }
 

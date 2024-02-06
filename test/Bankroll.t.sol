@@ -147,8 +147,8 @@ contract BankrollTest is Test {
 
     function test_debitInsufficientFunds() public {
         vm.startPrank(lpOne);
-        token.approve(address(bankroll), 1000_000);
-        bankroll.depositFunds(1000_000);
+        token.approve(address(bankroll), 1_000_000);
+        bankroll.depositFunds(1_000_000);
         vm.stopPrank();
 
         assertEq(bankroll.liquidity(), 1000_000);
@@ -234,6 +234,10 @@ contract BankrollTest is Test {
         vm.prank(manager);
         vm.expectRevert(0xb5b9a8e6); //reverts: NO_PROFIT()
         bankroll.claimProfit();
+
+        // console.log(bankroll.getLpStake(address(lpOne)));
+        // emit log_int(bankroll.getLpProfit(address(lpOne)));
+        // console.log(bankroll.getLpValue(address(lpOne)));
 
         // lpOne investment should have decreased
         assertEq(bankroll.getLpStake(address(lpOne)), 10_000);
