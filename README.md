@@ -1,16 +1,12 @@
 # Bankroll Contracts
 
-## Foundry Installation
-
-```sh
-curl -L https://foundry.paradigm.xyz | bash
-```
-
-```sh
-foundryup
-```
-
-see [docs](https://book.getfoundry.sh/getting-started/first-steps)
+## Deployments
+| Operator | Environment | Token | Arbitrum Sepolia | XDC Apothem                                                                                                                                   | XDC Mainnet |
+|----------|-------------|-------|------------------|-------------                                                                        |-------------| 
+| Cap Demo | Development | mUSD  |                  | https://explorer.apothem.network/address/0x442cD67533Efc9519722a4401d0e4d6EBa2A6bf1 |             |
+| Cap Demo | Development | mUSDT |                  | https://explorer.apothem.network/address/0xD665D66070f6B7dA3659548521C049967ba7bafD |             |
+| Cap Demo | Staging     | mUSD  |                  |                                                                                     |             |
+| Cap Demo | Staging     | mUSDT |                  |                                                                                     |             | 
 
 ## Compile Project
 
