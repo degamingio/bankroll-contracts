@@ -29,6 +29,7 @@
 | Casino0x   | Development | mUSDT |                  | https://explorer.apothem.network/address/0xeafd5b5c8d56ca3b898ebe48bc976283f0909f37 |             |
 | Casino0x   | Staging     | mUSD  |                  | https://explorer.apothem.network/address/0x544aa2ed39773ba470dba4b0884a5222d220b3a7 |             |
 | Casino0x   | Staging     | mUSDT |                  | https://explorer.apothem.network/address/0x05fb034b05d42abd5deeead5c528e42cf465629a |             |
+| Casino0x   | Production  | USDT  |                  |                                                                                     |             | 
 
 ## Compile Project
 
