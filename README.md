@@ -16,7 +16,19 @@
 | KOC        | Development | mUSDT |                  | https://explorer.apothem.network/address/0x4F3DF10e5e800A1990ED38fB814202a10611E4Af |             |
 | KOC        | Staging     | mUSD  |                  | https://explorer.apothem.network/address/0x5f0D8A3e8e5990CFb23795645e6849b83fc60726 |             | 
 | KOC        | Staging     | mUSDT |                  | https://explorer.apothem.network/address/0xda2614e4a44c06f21533d848c5c9445f42641ab2 |             | 
-| KOC        | Prod        | USDT  |                  |                                                                                     |             |    
+| KOC        | Prod        | USDT  |                  |                                                                                     |             |
+| Zizi       | Staging     | mUSD  |                  | https://explorer.apothem.network/address/0xbeed2a87dd796991cadea33e1df17ee7c37e9da9 |             |
+| Zizi       | staging     | mUSDT |                  | https://explorer.apothem.network/address/0x51d77cb2d8a76350d3bb01d01d3e2bdfe9df42cc |             |
+| Zizi       | Production  | USDT  |                  |                                                                                     |             |
+| Raja       | Development | mUSD  |                  | https://explorer.apothem.network/address/0x06b93c503ec39cd45c8664190c6d2663365bf45c |             |
+| Raja       | Development | mUSDT |                  | https://explorer.apothem.network/address/0xc99e61443689742a36fbeaa6da5e1ec06ee93a52 |             | 
+| Raja       | Staging     | mUSD  |                  | https://explorer.apothem.network/address/0xf0fe256f315ffcbd713c6904e33311e1d528af99 |             | 
+| Raja       | Staging     | mUSDT |                  | https://explorer.apothem.network/address/0x720624c87292b7a4792e6237682aa699199caff8 |             | 
+| Raja       | Prod        | USDT  |                  |                                                                                     |             |
+| Casino0x   | Development | mUSD  |                  | https://explorer.apothem.network/address/0x038aB83c4E3C7BBFeEbaEfD27E8974785FC8FCF7 |             |
+| Casino0x   | Development | mUSDT |                  | https://explorer.apothem.network/address/0xeafd5b5c8d56ca3b898ebe48bc976283f0909f37 |             |
+| Casino0x   | Staging     | mUSD  |                  | https://explorer.apothem.network/address/0x544aa2ed39773ba470dba4b0884a5222d220b3a7 |             |
+| Casino0x   | Staging     | mUSDT |                  | https://explorer.apothem.network/address/0x05fb034b05d42abd5deeead5c528e42cf465629a |             |
 
 ## Compile Project
 
