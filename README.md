@@ -25,11 +25,11 @@
 | Raja       | Staging     | mUSD  |                  | https://explorer.apothem.network/address/0xf0fe256f315ffcbd713c6904e33311e1d528af99 |             | 
 | Raja       | Staging     | mUSDT |                  | https://explorer.apothem.network/address/0x720624c87292b7a4792e6237682aa699199caff8 |             | 
 | Raja       | Prod        | USDT  |                  |                                                                                     | https://xdcscan.io/address/xdcf60f191da9455756648db724976d9011219dfd11 |
-| Casino0x   | Development | mUSD  |                  | https://explorer.apothem.network/address/0x038aB83c4E3C7BBFeEbaEfD27E8974785FC8FCF7 |             |
-| Casino0x   | Development | mUSDT |                  | https://explorer.apothem.network/address/0xeafd5b5c8d56ca3b898ebe48bc976283f0909f37 |             |
-| Casino0x   | Staging     | mUSD  |                  | https://explorer.apothem.network/address/0x544aa2ed39773ba470dba4b0884a5222d220b3a7 |             |
-| Casino0x   | Staging     | mUSDT |                  | https://explorer.apothem.network/address/0x05fb034b05d42abd5deeead5c528e42cf465629a |             |
-| Casino0x   | Production  | USDT  |                  |                                                                                     | https://xdcscan.io/address/xdcb6e7daef92c0ba5420ea2c394f9f654f259ec6c4 | 
+| Casin0x   | Development | mUSD  |                  | https://explorer.apothem.network/address/0x038aB83c4E3C7BBFeEbaEfD27E8974785FC8FCF7 |             |
+| Casin0x   | Development | mUSDT |                  | https://explorer.apothem.network/address/0xeafd5b5c8d56ca3b898ebe48bc976283f0909f37 |             |
+| Casin0x   | Staging     | mUSD  |                  | https://explorer.apothem.network/address/0x544aa2ed39773ba470dba4b0884a5222d220b3a7 |             |
+| Casin0x   | Staging     | mUSDT |                  | https://explorer.apothem.network/address/0x05fb034b05d42abd5deeead5c528e42cf465629a |             |
+| Casin0x   | Production  | USDT  |                  |                                                                                     | https://xdcscan.io/address/xdcb6e7daef92c0ba5420ea2c394f9f654f259ec6c4 | 
 
 ## Compile Project
 
