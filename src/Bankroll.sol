@@ -25,7 +25,7 @@ contract Bankroll {
     uint256 public totalSupply; 
     
     /// @dev the current aggregated profit of the bankroll balance allocated for managers
-    int256 public managersProfit; 
+    int256 public GGR; 
     
     ///  @dev the current aggregated profit of the bankroll balance allocated for lps
     int256 public lpsProfit;
@@ -150,7 +150,8 @@ contract Bankroll {
         }
 
         // substract from total managers profit
-        managersProfit -= int(_amount);
+        // managersProfit -= int(_amount);
+        GGR -= int(_amount);
 
         // substract from managers profit
         profitOf[msg.sender] -= int(_amount);
@@ -171,7 +172,8 @@ contract Bankroll {
         if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
 
         // add to total managers profit
-        managersProfit += int(_amount);
+        // managersProfit += int(_amount);
+        GGR += int(_amount);
 
         // add to managers profit
         profitOf[msg.sender] += int(_amount);
@@ -186,36 +188,36 @@ contract Bankroll {
      * @notice Claim profit from the bankroll
      * Called by an authorized manager
      */
-    function claimProfit() external {
-        // check if caller is an authorized manager
-        if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
+    // function claimProfit() external {
+        // // check if caller is an authorized manager
+        // if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
 
-        // get manager profit
-        int256 profit = profitOf[msg.sender];
+        // // get manager profit
+        // int256 profit = profitOf[msg.sender];
 
-        // check if there is profit to claim
-        if (profit < 1) revert DGErrors.NO_PROFIT();
+        // // check if there is profit to claim
+        // if (profit < 1) revert DGErrors.NO_PROFIT();
 
-        // calculate LP profit
-        uint256 lpsProfitCurrent = (uint(profit) * lpFee) / DENOMINATOR;
+        // // calculate LP profit
+        // uint256 lpsProfitCurrent = (uint(profit) * lpFee) / DENOMINATOR;
 
-        // add to total LP profit
-        lpsProfit += int(lpsProfitCurrent);
+        // // add to total LP profit
+        // lpsProfit += int(lpsProfitCurrent);
 
-        // substract from total managers profit
-        managersProfit -= profit;
+        // // substract from total managers profit
+        // managersProfit -= profit;
 
-        // substract from managers profit
-        profit -= int(lpsProfitCurrent);
+        // // substract from managers profit
+        // profit -= int(lpsProfitCurrent);
 
-        // zero manager profit
-        profitOf[msg.sender] = 0;
+        // // zero manager profit
+        // profitOf[msg.sender] = 0;
 
-        // transfer ERC20 from the vault to the manager
-        ERC20.transfer(msg.sender, uint256(profit));
+        // // transfer ERC20 from the vault to the manager
+        // ERC20.transfer(msg.sender, uint256(profit));
 
-        emit DGEvents.ProfitClaimed(msg.sender, uint256(profit));
-    }
+        // emit DGEvents.ProfitClaimed(msg.sender, uint256(profit));
+    // }
 
     /**
      * @notice Remove or add authorized liquidity provider to the bankroll
@@ -280,10 +282,10 @@ contract Bankroll {
      * will not include funds that are reserved for managers profit
      */
     function liquidity() public view returns (uint256 _balance) {
-        if (managersProfit <= 0) {
+        if (GGR <= 0) {
             _balance = ERC20.balanceOf(address(this));
-        } else if (managersProfit > 0) {
-            _balance = ERC20.balanceOf(address(this)) - uint(managersProfit);
+        } else if (GGR > 0) {
+            _balance = ERC20.balanceOf(address(this)) - uint(GGR);
         }
     }
 

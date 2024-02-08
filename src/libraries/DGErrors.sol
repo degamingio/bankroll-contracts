@@ -16,4 +16,10 @@ library DGErrors {
     error INVALID_PARAMETER();
     
     error NO_PROFIT();
+
+    error EVENT_PERIOD_NOT_PASSED();
+
+    error BANKROLL_NOT_APPROVED();
+
+    error NOTHING_TO_CLAIM();
 }

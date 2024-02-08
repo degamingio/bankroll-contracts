@@ -116,4 +116,6 @@ interface IBankroll {
     function getLpStake(address _lp) external view returns (uint256 _stake);
 
     function getMaxRisk() external view returns (uint256 _maxRisk);
+
+    function GGR() external view returns(int256);
 }
