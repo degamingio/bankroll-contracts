@@ -86,6 +86,9 @@ contract DGFeeManager is Ownable {
         uint256 feeToGameProvider = uint256(GGR) * feeInfo.gameProvider / DENOMINATOR; 
         uint256 feeToManager = uint256(GGR) * feeInfo.manager / DENOMINATOR;
 
-
+        token.transferFrom(_bankroll, to, feeToDeGaming);
+        token.transferFrom(_bankroll, to, feeToBankRoll);
+        token.transferFrom(_bankroll, to, feeToGameProvider);
+        token.transferFrom(_bankroll, to, feeTofeeToManager);
     }
 }
