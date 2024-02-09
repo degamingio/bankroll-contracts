@@ -78,12 +78,7 @@ interface IBankroll {
      */
     function setPublic(bool _isPublic) external;
 
-    /**
-     * @notice Set Liquidity Provider fee
-     * Called by admin
-     * @param _lpFee Liquidity Provider fee
-     */
-    function setLpFee(uint16 _lpFee) external;
+    function nullGGR() external;
 
     //   _    ___                 ______                 __  _
     //  | |  / (_)__ _      __   / ____/_  ______  _____/ /_(_)___  ____  _____

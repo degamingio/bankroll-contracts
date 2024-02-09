@@ -13,7 +13,7 @@ import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
 import {DGEvents} from "src/libraries/DGEvents.sol";
 import {DGErrors} from "src/libraries/DGErrors.sol";
 
-contract DGFeeManager is Ownable {
+contract DGBankrollManager is Ownable {
     /// @dev basis points denominator used for percentage calculation
     uint256 public constant DENOMINATOR = 10_000;
 
@@ -99,14 +99,20 @@ contract DGFeeManager is Ownable {
 
         DGDataTypes.StakeHolders memory addressOf = stakeHolderAddresses[_bankroll];
 
+        eventPeriodEnds[_bankroll] = block.timestamp + EVENT_PERIOD;
+
         uint256 feeToDeGaming = uint256(GGR) * feeInfo.deGaming / DENOMINATOR;
-        uint256 feeToBankRoll = uint256(GGR) * feeInfo.bankRoll / DENOMINATOR;
+        //uint256 feeToBankRoll = uint256(GGR) * feeInfo.bankRoll / DENOMINATOR;
         uint256 feeToGameProvider = uint256(GGR) * feeInfo.gameProvider / DENOMINATOR; 
         uint256 feeToManager = uint256(GGR) * feeInfo.manager / DENOMINATOR;
 
         token.transferFrom(_bankroll, addressOf.deGaming, feeToDeGaming);
-        token.transferFrom(_bankroll, _bankroll, feeToBankRoll);
         token.transferFrom(_bankroll, addressOf.gameProvider, feeToGameProvider);
         token.transferFrom(_bankroll, addressOf.manager, feeToManager);
+    
+        // Should add some way to make it clear that this is a part of lp
+        //token.transferFrom(_bankroll, _bankroll, feeToBankRoll);
+
+        IBankroll(_bankroll).nullGGR();
     }
 }
