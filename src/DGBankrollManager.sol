@@ -32,20 +32,68 @@ contract DGBankrollManager is Ownable {
     /// @dev Store time claimed + event period
     mapping(address claimer => uint256 timestamp) public eventPeriodEnds;
 
+    //     ______                 __                  __
+    //    / ____/___  ____  _____/ /________  _______/ /_____  _____
+    //   / /   / __ \/ __ \/ ___/ __/ ___/ / / / ___/ __/ __ \/ ___/
+    //  / /___/ /_/ / / / (__  ) /_/ /  / /_/ / /__/ /_/ /_/ / /
+    //  \____/\____/_/ /_/____/\__/_/   \__,_/\___/\__/\____/_/
+
+    /**
+     * @notice DGBankrollManager constructor
+     *   Just sets the deployer of this contract as the owner
+     */
     constructor() Ownable(msg.sender) {}
 
+    //     ______     __                        __   ______                 __  _
+    //    / ____/  __/ /____  _________  ____ _/ /  / ____/_  ______  _____/ /_(_)___  ____  _____
+    //   / __/ | |/_/ __/ _ \/ ___/ __ \/ __ `/ /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
+    //  / /____>  </ /_/  __/ /  / / / / /_/ / /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
+    // /_____/_/|_|\__/\___/_/  /_/ /_/\__,_/_/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
+
+    /**
+     * @notice
+     *  Approve a bankroll to use the DeGaming Bankroll Manager
+     *  Only the contract owner can execute this operation
+     *
+     * @param _bankroll bankroll contract address to be approved
+     *
+     */
     function approveBankroll(address _bankroll) external onlyOwner {
+        // Toggle bankroll status
         bankrollStatus[_bankroll] = true;
     }
 
+    /**
+     * @notice
+     *  Prevent a bankroll from using the DeGaming Bankroll Manager
+     *  Only the contract owner can execute this operation
+     *
+     * @param _bankroll bankroll contract address to be blocked
+     *
+     */
     function blockBankroll(address _bankroll) external onlyOwner {
+        // Toggle bankroll status
         bankrollStatus[_bankroll] = false;
 
+        // Set the remove bankroll fee information
         bankrollFees[_bankroll] = DGDataTypes.Fee(0, 0, 0, 0);
 
+        // Emit FeeUpdated event
         emit DGEvents.FeeUpdated(_bankroll, 0, 0, 0, 0);
     }
 
+    /**
+     * @notice
+     *  Allows a bankroll to set their fees
+     *  Only the contract owner can execute this operation
+     *
+     * @param _bankroll address of bankroll
+     * @param _deGamingFee fees in percentages to DeGaming
+     * @param _bankRollFee fees in percentages to the bankroll, i.e. the LPs
+     * @param _gameProviderFee fees in percentages to the game provider
+     * @param _managerFee fees in percentages to the manager
+     *
+     */
     function setBankrollFees(
         address _bankroll,
         uint64 _deGamingFee,
@@ -58,8 +106,10 @@ contract DGBankrollManager is Ownable {
             revert DGErrors.INVALID_PARAMETER();
         }
 
+        // Set the bankroll fee information
         bankrollFees[_bankroll] = DGDataTypes.Fee(_deGamingFee, _bankRollFee, _gameProviderFee, _managerFee);
 
+        // Emit FeeUpdated event
         emit DGEvents.FeeUpdated(_bankroll, _deGamingFee, _bankRollFee, _gameProviderFee, _managerFee);
     }
 
