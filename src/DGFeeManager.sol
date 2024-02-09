@@ -26,8 +26,13 @@ contract DGFeeManager is Ownable {
     /// @dev store the fee schema for a given bankroll
     mapping(address bankroll => DGDataTypes.Fee fee) public bankrollFees;
 
+    /// @dev store the bankroll addresses for the stakeholders
+    mapping(address bankroll => DGDataTypes.StakeHolders addresses) public stakeHolderAddresses;
+
     /// @dev Store time claimed + event period
     mapping(address claimer => uint256 timestamp) public eventPeriodEnds;
+
+    constructor() Ownable(msg.sender) {}
 
     function approveBankroll(address _bankroll) external onlyOwner {
         bankrollStatus[_bankroll] = true;
@@ -58,6 +63,17 @@ contract DGFeeManager is Ownable {
         emit DGEvents.FeeUpdated(_bankroll, _deGamingFee, _bankRollFee, _gameProviderFee, _managerFee);
     }
 
+    function setStakeholderAddresses(
+        address _degaming,
+        address _bankroll,
+        address _gameProvider,
+        address _manager
+    ) external onlyOwner {
+        stakeHolderAddresses[_bankroll] = DGDataTypes.StakeHolders(_degaming, _gameProvider, _manager);
+
+        emit DGEvents.StakeholdersUpdated(_degaming, _bankroll, _gameProvider, _manager);
+    }
+
     /**
      * @notice Claim profit from the bankroll
      * Called by an authorized manager
@@ -73,7 +89,7 @@ contract DGFeeManager is Ownable {
         if (!bankrollStatus[_bankroll]) revert DGErrors.BANKROLL_NOT_APPROVED();
 
         // Set up GGR for desired bankroll
-        int256 GGR = IBankroll(_bankroll);
+        int256 GGR = IBankroll(_bankroll).GGR();
 
         // Check if Casino GGR is posetive
         if (GGR < 1) revert DGErrors.NOTHING_TO_CLAIM();
@@ -81,14 +97,16 @@ contract DGFeeManager is Ownable {
         // Get Bankroll Fee information
         DGDataTypes.Fee memory feeInfo = bankrollFees[_bankroll];
 
+        DGDataTypes.StakeHolders memory addressOf = stakeHolderAddresses[_bankroll];
+
         uint256 feeToDeGaming = uint256(GGR) * feeInfo.deGaming / DENOMINATOR;
         uint256 feeToBankRoll = uint256(GGR) * feeInfo.bankRoll / DENOMINATOR;
         uint256 feeToGameProvider = uint256(GGR) * feeInfo.gameProvider / DENOMINATOR; 
         uint256 feeToManager = uint256(GGR) * feeInfo.manager / DENOMINATOR;
 
-        token.transferFrom(_bankroll, to, feeToDeGaming);
-        token.transferFrom(_bankroll, to, feeToBankRoll);
-        token.transferFrom(_bankroll, to, feeToGameProvider);
-        token.transferFrom(_bankroll, to, feeTofeeToManager);
+        token.transferFrom(_bankroll, addressOf.deGaming, feeToDeGaming);
+        token.transferFrom(_bankroll, _bankroll, feeToBankRoll);
+        token.transferFrom(_bankroll, addressOf.gameProvider, feeToGameProvider);
+        token.transferFrom(_bankroll, addressOf.manager, feeToManager);
     }
 }

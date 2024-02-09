@@ -24,4 +24,12 @@ library DGEvents {
         uint64 gameProviderFee, 
         uint64 managerFee
     );
+
+    /// @dev Event emitted when stakeholder addresses are updated
+    event StakeholdersUpdated(
+        address degaming,
+        address bankroll,
+        address gameProvider,
+        address manager
+    );
 }

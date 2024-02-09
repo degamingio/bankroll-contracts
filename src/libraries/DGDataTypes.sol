@@ -10,4 +10,15 @@ library DGDataTypes {
         uint64 manager;
     }
 
+    struct StakeHolders {
+        address deGaming;
+        address gameProvider;
+        address manager;
+    }
+    
+    enum BankrollType {
+        GAME_BANKROLL,
+        OPERATOR_BANKROLL
+    }
+
 }
