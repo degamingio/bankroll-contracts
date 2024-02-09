@@ -115,4 +115,23 @@ contract DGBankrollManager is Ownable {
 
         IBankroll(_bankroll).nullGGR();
     }
+
+    function claimableAmountByBankroll(address _bankroll) external view returns (
+        int256 _claimabledegaming,
+        int256 _claimablebankroll,
+        int256 _claimablegameProvider,
+        int256 _claimablemanager,
+        DGDataTypes.StakeHolders memory _stakeHolderAddresses
+    ) {
+        int256 GGR = IBankroll(_bankroll).GGR();
+
+        DGDataTypes.Fee memory feeInfo = bankrollFees[_bankroll];
+
+        _claimabledegaming = GGR * int64(feeInfo.deGaming) / int(DENOMINATOR);
+        _claimablebankroll = GGR * int64(feeInfo.bankRoll) / int(DENOMINATOR);
+        _claimablegameProvider = GGR * int64(feeInfo.gameProvider) / int(DENOMINATOR);
+        _claimablemanager = GGR * int64(feeInfo.manager) / int(DENOMINATOR);
+
+        _stakeHolderAddresses = stakeHolderAddresses[_bankroll];
+    }
 }
