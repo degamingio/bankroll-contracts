@@ -130,8 +130,10 @@ contract DGBankrollManager is Ownable {
         address _gameProvider,
         address _manager
     ) external onlyOwner {
+        // Set bankroll stakeholder addresses
         stakeHolderAddresses[_bankroll] = DGDataTypes.StakeHolders(_deGaming, _gameProvider, _manager);
 
+        // Emit event stakeholders  updated
         emit DGEvents.StakeholdersUpdated(_deGaming, _bankroll, _gameProvider, _manager);
     }
 
@@ -161,15 +163,19 @@ contract DGBankrollManager is Ownable {
         // Get Bankroll Fee information
         DGDataTypes.Fee memory feeInfo = bankrollFees[_bankroll];
 
+        // Get stakeholder addresses
         DGDataTypes.StakeHolders memory addressOf = stakeHolderAddresses[_bankroll];
 
+        // Update event period ends unix timestamp to one <EVENT_PERIOD> from now
         eventPeriodEnds[_bankroll] = block.timestamp + EVENT_PERIOD;
 
+        // Calculate fees based on the GGR
         uint256 feeToDeGaming = uint256(GGR) * feeInfo.deGaming / DENOMINATOR;
         //uint256 feeToBankRoll = uint256(GGR) * feeInfo.bankRoll / DENOMINATOR;
         uint256 feeToGameProvider = uint256(GGR) * feeInfo.gameProvider / DENOMINATOR; 
         uint256 feeToManager = uint256(GGR) * feeInfo.manager / DENOMINATOR;
 
+        // Transfer Fees
         token.transferFrom(_bankroll, addressOf.deGaming, feeToDeGaming);
         token.transferFrom(_bankroll, addressOf.gameProvider, feeToGameProvider);
         token.transferFrom(_bankroll, addressOf.manager, feeToManager);
@@ -177,6 +183,7 @@ contract DGBankrollManager is Ownable {
         // Should add some way to make it clear that this is a part of lp
         //token.transferFrom(_bankroll, _bankroll, feeToBankRoll);
 
+        // Zero out the GGR
         IBankroll(_bankroll).nullGGR();
     }
 
@@ -207,15 +214,19 @@ contract DGBankrollManager is Ownable {
         int256 _claimableManager,
         DGDataTypes.StakeHolders memory _stakeHolderAddresses
     ) {
+        // Get the GGR for the desired Bankroll
         int256 GGR = IBankroll(_bankroll).GGR();
 
+        // Get the bankroll fee information
         DGDataTypes.Fee memory feeInfo = bankrollFees[_bankroll];
 
+        // calculate current ggr rate
         _claimableDeGaming = GGR * int64(feeInfo.deGaming) / int(DENOMINATOR);
         _claimableBankroll = GGR * int64(feeInfo.bankRoll) / int(DENOMINATOR);
         _claimableGameProvider = GGR * int64(feeInfo.gameProvider) / int(DENOMINATOR);
         _claimableManager = GGR * int64(feeInfo.manager) / int(DENOMINATOR);
 
+        // Fetch stakeholder addresses
         _stakeHolderAddresses = stakeHolderAddresses[_bankroll];
     }
 }
