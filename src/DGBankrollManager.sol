@@ -166,21 +166,35 @@ contract DGBankrollManager is Ownable {
         IBankroll(_bankroll).nullGGR();
     }
 
+    /**
+     * @notice
+     *  Allows anyone to see the fees calculated from the GGR for
+     *  all stakeholders by specific bankroll
+     *
+     * @param _bankroll the address of bankroll we want to check
+     *
+     * @return _claimableDeGaming claimable amount for DeGaming
+     * @return _claimableBankroll claimable amount for Bankroll
+     * @return _claimableGameProvider  claimable amount for Game Provider
+     * @return _claimableManager claimable amount for Manager
+     * @return _stakeHolderAddresses custom datatype which holds all addresses, added to simply keep track of context
+     *
+     */
     function claimableAmountByBankroll(address _bankroll) external view returns (
-        int256 _claimabledegaming,
-        int256 _claimablebankroll,
-        int256 _claimablegameProvider,
-        int256 _claimablemanager,
+        int256 _claimableDeGaming,
+        int256 _claimableBankroll,
+        int256 _claimableGameProvider,
+        int256 _claimableManager,
         DGDataTypes.StakeHolders memory _stakeHolderAddresses
     ) {
         int256 GGR = IBankroll(_bankroll).GGR();
 
         DGDataTypes.Fee memory feeInfo = bankrollFees[_bankroll];
 
-        _claimabledegaming = GGR * int64(feeInfo.deGaming) / int(DENOMINATOR);
-        _claimablebankroll = GGR * int64(feeInfo.bankRoll) / int(DENOMINATOR);
-        _claimablegameProvider = GGR * int64(feeInfo.gameProvider) / int(DENOMINATOR);
-        _claimablemanager = GGR * int64(feeInfo.manager) / int(DENOMINATOR);
+        _claimableDeGaming = GGR * int64(feeInfo.deGaming) / int(DENOMINATOR);
+        _claimableBankroll = GGR * int64(feeInfo.bankRoll) / int(DENOMINATOR);
+        _claimableGameProvider = GGR * int64(feeInfo.gameProvider) / int(DENOMINATOR);
+        _claimableManager = GGR * int64(feeInfo.manager) / int(DENOMINATOR);
 
         _stakeHolderAddresses = stakeHolderAddresses[_bankroll];
     }
