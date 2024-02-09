@@ -15,9 +15,6 @@ import {DGEvents} from "src/libraries/DGEvents.sol";
  *
  */
 contract Bankroll {
-    /// @dev 6.5% bankroll lpFee of profit
-    uint16 public lpFee = 650;
-    
     /// @dev admin address
     address public admin; 
     
@@ -185,41 +182,6 @@ contract Bankroll {
     }
 
     /**
-     * @notice Claim profit from the bankroll
-     * Called by an authorized manager
-     */
-    // function claimProfit() external {
-        // // check if caller is an authorized manager
-        // if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
-
-        // // get manager profit
-        // int256 profit = profitOf[msg.sender];
-
-        // // check if there is profit to claim
-        // if (profit < 1) revert DGErrors.NO_PROFIT();
-
-        // // calculate LP profit
-        // uint256 lpsProfitCurrent = (uint(profit) * lpFee) / DENOMINATOR;
-
-        // // add to total LP profit
-        // lpsProfit += int(lpsProfitCurrent);
-
-        // // substract from total managers profit
-        // managersProfit -= profit;
-
-        // // substract from managers profit
-        // profit -= int(lpsProfitCurrent);
-
-        // // zero manager profit
-        // profitOf[msg.sender] = 0;
-
-        // // transfer ERC20 from the vault to the manager
-        // ERC20.transfer(msg.sender, uint256(profit));
-
-        // emit DGEvents.ProfitClaimed(msg.sender, uint256(profit));
-    // }
-
-    /**
      * @notice Remove or add authorized liquidity provider to the bankroll
      * Called by admin
      * @param _lp Liquidity Provider address
@@ -259,16 +221,6 @@ contract Bankroll {
     function setPublic(bool _isPublic) external {
         if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
         isPublic = _isPublic;
-    }
-
-    /**
-     * @notice Set Liquidity Provider fee
-     * Called by admin
-     * @param _lpFee Liquidity Provider fee
-     */
-    function setLpFee(uint16 _lpFee) external {
-        if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
-        lpFee = _lpFee;
     }
 
     //   _    ___                 ______                 __  _
