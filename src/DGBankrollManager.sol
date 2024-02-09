@@ -113,20 +113,34 @@ contract DGBankrollManager is Ownable {
         emit DGEvents.FeeUpdated(_bankroll, _deGamingFee, _bankRollFee, _gameProviderFee, _managerFee);
     }
 
+    /**
+     * @notice
+     *  Allows a bankroll to set their stakeholder addresses
+     *  Only the contract owner can execute this operation
+     *
+     * @param _deGaming address of DeGaming
+     * @param _bankRoll address of the bankroll
+     * @param _gameProvider address of the game provider
+     * @param _manager address of the manager
+     *
+     */
     function setStakeholderAddresses(
-        address _degaming,
+        address _deGaming,
         address _bankroll,
         address _gameProvider,
         address _manager
     ) external onlyOwner {
-        stakeHolderAddresses[_bankroll] = DGDataTypes.StakeHolders(_degaming, _gameProvider, _manager);
+        stakeHolderAddresses[_bankroll] = DGDataTypes.StakeHolders(_deGaming, _gameProvider, _manager);
 
-        emit DGEvents.StakeholdersUpdated(_degaming, _bankroll, _gameProvider, _manager);
+        emit DGEvents.StakeholdersUpdated(_deGaming, _bankroll, _gameProvider, _manager);
     }
 
     /**
      * @notice Claim profit from the bankroll
      * Called by an authorized manager
+     * @param _bankroll address of bankroll 
+     * @param _token address of token
+     *
      */
     function claimProfit(address _bankroll, address _token) external {
         // Set up a token instance
