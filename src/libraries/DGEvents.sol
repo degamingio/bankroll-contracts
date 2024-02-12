@@ -16,15 +16,6 @@ library DGEvents {
     /// @dev Event emitted when the bankroll is emptied or reached max risk
     event BankrollSwept(address player, uint256 amount);
     
-    /// @dev Event emitted when the stakeholder fee are updated
-    event FeeUpdated(
-        address bankroll, 
-        uint64 deGamingFee,
-        uint64 bankRollFee, 
-        uint64 gameProviderFee, 
-        uint64 managerFee
-    );
-
     /// @dev Event emitted when stakeholder addresses are updated
     event StakeholdersUpdated(
         address degaming,
