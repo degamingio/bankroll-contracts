@@ -36,6 +36,8 @@ contract Bankroll {
     /// @dev Max percentage of liquidity risked
     uint256 public maxRiskPercentage; 
     
+    mapping(address operator => int256 operatorGGR) public ggrOf;
+    
     /// @dev profit per manager
     mapping(address manager => int256 profit) public profitOf; 
     
@@ -135,7 +137,7 @@ contract Bankroll {
      * @param _player Player wallet
      * @param _amount Prize money amount
      */
-    function debit(address _player, uint256 _amount) external {
+    function debit(address _player, uint256 _amount, address _operator) external {
         // check if caller is an authorized manager
         if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
 
@@ -148,10 +150,11 @@ contract Bankroll {
 
         // substract from total managers profit
         // managersProfit -= int(_amount);
-        GGR -= int(_amount);
+        GGR -= int256(_amount);
+        ggrOf[_operator] -= int256(_amount);
 
         // substract from managers profit
-        profitOf[msg.sender] -= int(_amount);
+        profitOf[msg.sender] -= int256(_amount);
 
         // transfer ERC20 from the vault to the winner
         ERC20.transfer(_player, _amount);
@@ -164,16 +167,17 @@ contract Bankroll {
      * Called by an authorized manager
      * @param _amount Player loss amount
      */
-    function credit(uint256 _amount) external {
+    function credit(uint256 _amount, address _operator) external {
         // check if caller is an authorized manager
         if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
 
         // add to total managers profit
         // managersProfit += int(_amount);
-        GGR += int(_amount);
+        GGR += int256(_amount);
+        ggrOf[_operator] += int256(_amount);
 
         // add to managers profit
-        profitOf[msg.sender] += int(_amount);
+        profitOf[msg.sender] += int256(_amount);
 
         // transfer ERC20 from the manager to the vault
         ERC20.transferFrom(msg.sender, address(this), _amount);
@@ -223,8 +227,9 @@ contract Bankroll {
         isPublic = _isPublic;
     }
 
-    function nullGGR() external {
-        GGR = 0;
+    function nullGgrOf(address _operator) external {
+        GGR -= ggrOf[_operator];
+        ggrOf[_operator] =  0;
     }
 
     //   _    ___                 ______                 __  _

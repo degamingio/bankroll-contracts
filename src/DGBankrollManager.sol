@@ -7,6 +7,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /* Openzeppelin Contracts */
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
+import {Bankroll} from "src/Bankroll.sol";
+
 import {IBankroll} from "src/interfaces/IBankroll.sol";
 
 import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
@@ -20,11 +22,14 @@ contract DGBankrollManager is Ownable {
     /// @dev Event period, the minimum time between each claim
     uint256 public constant EVENT_PERIOD = 30 days;
 
+    /// @dev DeGaming Wallet
+    address deGaming;
+
     /// @dev store bankroll status
     mapping(address bankroll => bool isApproved) public bankrollStatus;
 
     /// @dev mapping that stores all operators associated with a bankroll
-    mapping(address bankroll => address[] operator) public operatorOf;
+    mapping(address bankroll => address[] operator) public operatorsOf;
 
     /// @dev Store time claimed + event period
     mapping(address claimer => uint256 timestamp) public eventPeriodEnds;
@@ -74,7 +79,7 @@ contract DGBankrollManager is Ownable {
     }
 
     function setOperatorToBankroll(address _bankroll, address _operator) external onlyOwner  {
-        operatorOf[_bankroll].push(_operator);
+        operatorsOf[_bankroll].push(_operator);
     }
 
 
@@ -82,49 +87,40 @@ contract DGBankrollManager is Ownable {
      * @notice Claim profit from the bankroll
      * Called by an authorized manager
      * @param _bankroll address of bankroll 
-     * @param _token address of token
      *
      */
     function claimProfit(address _bankroll) external {
-        //// Set up a token instance
-        //IERC20 token = IERC20(_token);
-
-        //// Check if eventperiod has passed
-        //if (block.timestamp < eventPeriodEnds[_bankroll]) revert DGErrors.EVENT_PERIOD_NOT_PASSED();
+        Bankroll bankroll = IBankroll(_bankroll);
         
-        //// Check that the bankroll is an approved DeGaming Bankroll
-        //if (!bankrollStatus[_bankroll]) revert DGErrors.BANKROLL_NOT_APPROVED();
+        //// Set up a token instance
+        IERC20 token = IERC20(bankroll.ERC20());
+        
+        // Check if eventperiod has passed
+        if (block.timestamp < eventPeriodEnds[_bankroll]) revert DGErrors.EVENT_PERIOD_NOT_PASSED();
 
-        //// Set up GGR for desired bankroll
-        //int256 GGR = IBankroll(_bankroll).GGR();
+        // Check that the bankroll is an approved DeGaming Bankroll
+        if (!bankrollStatus[_bankroll]) revert DGErrors.BANKROLL_NOT_APPROVED();
+        
+        address[] operators = operatorsOf[_bankroll];
 
-        //// Check if Casino GGR is posetive
-        //if (GGR < 1) revert DGErrors.NOTHING_TO_CLAIM();
+        // Set up GGR for desired bankroll
+        int256 GGR = bankroll.GGR();
 
-        //// Get Bankroll Fee information
-        //DGDataTypes.Fee memory feeInfo = bankrollFees[_bankroll];
+        // Check if Casino GGR is posetive
+        if (GGR < 1) revert DGErrors.NOTHING_TO_CLAIM();
 
-        //// Get stakeholder addresses
-        //DGDataTypes.StakeHolders memory addressOf = stakeHolderAddresses[_bankroll];
+        // Update event period ends unix timestamp to one <EVENT_PERIOD> from now
+        eventPeriodEnds[_bankroll] = block.timestamp + EVENT_PERIOD;
 
-        //// Update event period ends unix timestamp to one <EVENT_PERIOD> from now
-        //eventPeriodEnds[_bankroll] = block.timestamp + EVENT_PERIOD;
+        for (uint256 i = 0; i >= operators.length; i++) {
+            token.transferFrom(
+                address(_bankroll), 
+                address(deGaming), 
+                uint256(bankroll.ggrOf(operators[i]))
+            );
 
-        //// Calculate fees based on the GGR
-        //uint256 feeToDeGaming = uint256(GGR) * feeInfo.deGaming / DENOMINATOR;
-        ////uint256 feeToBankRoll = uint256(GGR) * feeInfo.bankRoll / DENOMINATOR;
-        //uint256 feeToGameProvider = uint256(GGR) * feeInfo.gameProvider / DENOMINATOR; 
-        //uint256 feeToManager = uint256(GGR) * feeInfo.manager / DENOMINATOR;
-
-        //// Transfer Fees
-        //token.transferFrom(_bankroll, addressOf.deGaming, feeToDeGaming);
-        //token.transferFrom(_bankroll, addressOf.gameProvider, feeToGameProvider);
-        //token.transferFrom(_bankroll, addressOf.manager, feeToManager);
-    
-        //// Should add some way to make it clear that this is a part of lp
-        ////token.transferFrom(_bankroll, _bankroll, feeToBankRoll);
-
-        //// Zero out the GGR
-        //IBankroll(_bankroll).nullGGR();
+            // Zero out the GGR
+            bankroll.nullGgrOf(operators[i]);
+        }
     }
 }

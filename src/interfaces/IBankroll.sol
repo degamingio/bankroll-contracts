@@ -78,7 +78,7 @@ interface IBankroll {
      */
     function setPublic(bool _isPublic) external;
 
-    function nullGGR() external;
+    function nullGgrOf(address _operator) external;
 
     //   _    ___                 ______                 __  _
     //  | |  / (_)__ _      __   / ____/_  ______  _____/ /_(_)___  ____  _____
@@ -113,4 +113,8 @@ interface IBankroll {
     function getMaxRisk() external view returns (uint256 _maxRisk);
 
     function GGR() external view returns(int256);
+
+    function ggrOf(address _operator) external view returns(int256 _operatorGgr);
+
+    function ERC20() external view returns(address);
 }

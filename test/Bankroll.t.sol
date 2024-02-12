@@ -133,7 +133,7 @@ contract BankrollTest is Test {
 
         // pay player 500_000
         vm.prank(manager);
-        bankroll.debit(player, 500_000);
+        bankroll.debit(player, 500_000, address(manager));
 
         // bankroll now has 500_000
         assertEq(bankroll.liquidity(), 500_000);
@@ -154,7 +154,7 @@ contract BankrollTest is Test {
         assertEq(bankroll.liquidity(), 1000_000);
 
         vm.prank(manager);
-        bankroll.debit(player, 5000_000);
+        bankroll.debit(player, 5000_000, address(manager));
 
         assertEq(bankroll.liquidity(), 0);
         assertEq(token.balanceOf(address(player)), 1000_000);
@@ -172,7 +172,7 @@ contract BankrollTest is Test {
 
         vm.startPrank(manager);
         token.approve(address(bankroll), 500_000);
-        bankroll.credit(500_000);
+        bankroll.credit(500_000, address(manager));
         vm.stopPrank();
 
         // profit is not available for LPs before managers has claimed it
