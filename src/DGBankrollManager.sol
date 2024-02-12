@@ -101,7 +101,7 @@ contract DGBankrollManager is Ownable {
         // Check that the bankroll is an approved DeGaming Bankroll
         if (!bankrollStatus[_bankroll]) revert DGErrors.BANKROLL_NOT_APPROVED();
         
-        address[] operators = operatorsOf[_bankroll];
+        address[] memory operators = operatorsOf[_bankroll];
 
         // Set up GGR for desired bankroll
         int256 GGR = bankroll.GGR();

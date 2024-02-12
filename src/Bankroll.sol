@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.18;
 
 /* Openzeppelin Interfaces */
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import {IBankroll} from "src/interfaces/IBankroll.sol";
 
 import {DGErrors} from "src/libraries/DGErrors.sol";
 import {DGEvents} from "src/libraries/DGEvents.sol";
@@ -14,7 +15,7 @@ import {DGEvents} from "src/libraries/DGEvents.sol";
  * @notice Operator and Game Bankroll Contract
  *
  */
-contract Bankroll {
+contract Bankroll is IBankroll{
     /// @dev admin address
     address public admin; 
     

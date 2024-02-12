@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.18;
 
 /**
  * @title IBankroll V1
@@ -33,21 +33,15 @@ interface IBankroll {
      * @param _player Player wallet
      * @param _amount Prize money amount
      */
-    function debit(address _player, uint256 _amount) external;
+    function debit(address _player, uint256 _amount, address _operator) external;
 
     /**
      * @notice Pay bankroll in ERC20 tokens from players loss
      * Called by an authorized manager
      * @param _amount Player loss amount
      */
-    function credit(uint256 _amount) external;
+    function credit(uint256 _amount, address _operator) external;
     
-    /**
-     * @notice Claim profit from the bankroll
-     * Called by an authorized manager
-     */
-    function claimProfit() external;
-
     /**
      * @notice Remove or add authorized liquidity provider to the bankroll
      * Called by admin
@@ -116,5 +110,5 @@ interface IBankroll {
 
     function ggrOf(address _operator) external view returns(int256 _operatorGgr);
 
-    function ERC20() external view returns(address);
+    //function ERC20() external view returns(address);
 }
