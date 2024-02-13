@@ -13,10 +13,12 @@ contract DeployBankroll is Script {
         uint256 maxRisk = 10_000;
         vm.startBroadcast(deployerPrivateKey);
 
+        address bankrollManager = 0x0000000000000000000000000000000000000000;
+
         // deploy mock token
         MockToken token = new MockToken("Tether", "mUSDT");
-        Bankroll bankroll = new Bankroll(admin, address(token), maxRisk);
-        bankroll.setManager(manager, true);
+        Bankroll bankroll = new Bankroll(admin, address(token), bankrollManager, maxRisk);
+        //bankroll.setManager(manager, true);
 
         vm.stopBroadcast();
     }

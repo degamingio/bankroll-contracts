@@ -17,6 +17,7 @@ contract DeployBankroll is Script {
         address admin = vm.addr(adminPrivateKey);
         address manager = vm.addr(managerPrivateKey);
         address token = vm.envAddress("TOKEN_ADDRESS");
+        address bankrollManager = 0x0000000000000000000000000000000000000000;
 
         console.log("deployer: ", vm.addr(deployerPrivateKey));
         console.log("admin:    ", admin);
@@ -25,13 +26,13 @@ contract DeployBankroll is Script {
 
         // Deploy contract
         vm.startBroadcast(deployerPrivateKey);
-        Bankroll bankroll = new Bankroll(admin, token, percentageRisk);
+        Bankroll bankroll = new Bankroll(admin, token, bankrollManager, percentageRisk);
         vm.stopBroadcast();
 
         // Set manager
-        vm.startBroadcast(adminPrivateKey);
-        bankroll.setManager(manager, true);
-        vm.stopBroadcast();
+        // vm.startBroadcast(adminPrivateKey);
+        // bankroll.setManager(manager, true);
+        // vm.stopBroadcast();
 
         // Set bankroll max allowance
         vm.startBroadcast(managerPrivateKey);
