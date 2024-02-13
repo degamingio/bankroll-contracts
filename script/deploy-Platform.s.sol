@@ -14,7 +14,7 @@ import {DGBankrollManager} from "src/DGBankrollManager.sol";
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
 
-contract DGBankrollManagerTest is Script {
+contract DeployPlatform is Script {
     DGBankrollManager public dgBankrollManager;
     Bankroll public bankroll;
 
