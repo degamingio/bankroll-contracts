@@ -1,8 +1,12 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.18;
 
 import "forge-std/Script.sol";
+
+/* DeGaming Contracts */
 import {Bankroll} from "src/Bankroll.sol";
+
+/* OpenZeppelin Interfaces */
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract DeployBankroll is Script {
@@ -15,26 +19,22 @@ contract DeployBankroll is Script {
 
         // Addresses
         address admin = vm.addr(adminPrivateKey);
-        address manager = vm.addr(managerPrivateKey);
         address token = vm.envAddress("TOKEN_ADDRESS");
+
+        // replace address with bankroll manager
+        address bankrollManager = 0x0000000000000000000000000000000000000000;
 
         console.log("deployer: ", vm.addr(deployerPrivateKey));
         console.log("admin:    ", admin);
-        console.log("manager:  ", manager);
         console.log("token:    ", token);
 
         // Deploy contract
         vm.startBroadcast(deployerPrivateKey);
-        Bankroll bankroll = new Bankroll(admin, token, percentageRisk);
-        vm.stopBroadcast();
-
-        // Set manager
-        vm.startBroadcast(adminPrivateKey);
-        bankroll.setManager(manager, true);
+        Bankroll bankroll = new Bankroll(admin, token, bankrollManager, percentageRisk);
         vm.stopBroadcast();
 
         // Set bankroll max allowance
-        vm.startBroadcast(managerPrivateKey);
+        vm.startBroadcast(adminPrivateKey);
         IERC20(token).approve(
             address(bankroll),
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
