@@ -4,6 +4,8 @@ pragma solidity ^0.8.18;
 /* Openzeppelin Interfaces */
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {IBankroll} from "src/interfaces/IBankroll.sol";
 
@@ -16,12 +18,12 @@ import {DGEvents} from "src/libraries/DGEvents.sol";
  * @notice Operator and Game Bankroll Contract
  *
  */
-contract Bankroll is IBankroll{
+contract Bankroll is IBankroll, Ownable, AccessControl{
     //Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
 
     /// @dev admin address
-    address public admin; 
+    //address public admin; 
     
     /// @dev total amount of shares
     uint256 public totalSupply; 
@@ -40,7 +42,9 @@ contract Bankroll is IBankroll{
     
     /// @dev Max percentage of liquidity risked
     uint256 public maxRiskPercentage; 
-    
+
+    bytes32 public constant ADMIN = keccak256("ADMIN");
+
     mapping(address operator => int256 operatorGGR) public ggrOf;
     
     /// @dev profit per manager
@@ -75,10 +79,11 @@ contract Bankroll is IBankroll{
      * @param _admin Admin address
      * @param _ERC20 Bankroll liquidity token address
      */
-    constructor(address _admin, address _ERC20, uint256 _maxRiskPercentage) {
+    constructor(address _admin, address _ERC20, uint256 _maxRiskPercentage) Ownable(msg.sender) {
         admin = _admin;
         ERC20 = IERC20(_ERC20);
         maxRiskPercentage = _maxRiskPercentage;
+        _grantRole(ADMIN, _admin);
     }
 
     //      ______     __                        __   ______                 __  _
@@ -142,9 +147,9 @@ contract Bankroll is IBankroll{
      * @param _player Player wallet
      * @param _amount Prize money amount
      */
-    function debit(address _player, uint256 _amount, address _operator) external {
+    function debit(address _player, uint256 _amount, address _operator) external onlyRole(ADMIN) {
         // check if caller is an authorized manager
-        if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
+        //if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
 
         // pay what is left if amount is bigger than bankroll balance
         uint256 maxRisk = getMaxRisk();
@@ -173,9 +178,9 @@ contract Bankroll is IBankroll{
      * Called by an authorized manager
      * @param _amount Player loss amount
      */
-    function credit(uint256 _amount, address _operator) external {
+    function credit(uint256 _amount, address _operator) external onlyRole(ADMIN) {
         // check if caller is an authorized manager
-        if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
+        // if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
 
         // add to total managers profit
         // managersProfit += int(_amount);
@@ -197,30 +202,9 @@ contract Bankroll is IBankroll{
      * @param _lp Liquidity Provider address
      * @param _isAuthorized If false, LP will not be able to deposit
      */
-    function setInvestorWhitelist(address _lp, bool _isAuthorized) external {
-        if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
+    function setInvestorWhitelist(address _lp, bool _isAuthorized) external onlyRole(ADMIN) {
+    //    if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
         lpWhitelist[_lp] = _isAuthorized;
-    }
-
-    /**
-     * @notice Set admin address
-     * Called by admin
-     * @param _admin Admin address
-     */
-    function setAdmin(address _admin) external {
-        if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
-        admin = _admin;
-    }
-
-    /**
-     * @notice Remove or add authorized manager
-     * Called by admin
-     * @param _manager Manager address
-     * @param isAuthorized If false, manager will not be able to operate the bankroll
-     */
-    function setManager(address _manager, bool isAuthorized) external {
-        if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
-        managers[_manager] = isAuthorized;
     }
 
     /**
@@ -228,14 +212,19 @@ contract Bankroll is IBankroll{
      * Called by admin
      * @param _isPublic If false, only whitelisted lps can deposit
      */
-    function setPublic(bool _isPublic) external {
-        if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
+    function setPublic(bool _isPublic) external onlyRole(ADMIN) {
+        // if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
         isPublic = _isPublic;
     }
 
     function nullGgrOf(address _operator) external {
         GGR -= ggrOf[_operator];
         ggrOf[_operator] =  0;
+    }
+
+    function updateAdmin(address _oldAdmin, address _newAdmin) external onlyOwner {
+        _revokeRole(ADMIN, _oldAdmin);
+        _grantRole(ADMIN, _newAdmin);
     }
 
     //   _    ___                 ______                 __  _
