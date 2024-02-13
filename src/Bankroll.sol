@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.18;
 
 /* Openzeppelin Interfaces */
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -325,8 +325,12 @@ contract Bankroll {
         }
     }
 
+    /**
+     * @notice returns the maximum amount that can be taken from the bankroll during debit() call
+     * @param _maxRisk the maximum amount that can be risked
+     */
     function getMaxRisk() public view returns (uint256 _maxRisk) {
-        uint256 currentLiquidity = liquidity();
+        uint256 currentLiquidity = ERC20.balanceOf(address(this));
         _maxRisk = (currentLiquidity * maxRiskPercentage) / DENOMINATOR;
     }
 

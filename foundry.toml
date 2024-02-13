@@ -7,4 +7,13 @@ remappings = [
     '@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/',
 ]
 
+[rpc_endpoints]
+xdc-apothem = "${XDC_APOTHEM_RPC}"
+xdc-mainnet = "${XDC_MAINNET_RPC}"
+arbitrum = "${ARBITRUM_RPC}"
+arbitrum-sepolia = "${ARBITRUM_SEPOLIA_RPC}"
+
+[etherscan]
+arbitrum-sepolia = { key = "${ARBITRUM_ETHERSCAN_API_KEY}", chain = 421614, url = "https://api-sepolia.arbiscan.io/api" }
+
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
