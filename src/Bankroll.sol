@@ -1,9 +1,14 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.18;
 
 /* Openzeppelin Interfaces */
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
+import {IBankroll} from "src/interfaces/IBankroll.sol";
 
 import {DGErrors} from "src/libraries/DGErrors.sol";
 import {DGEvents} from "src/libraries/DGEvents.sol";
@@ -14,18 +19,18 @@ import {DGEvents} from "src/libraries/DGEvents.sol";
  * @notice Operator and Game Bankroll Contract
  *
  */
-contract Bankroll {
-    /// @dev 6.5% bankroll lpFee of profit
-    uint16 public lpFee = 650;
-    
+contract Bankroll is IBankroll, Ownable, AccessControl{
+    //Using SafeERC20 for safer token interaction
+    using SafeERC20 for IERC20;
+
     /// @dev admin address
-    address public admin; 
+    //address public admin; 
     
     /// @dev total amount of shares
     uint256 public totalSupply; 
     
     /// @dev the current aggregated profit of the bankroll balance allocated for managers
-    int256 public managersProfit; 
+    int256 public GGR; 
     
     ///  @dev the current aggregated profit of the bankroll balance allocated for lps
     int256 public lpsProfit;
@@ -38,6 +43,12 @@ contract Bankroll {
     
     /// @dev Max percentage of liquidity risked
     uint256 public maxRiskPercentage; 
+
+    bytes32 public constant ADMIN = keccak256("ADMIN");
+
+    bytes32 public constant BANKROLL_MANAGER = keccak256("BANKROLL_MANAGER");
+
+    mapping(address operator => int256 operatorGGR) public ggrOf;
     
     /// @dev profit per manager
     mapping(address manager => int256 profit) public profitOf; 
@@ -71,10 +82,11 @@ contract Bankroll {
      * @param _admin Admin address
      * @param _ERC20 Bankroll liquidity token address
      */
-    constructor(address _admin, address _ERC20, uint256 _maxRiskPercentage) {
-        admin = _admin;
+    constructor(address _admin, address _ERC20, address _bankrollManager, uint256 _maxRiskPercentage) Ownable(msg.sender) {
         ERC20 = IERC20(_ERC20);
         maxRiskPercentage = _maxRiskPercentage;
+        _grantRole(ADMIN, _admin);
+        _grantRole(BANKROLL_MANAGER, _bankrollManager);
     }
 
     //      ______     __                        __   ______                 __  _
@@ -110,7 +122,7 @@ contract Bankroll {
         totalDeposit += _amount;
 
         // transfer ERC20 from the user to the vault
-        ERC20.transferFrom(msg.sender, address(this), _amount);
+        ERC20.safeTransferFrom(msg.sender, address(this), _amount);
 
         emit DGEvents.FundsDeposited(msg.sender, _amount);
     }
@@ -138,10 +150,7 @@ contract Bankroll {
      * @param _player Player wallet
      * @param _amount Prize money amount
      */
-    function debit(address _player, uint256 _amount) external {
-        // check if caller is an authorized manager
-        if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
-
+    function debit(address _player, uint256 _amount, address _operator) external onlyRole(ADMIN) {
         // pay what is left if amount is bigger than bankroll balance
         uint256 maxRisk = getMaxRisk();
         if (_amount > maxRisk) {
@@ -149,14 +158,15 @@ contract Bankroll {
             emit DGEvents.BankrollSwept(_player, _amount);
         }
 
-        // substract from total managers profit
-        managersProfit -= int(_amount);
+        // substract from total GGR
+        GGR -= int256(_amount);
+        ggrOf[_operator] -= int256(_amount);
 
         // substract from managers profit
-        profitOf[msg.sender] -= int(_amount);
+        profitOf[msg.sender] -= int256(_amount);
 
         // transfer ERC20 from the vault to the winner
-        ERC20.transfer(_player, _amount);
+        ERC20.safeTransfer(_player, _amount);
 
         emit DGEvents.Debit(msg.sender, _player, _amount);
     }
@@ -166,55 +176,18 @@ contract Bankroll {
      * Called by an authorized manager
      * @param _amount Player loss amount
      */
-    function credit(uint256 _amount) external {
-        // check if caller is an authorized manager
-        if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
-
-        // add to total managers profit
-        managersProfit += int(_amount);
+    function credit(uint256 _amount, address _operator) external onlyRole(ADMIN) {
+        // Add to total GGR
+        GGR += int256(_amount);
+        ggrOf[_operator] += int256(_amount);
 
         // add to managers profit
-        profitOf[msg.sender] += int(_amount);
+        profitOf[msg.sender] += int256(_amount);
 
         // transfer ERC20 from the manager to the vault
-        ERC20.transferFrom(msg.sender, address(this), _amount);
+        ERC20.safeTransferFrom(msg.sender, address(this), _amount);
 
         emit DGEvents.Credit(msg.sender, _amount);
-    }
-
-    /**
-     * @notice Claim profit from the bankroll
-     * Called by an authorized manager
-     */
-    function claimProfit() external {
-        // check if caller is an authorized manager
-        if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
-
-        // get manager profit
-        int256 profit = profitOf[msg.sender];
-
-        // check if there is profit to claim
-        if (profit < 1) revert DGErrors.NO_PROFIT();
-
-        // calculate LP profit
-        uint256 lpsProfitCurrent = (uint(profit) * lpFee) / DENOMINATOR;
-
-        // add to total LP profit
-        lpsProfit += int(lpsProfitCurrent);
-
-        // substract from total managers profit
-        managersProfit -= profit;
-
-        // substract from managers profit
-        profit -= int(lpsProfitCurrent);
-
-        // zero manager profit
-        profitOf[msg.sender] = 0;
-
-        // transfer ERC20 from the vault to the manager
-        ERC20.transfer(msg.sender, uint256(profit));
-
-        emit DGEvents.ProfitClaimed(msg.sender, uint256(profit));
     }
 
     /**
@@ -223,30 +196,8 @@ contract Bankroll {
      * @param _lp Liquidity Provider address
      * @param _isAuthorized If false, LP will not be able to deposit
      */
-    function setInvestorWhitelist(address _lp, bool _isAuthorized) external {
-        if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
+    function setInvestorWhitelist(address _lp, bool _isAuthorized) external onlyRole(ADMIN) {
         lpWhitelist[_lp] = _isAuthorized;
-    }
-
-    /**
-     * @notice Set admin address
-     * Called by admin
-     * @param _admin Admin address
-     */
-    function setAdmin(address _admin) external {
-        if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
-        admin = _admin;
-    }
-
-    /**
-     * @notice Remove or add authorized manager
-     * Called by admin
-     * @param _manager Manager address
-     * @param isAuthorized If false, manager will not be able to operate the bankroll
-     */
-    function setManager(address _manager, bool isAuthorized) external {
-        if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
-        managers[_manager] = isAuthorized;
     }
 
     /**
@@ -254,19 +205,23 @@ contract Bankroll {
      * Called by admin
      * @param _isPublic If false, only whitelisted lps can deposit
      */
-    function setPublic(bool _isPublic) external {
-        if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
+    function setPublic(bool _isPublic) external onlyRole(ADMIN) {
         isPublic = _isPublic;
     }
 
-    /**
-     * @notice Set Liquidity Provider fee
-     * Called by admin
-     * @param _lpFee Liquidity Provider fee
-     */
-    function setLpFee(uint16 _lpFee) external {
-        if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
-        lpFee = _lpFee;
+    function nullGgrOf(address _operator) external onlyRole(BANKROLL_MANAGER){
+        GGR -= ggrOf[_operator];
+        ggrOf[_operator] =  0;
+    }
+
+    function updateAdmin(address _oldAdmin, address _newAdmin) external onlyOwner {
+        _revokeRole(ADMIN, _oldAdmin);
+        _grantRole(ADMIN, _newAdmin);
+    }
+
+    function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external onlyOwner {
+        _revokeRole(BANKROLL_MANAGER, _oldBankrollManager);
+        _grantRole(BANKROLL_MANAGER, _newBankrollManager);
     }
 
     //   _    ___                 ______                 __  _
@@ -275,15 +230,19 @@ contract Bankroll {
     //  | |/ / /  __/ |/ |/ /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
     //  |___/_/\___/|__/|__/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
+    function viewTokenAddress() external view returns (address _token) {
+        _token = address(ERC20);
+    }
+
     /**
      * @notice Returns the amount of ERC20 tokens held by the bankroll that are available for playes to win and
      * will not include funds that are reserved for managers profit
      */
     function liquidity() public view returns (uint256 _balance) {
-        if (managersProfit <= 0) {
+        if (GGR <= 0) {
             _balance = ERC20.balanceOf(address(this));
-        } else if (managersProfit > 0) {
-            _balance = ERC20.balanceOf(address(this)) - uint(managersProfit);
+        } else if (GGR > 0) {
+            _balance = ERC20.balanceOf(address(this)) - uint(GGR);
         }
     }
 
