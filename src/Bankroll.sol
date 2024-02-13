@@ -4,12 +4,16 @@ pragma solidity ^0.8.18;
 
 /* Openzeppelin Interfaces */
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+/* Openzeppelin Contracts */
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
+/* DeGaming Interfaces */
 import {IBankroll} from "src/interfaces/IBankroll.sol";
 
+/* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
 import {DGEvents} from "src/libraries/DGEvents.sol";
 

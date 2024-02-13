@@ -8,10 +8,13 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+/* DeGaming Contracts */
 import {Bankroll} from "src/Bankroll.sol";
 
+/* DeGaming Interfaces */
 import {IBankroll} from "src/interfaces/IBankroll.sol";
 
+/* DeGaming Libraries */
 import {DGEvents} from "src/libraries/DGEvents.sol";
 import {DGErrors} from "src/libraries/DGErrors.sol";
 
