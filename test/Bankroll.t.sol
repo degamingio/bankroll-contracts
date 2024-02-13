@@ -180,66 +180,6 @@ contract BankrollTest is Test {
         assertEq(bankroll.lpsProfit(), 0);
     }
 
-    function test_claimProfit() public {
-        // vm.startPrank(lpOne);
-        // token.approve(address(bankroll), 1000_000);
-        // bankroll.depositFunds(1000_000);
-        // vm.stopPrank();
-
-        // vm.startPrank(operator);
-        // token.approve(address(bankroll), 100_000);
-        // bankroll.credit(100_000);
-        // vm.stopPrank();
-
-        // // profit is NOT available for LPs before managers has claimed it
-        // assertEq(bankroll.liquidity(), 1000_000);
-        // assertEq(bankroll.GGR(), 100_000);
-        // assertEq(bankroll.lpsProfit(), 0);
-
-        // // claim profit
-        // vm.startPrank(operator);
-        // bankroll.claimProfit();
-        // vm.stopPrank();
-
-        // // managers should have claimed profit
-        // assertEq(bankroll.managersProfit(), 0);
-        // assertEq(bankroll.profitOf(address(operator)), 0);
-
-        // // profit is NOW available for LPs
-        // assertEq(bankroll.lpsProfit(), 6_500);
-        // assertEq(bankroll.liquidity(), 1006_500);
-        // assertEq(bankroll.getLpValue(lpOne), 1006_500);
-
-        // // widthdraw all funds
-        // vm.prank(lpOne);
-        // bankroll.withdrawAll();
-
-        // // lpOne should have claimed profit
-        // assertEq(bankroll.getLpStake(address(lpOne)), 0);
-        // assertEq(bankroll.getLpProfit(address(lpOne)), 0);
-        // assertEq(bankroll.getLpValue(address(lpOne)), 0);
-    }
-
-    function test_claimProfitWhenNegative() public {
-        // vm.startPrank(lpOne);
-        // token.approve(address(bankroll), 100_000);
-        // bankroll.depositFunds(100_000);
-        // vm.stopPrank();
-
-        // vm.prank(operator);
-        // bankroll.debit(player, 10_000);
-
-        // // operator cannot claim profit when negative
-        // vm.prank(operator);
-        // vm.expectRevert(0xb5b9a8e6); //reverts: NO_PROFIT()
-        // bankroll.claimProfit();
-
-        // // lpOne investment should have decreased
-        // assertEq(bankroll.getLpStake(address(lpOne)), 10_000);
-        // assertEq(bankroll.getLpProfit(address(lpOne)), -10_000);
-        // assertEq(bankroll.getLpValue(address(lpOne)), 90_000);
-    }
-
     function test_setInvestorWhitelist() public {
         assertEq(bankroll.lpWhitelist(lpOne), false);
 
@@ -249,28 +189,20 @@ contract BankrollTest is Test {
         assertEq(bankroll.lpWhitelist(lpOne), true);
     }
 
-    function test_setAdmin() public {
-        // assertEq(bankroll.admin(), admin);
+    function test_updateAdmin(address _newAdmin) public {
+        token.mint(_newAdmin, 10);
 
-        // vm.prank(admin);
-        // bankroll.setAdmin(lpOne);
-
-        // assertEq(bankroll.admin(), lpOne);
-    }
-
-    function test_setManager() public {
-        // assertEq(bankroll.managers(operator), true);
-
-        // vm.prank(admin);
-        // bankroll.setManager(lpOne, true);
-
-        // assertEq(bankroll.managers(lpOne), true);
-        // assertEq(bankroll.managers(operator), true);
-
-        // vm.prank(admin);
-        // bankroll.setManager(operator, false);
-
-        // assertEq(bankroll.managers(operator), false);
+        vm.prank(_newAdmin);
+        token.approve(address(bankroll), 10);
+        vm.expectRevert();
+        bankroll.credit(10, operator);
+        vm.stopPrank(); 
+     
+        bankroll.updateAdmin(admin, _newAdmin);
+        vm.startPrank(_newAdmin);
+        token.approve(address(bankroll), 10);
+        bankroll.credit(10, operator);
+        vm.stopPrank();
     }
 
     function test_setPublic() public {
@@ -280,15 +212,6 @@ contract BankrollTest is Test {
         bankroll.setPublic(false);
 
         assertEq(bankroll.isPublic(), false);
-    }
-
-    function test_setFee() public {
-        // assertEq(bankroll.lpFee(), 650);
-
-        // vm.prank(admin);
-        // bankroll.setLpFee(10);
-
-        // assertEq(bankroll.lpFee(), 10);
     }
 
     function test_getLpStake() public {
