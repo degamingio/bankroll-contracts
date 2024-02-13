@@ -82,7 +82,6 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      * @param _ERC20 Bankroll liquidity token address
      */
     constructor(address _admin, address _ERC20, address _bankrollManager, uint256 _maxRiskPercentage) Ownable(msg.sender) {
-        admin = _admin;
         ERC20 = IERC20(_ERC20);
         maxRiskPercentage = _maxRiskPercentage;
         _grantRole(ADMIN, _admin);
@@ -151,9 +150,6 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      * @param _amount Prize money amount
      */
     function debit(address _player, uint256 _amount, address _operator) external onlyRole(ADMIN) {
-        // check if caller is an authorized manager
-        //if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
-
         // pay what is left if amount is bigger than bankroll balance
         uint256 maxRisk = getMaxRisk();
         if (_amount > maxRisk) {
@@ -161,8 +157,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
             emit DGEvents.BankrollSwept(_player, _amount);
         }
 
-        // substract from total managers profit
-        // managersProfit -= int(_amount);
+        // substract from total GGR
         GGR -= int256(_amount);
         ggrOf[_operator] -= int256(_amount);
 
@@ -170,7 +165,6 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         profitOf[msg.sender] -= int256(_amount);
 
         // transfer ERC20 from the vault to the winner
-        //ERC20.transfer(_player, _amount);
         ERC20.safeTransfer(_player, _amount);
 
         emit DGEvents.Debit(msg.sender, _player, _amount);
@@ -182,11 +176,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      * @param _amount Player loss amount
      */
     function credit(uint256 _amount, address _operator) external onlyRole(ADMIN) {
-        // check if caller is an authorized manager
-        // if (!managers[msg.sender]) revert DGErrors.SENDER_IS_NOT_A_MANAGER();
-
-        // add to total managers profit
-        // managersProfit += int(_amount);
+        // Add to total GGR
         GGR += int256(_amount);
         ggrOf[_operator] += int256(_amount);
 
@@ -206,7 +196,6 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      * @param _isAuthorized If false, LP will not be able to deposit
      */
     function setInvestorWhitelist(address _lp, bool _isAuthorized) external onlyRole(ADMIN) {
-    //    if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
         lpWhitelist[_lp] = _isAuthorized;
     }
 
@@ -216,7 +205,6 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      * @param _isPublic If false, only whitelisted lps can deposit
      */
     function setPublic(bool _isPublic) external onlyRole(ADMIN) {
-        // if (msg.sender != admin) revert DGErrors.SENDER_IS_NOT_AN_ADMIN();
         isPublic = _isPublic;
     }
 

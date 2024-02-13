@@ -51,21 +51,6 @@ interface IBankroll {
     function setInvestorWhitelist(address _lp, bool _isAuthorized) external;
 
     /**
-     * @notice Set admin address
-     * Called by admin
-     * @param _admin Admin address
-     */
-    function setAdmin(address _admin) external; 
-
-    /**
-     * @notice Remove or add authorized manager
-     * Called by admin
-     * @param _manager Manager address
-     * @param isAuthorized If false, manager will not be able to operate the bankroll
-     */
-    function setManager(address _manager, bool isAuthorized) external;
-
-    /**
      * @notice Make bankroll permissionless for LPs or not
      * Called by admin
      * @param _isPublic If false, only whitelisted lps can deposit
