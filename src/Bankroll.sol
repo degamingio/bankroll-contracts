@@ -23,13 +23,10 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     //Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
 
-    /// @dev admin address
-    //address public admin; 
-    
     /// @dev total amount of shares
     uint256 public totalSupply; 
     
-    /// @dev the current aggregated profit of the bankroll balance allocated for managers
+    /// @dev the current aggregated profit of the bankroll balance
     int256 public GGR; 
     
     ///  @dev the current aggregated profit of the bankroll balance allocated for lps
@@ -52,9 +49,6 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     
     /// @dev profit per manager
     mapping(address manager => int256 profit) public profitOf; 
-    
-    /// @dev managers that are allowed to operate this bankroll
-    mapping(address manager => bool authorized) public managers; 
     
     /// @dev amount of shares per lp
     mapping(address lp => uint256 shares) public sharesOf; 

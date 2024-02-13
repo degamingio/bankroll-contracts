@@ -25,9 +25,6 @@ contract DGBankrollManager is Ownable {
     //Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
 
-    /// @dev basis points denominator used for percentage calculation
-    uint256 public constant DENOMINATOR = 10_000;
-
     /// @dev Event period, the minimum time between each claim
     uint256 public constant EVENT_PERIOD = 30 days;
 
