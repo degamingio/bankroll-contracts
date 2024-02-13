@@ -126,6 +126,9 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      * Called by Liquidity Providers
      */
     function withdrawAll() external {
+        // check if the user is allowed to deposit if the bankroll is not public
+        if (!isPublic && !lpWhitelist[msg.sender]) revert DGErrors.LP_IS_NOT_WHITELISTED();
+        
         // decrement total deposit
         totalDeposit -= depositOf[msg.sender];
 
@@ -135,6 +138,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         // zero lp deposit
         depositOf[msg.sender] = 0;
 
+        // call internal withdrawal function
         _withdraw(sharesOf[msg.sender]);
     }
 
@@ -143,6 +147,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      * Called by an authorized manager
      * @param _player Player wallet
      * @param _amount Prize money amount
+     * @param _operator The operator from which the call comes from
      */
     function debit(address _player, uint256 _amount, address _operator) external onlyRole(ADMIN) {
         // pay what is left if amount is bigger than bankroll balance
@@ -162,6 +167,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         // transfer ERC20 from the vault to the winner
         ERC20.safeTransfer(_player, _amount);
 
+        // Emit debit event
         emit DGEvents.Debit(msg.sender, _player, _amount);
     }
 
@@ -169,6 +175,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      * @notice Pay bankroll in ERC20 tokens from players loss
      * Called by an authorized manager
      * @param _amount Player loss amount
+     * @param _operator The operator from which the call comes from
      */
     function credit(uint256 _amount, address _operator) external onlyRole(ADMIN) {
         // Add to total GGR
@@ -181,6 +188,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         // transfer ERC20 from the manager to the vault
         ERC20.safeTransferFrom(msg.sender, address(this), _amount);
 
+        // Emit credit event
         emit DGEvents.Credit(msg.sender, _amount);
     }
 
@@ -203,7 +211,13 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         isPublic = _isPublic;
     }
 
-
+    /**
+     * @notice Remove the GGR of a specified operator from the total GGR, 
+     *  then null out the operator GGR. Only callable by the bankroll manager
+     *
+     * @param _operator the address  of the operator we want to null out
+     *
+     */
     function nullGgrOf(address _operator) external onlyRole(BANKROLL_MANAGER){
         GGR -= ggrOf[_operator];
         ggrOf[_operator] =  0;
