@@ -54,13 +54,16 @@ contract DGBankrollManager is Ownable {
      *   Just sets the deployer of this contract as the owner
      *
      */
-    constructor() Ownable(msg.sender) {}
+    constructor(address _deGaming) Ownable(msg.sender) {
+        deGaming = _deGaming;
+    }
 
-    //     ______     __                        __   ______                 __  _
-    //    / ____/  __/ /____  _________  ____ _/ /  / ____/_  ______  _____/ /_(_)___  ____  _____
-    //   / __/ | |/_/ __/ _ \/ ___/ __ \/ __ `/ /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
-    //  / /____>  </ /_/  __/ /  / / / / /_/ / /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
-    // /_____/_/|_|\__/\___/_/  /_/ /_/\__,_/_/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
+    //     ____        __         ____                              ______                 __  _
+    //    / __ \____  / /_  __   / __ \_      ______  ___  _____   / ____/_  ______  _____/ /_(_)___  ____  _____
+    //   / / / / __ \/ / / / /  / / / / | /| / / __ \/ _ \/ ___/  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
+    //  / /_/ / / / / / /_/ /  / /_/ /| |/ |/ / / / /  __/ /     / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
+    //  \____/_/ /_/_/\__, /   \____/ |__/|__/_/ /_/\___/_/     /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
+    //               /____/
 
     /**
      * @notice
@@ -100,6 +103,12 @@ contract DGBankrollManager is Ownable {
     function setOperatorToBankroll(address _bankroll, address _operator) external onlyOwner  {
         operatorsOf[_bankroll].push(_operator);
     }
+        
+    //     ______     __                        __   ______                 __  _
+    //    / ____/  __/ /____  _________  ____ _/ /  / ____/_  ______  _____/ /_(_)___  ____  _____
+    //   / __/ | |/_/ __/ _ \/ ___/ __ \/ __ `/ /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
+    //  / /____>  </ /_/  __/ /  / / / / /_/ / /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
+    // /_____/_/|_|\__/\___/_/  /_/ /_/\__,_/_/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
     /**
      * @notice Claim profit from the bankroll
@@ -114,11 +123,13 @@ contract DGBankrollManager is Ownable {
         // Check that the bankroll is an approved DeGaming Bankroll
         if (!bankrollStatus[_bankroll]) revert DGErrors.BANKROLL_NOT_APPROVED();
         
+        // Fetch list of operators we will claim from
         address[] memory operators = operatorsOf[_bankroll];
 
+        // Setup bankroll instance
         bankroll = IBankroll(_bankroll);
         
-        //// Set up a token instance
+        // Set up a token instance
         IERC20 token = IERC20(bankroll.viewTokenAddress());
         
         // Set up GGR for desired bankroll
@@ -130,7 +141,10 @@ contract DGBankrollManager is Ownable {
         // Update event period ends unix timestamp to one <EVENT_PERIOD> from now
         eventPeriodEnds[_bankroll] = block.timestamp + EVENT_PERIOD;
 
+        // Loop over the operator list and perform the claim process over each operator
         for (uint256 i = 0; i >= operators.length; i++) {
+            
+            // transfer the GGR to DeGaming
             token.safeTransferFrom(
                 address(_bankroll), 
                 address(deGaming), 
