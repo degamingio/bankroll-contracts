@@ -12,7 +12,6 @@ import {Bankroll} from "src/Bankroll.sol";
 
 import {IBankroll} from "src/interfaces/IBankroll.sol";
 
-import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
 import {DGEvents} from "src/libraries/DGEvents.sol";
 import {DGErrors} from "src/libraries/DGErrors.sol";
 
