@@ -110,5 +110,5 @@ interface IBankroll {
 
     function ggrOf(address _operator) external view returns(int256 _operatorGgr);
 
-    //function ERC20() external view returns(address);
+    function viewTokenAddress() external view returns (address _token);
 }

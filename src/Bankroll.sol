@@ -3,6 +3,7 @@ pragma solidity ^0.8.18;
 
 /* Openzeppelin Interfaces */
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {IBankroll} from "src/interfaces/IBankroll.sol";
 
@@ -16,6 +17,9 @@ import {DGEvents} from "src/libraries/DGEvents.sol";
  *
  */
 contract Bankroll is IBankroll{
+    //Using SafeERC20 for safer token interaction
+    using SafeERC20 for IERC20;
+
     /// @dev admin address
     address public admin; 
     
@@ -110,7 +114,7 @@ contract Bankroll is IBankroll{
         totalDeposit += _amount;
 
         // transfer ERC20 from the user to the vault
-        ERC20.transferFrom(msg.sender, address(this), _amount);
+        ERC20.safeTransferFrom(msg.sender, address(this), _amount);
 
         emit DGEvents.FundsDeposited(msg.sender, _amount);
     }
@@ -158,7 +162,8 @@ contract Bankroll is IBankroll{
         profitOf[msg.sender] -= int256(_amount);
 
         // transfer ERC20 from the vault to the winner
-        ERC20.transfer(_player, _amount);
+        //ERC20.transfer(_player, _amount);
+        ERC20.safeTransfer(_player, _amount);
 
         emit DGEvents.Debit(msg.sender, _player, _amount);
     }
@@ -181,7 +186,7 @@ contract Bankroll is IBankroll{
         profitOf[msg.sender] += int256(_amount);
 
         // transfer ERC20 from the manager to the vault
-        ERC20.transferFrom(msg.sender, address(this), _amount);
+        ERC20.safeTransferFrom(msg.sender, address(this), _amount);
 
         emit DGEvents.Credit(msg.sender, _amount);
     }
@@ -238,6 +243,10 @@ contract Bankroll is IBankroll{
     //  | | / / / _ \ | /| / /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
     //  | |/ / /  __/ |/ |/ /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
     //  |___/_/\___/|__/|__/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
+
+    function viewTokenAddress() external view returns (address _token) {
+        _token = address(ERC20);
+    }
 
     /**
      * @notice Returns the amount of ERC20 tokens held by the bankroll that are available for playes to win and
