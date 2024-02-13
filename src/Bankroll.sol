@@ -45,6 +45,8 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
 
     bytes32 public constant ADMIN = keccak256("ADMIN");
 
+    bytes32 public constant BANKROLL_MANAGER = keccak256("BANKROLL_MANAGER");
+
     mapping(address operator => int256 operatorGGR) public ggrOf;
     
     /// @dev profit per manager
@@ -79,11 +81,12 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      * @param _admin Admin address
      * @param _ERC20 Bankroll liquidity token address
      */
-    constructor(address _admin, address _ERC20, uint256 _maxRiskPercentage) Ownable(msg.sender) {
+    constructor(address _admin, address _ERC20, address _bankrollManager, uint256 _maxRiskPercentage) Ownable(msg.sender) {
         admin = _admin;
         ERC20 = IERC20(_ERC20);
         maxRiskPercentage = _maxRiskPercentage;
         _grantRole(ADMIN, _admin);
+        _grantRole(BANKROLL_MANAGER, _bankrollManager);
     }
 
     //      ______     __                        __   ______                 __  _
@@ -217,7 +220,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         isPublic = _isPublic;
     }
 
-    function nullGgrOf(address _operator) external {
+    function nullGgrOf(address _operator) external onlyRole(BANKROLL_MANAGER){
         GGR -= ggrOf[_operator];
         ggrOf[_operator] =  0;
     }
@@ -225,6 +228,11 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     function updateAdmin(address _oldAdmin, address _newAdmin) external onlyOwner {
         _revokeRole(ADMIN, _oldAdmin);
         _grantRole(ADMIN, _newAdmin);
+    }
+
+    function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external onlyOwner {
+        _revokeRole(BANKROLL_MANAGER, _oldBankrollManager);
+        _grantRole(BANKROLL_MANAGER, _newBankrollManager);
     }
 
     //   _    ___                 ______                 __  _
