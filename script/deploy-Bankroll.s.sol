@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.18;
 
 import "forge-std/Script.sol";
 
@@ -19,13 +19,13 @@ contract DeployBankroll is Script {
 
         // Addresses
         address admin = vm.addr(adminPrivateKey);
-        address operator = vm.addr(managerPrivateKey);
         address token = vm.envAddress("TOKEN_ADDRESS");
+
+        // replace address with bankroll manager
         address bankrollManager = 0x0000000000000000000000000000000000000000;
 
         console.log("deployer: ", vm.addr(deployerPrivateKey));
         console.log("admin:    ", admin);
-        console.log("operator:  ", operator);
         console.log("token:    ", token);
 
         // Deploy contract
@@ -34,7 +34,7 @@ contract DeployBankroll is Script {
         vm.stopBroadcast();
 
         // Set bankroll max allowance
-        vm.startBroadcast(managerPrivateKey);
+        vm.startBroadcast(adminPrivateKey);
         IERC20(token).approve(
             address(bankroll),
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
