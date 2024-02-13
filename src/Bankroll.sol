@@ -132,6 +132,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         // transfer ERC20 from the user to the vault
         ERC20.safeTransferFrom(msg.sender, address(this), _amount);
 
+        // Emit a funds deposited event
         emit DGEvents.FundsDeposited(msg.sender, _amount);
     }
 
