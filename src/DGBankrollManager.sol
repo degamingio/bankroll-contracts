@@ -22,7 +22,7 @@ import {DGErrors} from "src/libraries/DGErrors.sol";
  *
  */
 contract DGBankrollManager is Ownable {
-    //Using SafeERC20 for safer token interaction
+    /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
 
     /// @dev Event period, the minimum time between each claim
@@ -52,6 +52,7 @@ contract DGBankrollManager is Ownable {
     /**
      * @notice DGBankrollManager constructor
      *   Just sets the deployer of this contract as the owner
+     *
      */
     constructor() Ownable(msg.sender) {}
 
@@ -87,10 +88,18 @@ contract DGBankrollManager is Ownable {
         bankrollStatus[_bankroll] = false;
     }
 
+    /**
+     * @notice 
+     *  Adding list of operator to list of operators associated with a bankroll
+     *  Only calleable by owner
+     *
+     * @param _bankroll the bankroll contract address
+     * @param _operator address of the operator we want to add to the list of associated operators
+     *
+     */
     function setOperatorToBankroll(address _bankroll, address _operator) external onlyOwner  {
         operatorsOf[_bankroll].push(_operator);
     }
-
 
     /**
      * @notice Claim profit from the bankroll
