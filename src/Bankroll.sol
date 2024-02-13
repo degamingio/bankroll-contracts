@@ -333,7 +333,8 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
 
         // Transfer ERC20 to the caller
         ERC20.transfer(msg.sender, amount);
-
+    
+        // Emit an event that funds are withdrawn
         emit DGEvents.FundsWithdrawn(msg.sender, amount);
     }
 }

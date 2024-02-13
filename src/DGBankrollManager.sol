@@ -15,6 +15,12 @@ import {IBankroll} from "src/interfaces/IBankroll.sol";
 import {DGEvents} from "src/libraries/DGEvents.sol";
 import {DGErrors} from "src/libraries/DGErrors.sol";
 
+/**
+ * @title DGBankrollManager
+ * @author DeGaming Technical Team
+ * @notice Fee management of GGR 
+ *
+ */
 contract DGBankrollManager is Ownable {
     //Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
@@ -91,7 +97,7 @@ contract DGBankrollManager is Ownable {
 
     /**
      * @notice Claim profit from the bankroll
-     * Called by an authorized manager
+     * 
      * @param _bankroll address of bankroll 
      *
      */

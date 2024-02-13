@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
+/**
+ * @title DGEvents
+ * @author DeGaming Technical Team
+ * @notice Library containing DeGaming contracts' custom events
+ */
 library DGEvents {
     /// @dev Event emitted when LPs have deposited funds
     event FundsDeposited(address lp, uint256 amount);
