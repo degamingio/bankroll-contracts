@@ -209,16 +209,31 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         isPublic = _isPublic;
     }
 
+
     function nullGgrOf(address _operator) external onlyRole(BANKROLL_MANAGER){
         GGR -= ggrOf[_operator];
         ggrOf[_operator] =  0;
     }
 
+    /**
+     * @notice Update the ADMIN role
+     *  Only calleable by contract owner
+     *
+     * @param _oldAdmin address of the old admin
+     * @param _newAdmin address of the new admin
+     */
     function updateAdmin(address _oldAdmin, address _newAdmin) external onlyOwner {
         _revokeRole(ADMIN, _oldAdmin);
         _grantRole(ADMIN, _newAdmin);
     }
 
+    /**
+     * @notice Update the BANKROLL_MANAGER role
+     *  Only calleable by contract owner
+     *
+     * @param _oldBankrollManager address of the old bankroll manager
+     * @param _newBankrollManager address of the new bankroll manager
+     */
     function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external onlyOwner {
         _revokeRole(BANKROLL_MANAGER, _oldBankrollManager);
         _grantRole(BANKROLL_MANAGER, _newBankrollManager);
@@ -230,13 +245,20 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     //  | |/ / /  __/ |/ |/ /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
     //  |___/_/\___/|__/|__/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
+    /**
+     * @notice Returns the adddress of the token associated with this bankroll
+     *
+     * @return _token token address
+     */
     function viewTokenAddress() external view returns (address _token) {
         _token = address(ERC20);
     }
 
     /**
      * @notice Returns the amount of ERC20 tokens held by the bankroll that are available for playes to win and
-     * will not include funds that are reserved for managers profit
+     * will not include funds that are reserved for GGR
+     *
+     * @return _balance available balance for LPs
      */
     function liquidity() public view returns (uint256 _balance) {
         if (GGR <= 0) {
@@ -249,6 +271,8 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     /**
      * @notice Returns the current value of the LPs investment (deposit + profit).
      * @param _lp Liquidity Provider address
+     *
+     * @return _amount the value of the lps holdings
      */
     function getLpValue(address _lp) external view returns (uint256 _amount) {
         if (sharesOf[_lp] > 0) {
@@ -261,6 +285,8 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     /**
      * @notice Returns the current profit of the LPs investment.
      * @param _lp Liquidity Provider address
+     *
+     * @return _profit collected LP profit
      */
     function getLpProfit(address _lp) public view returns (int256 _profit) {
         if (sharesOf[_lp] > 0) {
@@ -275,6 +301,8 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     /**
      * @notice Returns the current stake of the LPs investment in percentage
      * @param _lp Liquidity Provider address
+     *
+     * @return _stake the stake amount of given LP address
      */
     function getLpStake(address _lp) external view returns (uint256 _stake) {
         if (sharesOf[_lp] > 0) {
@@ -286,7 +314,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
 
     /**
      * @notice returns the maximum amount that can be taken from the bankroll during debit() call
-     * @param _maxRisk the maximum amount that can be risked
+     * @return _maxRisk the maximum amount that can be risked
      */
     function getMaxRisk() public view returns (uint256 _maxRisk) {
         uint256 currentLiquidity = ERC20.balanceOf(address(this));
