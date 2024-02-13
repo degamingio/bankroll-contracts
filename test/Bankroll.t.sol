@@ -8,7 +8,7 @@ import {DGErrors} from "src/libraries/DGErrors.sol";
 
 contract BankrollTest is Test {
     address admin;
-    address manager;
+    address operator;
     address lpOne;
     address lpTwo;
     address player;
@@ -19,7 +19,7 @@ contract BankrollTest is Test {
 
     function setUp() public {
         admin = address(0x1);
-        manager = address(0x2);
+        operator = address(0x2);
         lpOne = address(0x3);
         lpTwo = address(0x4);
         player = address(0x5);
@@ -132,7 +132,7 @@ contract BankrollTest is Test {
 
         // pay player 500_000
         vm.prank(admin);
-        bankroll.debit(player, 500_000, address(manager));
+        bankroll.debit(player, 500_000, address(operator));
 
         // bankroll now has 500_000
         assertEq(bankroll.liquidity(), 500_000);
@@ -153,7 +153,7 @@ contract BankrollTest is Test {
         assertEq(bankroll.liquidity(), 1000_000);
 
         vm.prank(admin);
-        bankroll.debit(player, 5000_000, address(manager));
+        bankroll.debit(player, 5000_000, address(operator));
 
         assertEq(bankroll.liquidity(), 0);
         assertEq(token.balanceOf(address(player)), 1000_000);
@@ -171,7 +171,7 @@ contract BankrollTest is Test {
 
         vm.startPrank(admin);
         token.approve(address(bankroll), 500_000);
-        bankroll.credit(500_000, address(manager));
+        bankroll.credit(500_000, address(operator));
         vm.stopPrank();
 
         // profit is not available for LPs before managers has claimed it
@@ -186,7 +186,7 @@ contract BankrollTest is Test {
         // bankroll.depositFunds(1000_000);
         // vm.stopPrank();
 
-        // vm.startPrank(manager);
+        // vm.startPrank(operator);
         // token.approve(address(bankroll), 100_000);
         // bankroll.credit(100_000);
         // vm.stopPrank();
@@ -197,13 +197,13 @@ contract BankrollTest is Test {
         // assertEq(bankroll.lpsProfit(), 0);
 
         // // claim profit
-        // vm.startPrank(manager);
+        // vm.startPrank(operator);
         // bankroll.claimProfit();
         // vm.stopPrank();
 
         // // managers should have claimed profit
         // assertEq(bankroll.managersProfit(), 0);
-        // assertEq(bankroll.profitOf(address(manager)), 0);
+        // assertEq(bankroll.profitOf(address(operator)), 0);
 
         // // profit is NOW available for LPs
         // assertEq(bankroll.lpsProfit(), 6_500);
@@ -226,11 +226,11 @@ contract BankrollTest is Test {
         // bankroll.depositFunds(100_000);
         // vm.stopPrank();
 
-        // vm.prank(manager);
+        // vm.prank(operator);
         // bankroll.debit(player, 10_000);
 
-        // // manager cannot claim profit when negative
-        // vm.prank(manager);
+        // // operator cannot claim profit when negative
+        // vm.prank(operator);
         // vm.expectRevert(0xb5b9a8e6); //reverts: NO_PROFIT()
         // bankroll.claimProfit();
 
@@ -259,18 +259,18 @@ contract BankrollTest is Test {
     }
 
     function test_setManager() public {
-        // assertEq(bankroll.managers(manager), true);
+        // assertEq(bankroll.managers(operator), true);
 
         // vm.prank(admin);
         // bankroll.setManager(lpOne, true);
 
         // assertEq(bankroll.managers(lpOne), true);
-        // assertEq(bankroll.managers(manager), true);
+        // assertEq(bankroll.managers(operator), true);
 
         // vm.prank(admin);
-        // bankroll.setManager(manager, false);
+        // bankroll.setManager(operator, false);
 
-        // assertEq(bankroll.managers(manager), false);
+        // assertEq(bankroll.managers(operator), false);
     }
 
     function test_setPublic() public {
