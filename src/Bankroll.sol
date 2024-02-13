@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.18;
 
 /* Openzeppelin Interfaces */
@@ -283,8 +284,12 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         }
     }
 
+    /**
+     * @notice returns the maximum amount that can be taken from the bankroll during debit() call
+     * @param _maxRisk the maximum amount that can be risked
+     */
     function getMaxRisk() public view returns (uint256 _maxRisk) {
-        uint256 currentLiquidity = liquidity();
+        uint256 currentLiquidity = ERC20.balanceOf(address(this));
         _maxRisk = (currentLiquidity * maxRiskPercentage) / DENOMINATOR;
     }
 

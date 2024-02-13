@@ -147,8 +147,8 @@ contract BankrollTest is Test {
 
     function test_debitInsufficientFunds() public {
         vm.startPrank(lpOne);
-        token.approve(address(bankroll), 1000_000);
-        bankroll.depositFunds(1000_000);
+        token.approve(address(bankroll), 1_000_000);
+        bankroll.depositFunds(1_000_000);
         vm.stopPrank();
 
         assertEq(bankroll.liquidity(), 1000_000);
