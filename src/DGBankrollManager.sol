@@ -39,6 +39,9 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
     /// @dev Set up bankroll instance
     IBankroll bankroll;
 
+    /// @dev ADMIN role
+    bytes32 public constant ADMIN = keccak256("ADMIN");
+
     /// @dev store bankroll status
     mapping(address bankroll => bool isApproved) public bankrollStatus;
 
@@ -64,6 +67,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      */
     constructor(address _deGaming) Ownable(msg.sender) {
         deGaming = _deGaming;
+        _grantRole(ADMIN, msg.sender);
     }
 
     //     ____        __         ____                              ______                 __  _
@@ -114,9 +118,18 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
 
         // Approve operator
         isApproved[_operator] = true;
+    }
 
-        // Grant operator with lp whitelist admin role
-        IBankroll(_bankroll).addLPWhitelistAdmin(_operator);
+    /**
+     * @notice
+     *  Adding an operator to bankroll ecosystem
+     *
+     * @param _operator address of the operaotr
+     *
+     */
+    function addOperator(address _operator) external onlyRole(ADMIN) {
+        // Sett operators appoved status
+        isApproved[_operator] = true;
     }
 
     /**
@@ -126,7 +139,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      * @param _operator address of the operator we want to block
      *
      */
-    function blockOperator(address _operator) external onlyOwner() {
+    function blockOperator(address _operator) external onlyRole(ADMIN) {
         // Remove operators approved status
         isApproved[_operator] = false;
     }

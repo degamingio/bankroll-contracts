@@ -21,4 +21,7 @@ library DGErrors {
 
     /// @dev Error thrown when address sent to credit/debit is not a valid operator
     error NOT_AN_OPERATOR();
+
+    /// @dev Error thrown when 
+    error NO_LP_ACCESS_PERMISSION();
 }

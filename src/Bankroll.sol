@@ -52,9 +52,6 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     /// @dev BANKROLL_MANAGER role
     bytes32 public constant BANKROLL_MANAGER = keccak256("BANKROLL_MANAGER");
 
-    /// @dev LP_WHITELIST_ADMIN role 
-    bytes32 public constant LP_WHITELIST_ADMIN = keccak256("LP_WHITELIST_ADMIN");
-
     /// @dev The GGR of a certain operator
     mapping(address operator => int256 operatorGGR) public ggrOf;
     
@@ -103,9 +100,6 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
 
         // Grant Admin role
         _grantRole(ADMIN, _admin);
-
-        // Grant LP Whitelist Admin role
-        _grantRole(LP_WHITELIST_ADMIN, _admin);
 
         // Grant Bankroll manager role
         _grantRole(BANKROLL_MANAGER, _bankrollManager);
@@ -246,9 +240,8 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      * @param _isAuthorized If false, LP will not be able to deposit
      *
      */
-    function setInvestorWhitelist(address _lp, bool _isAuthorized) external onlyRole(LP_WHITELIST_ADMIN) {
-        // Check that operator is approved
-        if (!dgBankrollManager.isApproved(msg.sender)) revert DGErrors.NOT_AN_OPERATOR();
+    function setInvestorWhitelist(address _lp, bool _isAuthorized) external {
+        if (!dgBankrollManager.isApproved(msg.sender) && !hasRole(ADMIN, msg.sender) ) revert DGErrors.NO_LP_ACCESS_PERMISSION();
         
         // Add toggle LPs _isAuthorized status
         lpWhitelist[_lp] = _isAuthorized;
@@ -314,30 +307,6 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
 
         // Update BankrollManager Contract
         dgBankrollManager = IDGBankrollManager(_newBankrollManager);
-    }
-
-    /**
-     * @notice Add new operator to LP_WHITELIST_ADMIN role
-     *  Only callable from the bankroll manager contract, in the event of adding a new operator
-     *
-     * @param _operator Address of the new operator
-     *
-     */
-    function addLPWhitelistAdmin(address _operator) external onlyRole(BANKROLL_MANAGER) {
-        // Grant the lp whitelist admin role
-        _grantRole(LP_WHITELIST_ADMIN, _operator);
-    }
-
-    /**
-     * @notice Remove new operator from LP_WHITELIST_ADMIN role
-     *  Only callable from the bankroll manager contract, in the event of blocking an operator
-     *
-     * @param _operator Address of the new operator
-     *
-     */
-    function removeLPWhitelistAdmin(address _operator) external onlyRole(BANKROLL_MANAGER) {
-        // Remove the role
-        _revokeRole(LP_WHITELIST_ADMIN, _operator);
     }
 
     //   _    ___                 ______                 __  _
