@@ -2,57 +2,71 @@
 
 pragma solidity ^0.8.18;
 
-// import "forge-std/Test.sol";
+import "forge-std/Test.sol";
 
-// import {Bankroll} from "src/Bankroll.sol";
-// import {DGBankrollManager} from "src/DGBankrollManager.sol";
+/* DeGaming Contracts */
+import {Bankroll} from "src/Bankroll.sol";
+import {DGBankrollManager} from "src/DGBankrollManager.sol";
 
-// import {DGErrors} from "src/libraries/DGErrors.sol";
-// import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
+/* DeGaming Libraries */
+import {DGErrors} from "src/libraries/DGErrors.sol";
 
-// import {MockToken} from "test/mock/MockToken.sol";
+/* Mock Contracts */
+import {MockToken} from "test/mock/MockToken.sol";
 
-// contract DGBankrollManagerTest is Test {
-    // MockToken public mockToken;
-    // DGBankrollManager public dgBankrollManager;
+contract DGBankrollManagerTest is Test {
+    MockToken public mockToken;
+    DGBankrollManager public dgBankrollManager;
+    Bankroll public bankroll;
 
-    // address public deGaming;
-    // address public bankroll;
-    // address public gameProvider;
-    // address public manager;
+    address admin;
+    address deGaming;
+    address operator;
 
-    // uint64 public constant deGamingFee = 1_250;
-    // uint64 public constant bankrollFee = 1_300;
-    // uint64 public constant gameProviderFee = 650;
-    // uint64 public constant managerFee = 6_800;
+    uint256 maxRisk = 10_000;
 
-    // uint256 public constant DENOMINATOR = 10_000;
+    function setUp() public {
+        admin = address(0x1);
+        deGaming = address(0x2);
+        operator = address(0x3);
 
-    // function setUp() public {
-        // deGaming = vm.addr(2);
-        // bankroll = vm.addr(3);
-        // gameProvider = vm.addr(4);
-        // manager = vm.addr(5);
+        mockToken = new MockToken("Mock USDC", "mUSDC");
 
-        // vm.label(deGaming, "deGaming");
-        // vm.label(bankroll, "bankroll");
-        // vm.label(gameProvider, "gameProvider");
-        // vm.label(manager, "manager");
+        dgBankrollManager = new DGBankrollManager(deGaming);
 
-        // mockToken = new MockToken("Mock USDC", "mUSDC");
+        bankroll = new Bankroll(admin, address(mockToken), address(dgBankrollManager), maxRisk);
 
-        // dgBankrollManager = new DGBankrollManager();
-    // }
+        dgBankrollManager.approveBankroll(address(bankroll));
 
-    // function  test_setBankrollFees(address _bankrollAddress) public {
-        // dgBankrollManager.setBankrollFees(address(_bankrollAddress), deGamingFee, bankrollFee, gameProviderFee, managerFee);
+        dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
 
-        // (uint256 _deGaming, uint256 _bankroll, uint256 _gameProvider, uint256 _manager) =
-            // dgBankrollManager.bankrollFees(address(_bankrollAddress));
+        mockToken.mint(admin, 1_000_000);
 
-        // assertEq(_deGaming, deGamingFee);
-        // assertEq(_bankroll, bankrollFee);
-        // assertEq(_gameProvider, gameProviderFee);
-        // assertEq(_manager, managerFee);
-    // }
-// }
+        vm.prank(admin);
+    
+        mockToken.approve(address(bankroll), 1_000_000);
+    }
+
+    function test_claimProfit() public {    
+        vm.prank(admin);
+        bankroll.credit(1_000_000, operator);
+
+        dgBankrollManager.claimProfit(address(bankroll));
+    }
+
+    function test_claimProfit_nothingToClaim() public {
+        vm.expectRevert(DGErrors.NOTHING_TO_CLAIM.selector);
+        dgBankrollManager.claimProfit(address(bankroll));
+    }
+
+
+    function test_blockBankroll() public {
+        vm.prank(admin);
+        bankroll.credit(1_000_000, operator);
+
+        dgBankrollManager.blockBankroll(address(bankroll));
+
+        vm.expectRevert(DGErrors.BANKROLL_NOT_APPROVED.selector);
+        dgBankrollManager.claimProfit(address(bankroll));
+    }
+}

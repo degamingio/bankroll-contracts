@@ -58,3 +58,9 @@ forge script script/deploy-Bankroll.s.sol:DeployBankroll --broadcast --legacy --
 
 forge script script/deploy-Bankroll.s.sol:DeployBankroll --broadcast --legacy --rpc-url https://rpc.xinfin.network
 ```
+
+Deploy Platform
+
+```sh
+forge script script/deploy-Platform.s.sol:DeployPlatform --broadcast --legacy --rpc-url xdc-mainnet
+```

@@ -159,4 +159,20 @@ interface IBankroll {
      *
      */
     function getMaxRisk() external view returns (uint256 _maxRisk);
+
+    /**
+     * @notice Getter function for GGR variable
+     *
+     */
+    function GGR() external view returns(int256);
+
+    /**
+     * @notice getter function for ggrOf mapping
+     *
+     * @param operator address of operator
+     *
+     * @return operatorGGR the GGR of specified operator
+     *
+     */
+    function ggrOf(address operator) external view returns(int256 operatorGGR);
 }
