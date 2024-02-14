@@ -46,7 +46,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
     mapping(address bankroll => address[] operator) public operatorsOf;
 
     /// @dev mapping that if operator is approved
-    mapping(address operator => bool isApproved) public isApproved;
+    mapping(address operator => bool approved) public isApproved;
 
     /// @dev Store time claimed + event period
     mapping(address claimer => uint256 timestamp) public eventPeriodEnds;
@@ -109,14 +109,27 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      *
      */
     function setOperatorToBankroll(address _bankroll, address _operator) external onlyOwner {
+        // Add operator into array of associated operators to bankroll
         operatorsOf[_bankroll].push(_operator);
+
+        // Approve operator
         isApproved[_operator] = true;
+
+        // Grant operator with lp whitelist admin role
+        IBankroll(_bankroll).addLPWhitelistAdmin(_operator);
     }
 
+    /**
+     * @notice
+     *  Block an operator from all bankrolls
+     *
+     * @param _operator address of the operator we want to block
+     *
+     */
     function blockOperator(address _operator) external onlyOwner() {
+        // Remove operators approved status
         isApproved[_operator] = false;
     }
-
 
     //     ______     __                        __   ______                 __  _
     //    / ____/  __/ /____  _________  ____ _/ /  / ____/_  ______  _____/ /_(_)___  ____  _____

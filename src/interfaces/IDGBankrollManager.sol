@@ -54,5 +54,7 @@ interface IDGBankrollManager {
      * @param _bankroll address of bankroll 
      *
      */
-    function claimProfit(address _bankroll) external;      
+    function claimProfit(address _bankroll) external;
+
+    function isApproved(address operator) external view returns(bool approved); 
 } 

@@ -99,6 +99,24 @@ interface IBankroll {
      */
     function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external;
 
+    /**
+     * @notice Add new operator to LP_WHITELIST_ADMIN role
+     *  Only callable from the bankroll manager contract, in the event of adding a new operator
+     *
+     * @param _operator Address of the new operator
+     *
+     */
+    function addLPWhitelistAdmin(address _operator) external;
+
+    /**
+     * @notice Remove new operator from LP_WHITELIST_ADMIN role
+     *  Only callable from the bankroll manager contract, in the event of blocking an operator
+     *
+     * @param _operator Address of the new operator
+     *
+     */
+    function removeLPWhitelistAdmin(address _operator) external; 
+
     //   _    ___                 ______                 __  _
     //  | |  / (_)__ _      __   / ____/_  ______  _____/ /_(_)___  ____  _____
     //  | | / / / _ \ | /| / /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/

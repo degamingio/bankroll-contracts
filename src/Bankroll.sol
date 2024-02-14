@@ -184,6 +184,9 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      *
      */
     function debit(address _player, uint256 _amount, address _operator) external onlyRole(ADMIN) {
+        // Check that operator is approved
+        if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
+        
         // pay what is left if amount is bigger than bankroll balance
         uint256 maxRisk = getMaxRisk();
         if (_amount > maxRisk) {
@@ -216,6 +219,9 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      *
      */
     function credit(uint256 _amount, address _operator) external onlyRole(ADMIN) {
+        // Check that operator is approved
+        if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
+        
         // Add to total GGR
         GGR += int256(_amount);
         
@@ -241,6 +247,9 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      *
      */
     function setInvestorWhitelist(address _lp, bool _isAuthorized) external onlyRole(LP_WHITELIST_ADMIN) {
+        // Check that operator is approved
+        if (!dgBankrollManager.isApproved(msg.sender)) revert DGErrors.NOT_AN_OPERATOR();
+        
         // Add toggle LPs _isAuthorized status
         lpWhitelist[_lp] = _isAuthorized;
     }
@@ -317,6 +326,18 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     function addLPWhitelistAdmin(address _operator) external onlyRole(BANKROLL_MANAGER) {
         // Grant the lp whitelist admin role
         _grantRole(LP_WHITELIST_ADMIN, _operator);
+    }
+
+    /**
+     * @notice Remove new operator from LP_WHITELIST_ADMIN role
+     *  Only callable from the bankroll manager contract, in the event of blocking an operator
+     *
+     * @param _operator Address of the new operator
+     *
+     */
+    function removeLPWhitelistAdmin(address _operator) external onlyRole(BANKROLL_MANAGER) {
+        // Remove the role
+        _revokeRole(LP_WHITELIST_ADMIN, _operator);
     }
 
     //   _    ___                 ______                 __  _
