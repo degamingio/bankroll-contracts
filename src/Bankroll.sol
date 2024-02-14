@@ -12,6 +12,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /* DeGaming Interfaces */
 import {IBankroll} from "src/interfaces/IBankroll.sol";
+import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";
 
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
@@ -51,6 +52,9 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     /// @dev BANKROLL_MANAGER role
     bytes32 public constant BANKROLL_MANAGER = keccak256("BANKROLL_MANAGER");
 
+    /// @dev LP_WHITELIST_ADMIN role 
+    bytes32 public constant LP_WHITELIST_ADMIN = keccak256("LP_WHITELIST_ADMIN");
+
     /// @dev The GGR of a certain operator
     mapping(address operator => int256 operatorGGR) public ggrOf;
     
@@ -67,7 +71,10 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     mapping(address lp => bool authorized) public lpWhitelist; 
     
     /// @dev bankroll liquidity token
-    IERC20 public immutable ERC20; 
+    IERC20 public immutable ERC20;
+
+    /// @dev Bankroll manager instance
+    IDGBankrollManager dgBankrollManager; 
     
     /// @dev if false, only whitelisted lps can deposit
     bool public isPublic = true; 
@@ -91,10 +98,15 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
 
         // Set the max risk percentage
         maxRiskPercentage = _maxRiskPercentage;
-        
+
+        dgBankrollManager = IDGBankrollManager(_bankrollManager);
+
         // Grant Admin role
         _grantRole(ADMIN, _admin);
-        
+
+        // Grant LP Whitelist Admin role
+        _grantRole(LP_WHITELIST_ADMIN, _admin);
+
         // Grant Bankroll manager role
         _grantRole(BANKROLL_MANAGER, _bankrollManager);
     }
@@ -228,7 +240,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      * @param _isAuthorized If false, LP will not be able to deposit
      *
      */
-    function setInvestorWhitelist(address _lp, bool _isAuthorized) external onlyRole(ADMIN) {
+    function setInvestorWhitelist(address _lp, bool _isAuthorized) external onlyRole(LP_WHITELIST_ADMIN) {
         // Add toggle LPs _isAuthorized status
         lpWhitelist[_lp] = _isAuthorized;
     }
@@ -290,6 +302,21 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         
         // Grant the new bankroll manager the BANKROLL_MANAGER role
         _grantRole(BANKROLL_MANAGER, _newBankrollManager);
+
+        // Update BankrollManager Contract
+        dgBankrollManager = IDGBankrollManager(_newBankrollManager);
+    }
+
+    /**
+     * @notice Add new operator to LP_WHITELIST_ADMIN role
+     *  Only callable from the bankroll manager contract, in the event of adding a new operator
+     *
+     * @param _operator Address of the new operator
+     *
+     */
+    function addLPWhitelistAdmin(address _operator) external onlyRole(BANKROLL_MANAGER) {
+        // Grant the lp whitelist admin role
+        _grantRole(LP_WHITELIST_ADMIN, _operator);
     }
 
     //   _    ___                 ______                 __  _

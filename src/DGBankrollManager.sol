@@ -7,12 +7,14 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /* Openzeppelin Contracts */
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /* DeGaming Contracts */
 import {Bankroll} from "src/Bankroll.sol";
 
 /* DeGaming Interfaces */
 import {IBankroll} from "src/interfaces/IBankroll.sol";
+import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";
 
 /* DeGaming Libraries */
 import {DGEvents} from "src/libraries/DGEvents.sol";
@@ -24,7 +26,7 @@ import {DGErrors} from "src/libraries/DGErrors.sol";
  * @notice Fee management of GGR 
  *
  */
-contract DGBankrollManager is Ownable {
+contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
 
@@ -42,6 +44,9 @@ contract DGBankrollManager is Ownable {
 
     /// @dev mapping that stores all operators associated with a bankroll
     mapping(address bankroll => address[] operator) public operatorsOf;
+
+    /// @dev mapping that if operator is approved
+    mapping(address operator => bool isApproved) public isApproved;
 
     /// @dev Store time claimed + event period
     mapping(address claimer => uint256 timestamp) public eventPeriodEnds;
@@ -103,10 +108,16 @@ contract DGBankrollManager is Ownable {
      * @param _operator address of the operator we want to add to the list of associated operators
      *
      */
-    function setOperatorToBankroll(address _bankroll, address _operator) external onlyOwner  {
+    function setOperatorToBankroll(address _bankroll, address _operator) external onlyOwner {
         operatorsOf[_bankroll].push(_operator);
+        isApproved[_operator] = true;
     }
-        
+
+    function blockOperator(address _operator) external onlyOwner() {
+        isApproved[_operator] = false;
+    }
+
+
     //     ______     __                        __   ______                 __  _
     //    / ____/  __/ /____  _________  ____ _/ /  / ____/_  ______  _____/ /_(_)___  ____  _____
     //   / __/ | |/_/ __/ _ \/ ___/ __ \/ __ `/ /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
@@ -145,7 +156,7 @@ contract DGBankrollManager is Ownable {
         eventPeriodEnds[_bankroll] = block.timestamp + EVENT_PERIOD;
 
         // Loop over the operator list and perform the claim process over each operator
-        for (uint256 i = 0; i >= operators.length; i++) {
+        for (uint256 i = 0; i < operators.length; i++) {
             
             // transfer the GGR to DeGaming
             token.safeTransferFrom(

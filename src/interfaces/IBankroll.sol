@@ -4,7 +4,7 @@ pragma solidity ^0.8.18;
 /**
  * @title IBankroll V1
  * @author DeGaming Technical Team
- * @notice Interface for Bankroll kontract
+ * @notice Interface for Bankroll contract
  *
  */
 interface IBankroll { 
