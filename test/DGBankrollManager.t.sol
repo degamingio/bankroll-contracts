@@ -61,6 +61,35 @@ contract DGBankrollManagerTest is Test {
         dgBankrollManager.claimProfit(address(bankroll));
     }
 
+    function test_addOperator(address _operator) public {
+        vm.prank(admin);
+        vm.expectRevert(DGErrors.NOT_AN_OPERATOR.selector);
+        bankroll.credit(1_000_000, _operator);
+
+        dgBankrollManager.addOperator(_operator);
+        vm.prank(admin);
+        bankroll.credit(1_000_000, _operator);
+
+        assertEq(mockToken.balanceOf(address(bankroll)), 1_000_000);
+    }
+
+    function test_removeOperator(address _operator) public {
+        vm.prank(admin);
+        vm.expectRevert(DGErrors.NOT_AN_OPERATOR.selector);
+        bankroll.credit(1_000_000, _operator);
+
+        dgBankrollManager.addOperator(_operator);
+        vm.prank(admin);
+        bankroll.credit(500_000, _operator);
+
+        assertEq(mockToken.balanceOf(address(bankroll)), 500_000);
+
+        dgBankrollManager.blockOperator(_operator);
+        
+        vm.prank(admin);
+        vm.expectRevert(DGErrors.NOT_AN_OPERATOR.selector);
+        bankroll.credit(500_000, _operator);
+    }
 
     function test_blockBankroll() public {
         vm.prank(admin);

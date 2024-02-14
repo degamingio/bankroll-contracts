@@ -241,7 +241,10 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      *
      */
     function setInvestorWhitelist(address _lp, bool _isAuthorized) external {
-        if (!dgBankrollManager.isApproved(msg.sender) && !hasRole(ADMIN, msg.sender) ) revert DGErrors.NO_LP_ACCESS_PERMISSION();
+        if (
+            !dgBankrollManager.isApproved(msg.sender) &&
+            !hasRole(ADMIN, msg.sender)
+        ) revert DGErrors.NO_LP_ACCESS_PERMISSION();
         
         // Add toggle LPs _isAuthorized status
         lpWhitelist[_lp] = _isAuthorized;
