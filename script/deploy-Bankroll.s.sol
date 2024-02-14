@@ -14,7 +14,7 @@ contract DeployBankroll is Script {
         // Private keys
         uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
         uint256 adminPrivateKey = vm.envUint("ADMIN_PRIVATE_KEY");
-        uint256 managerPrivateKey = vm.envUint("MANAGER_PRIVATE_KEY");
+        //uint256 managerPrivateKey = vm.envUint("MANAGER_PRIVATE_KEY");
         uint256 percentageRisk = 10_000;
 
         // Addresses

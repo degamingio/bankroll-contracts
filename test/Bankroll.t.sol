@@ -2,9 +2,17 @@
 pragma solidity ^0.8.18;
 
 import "forge-std/Test.sol";
+
+/* DeGaming Contracts */
 import {Bankroll} from "src/Bankroll.sol";
-import {MockToken} from "test/mock/MockToken.sol";
+import {DGBankrollManager} from "src/DGBankrollManager.sol";
+
+/* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
+
+/* Mock Contracts */
+import {MockToken} from "test/mock/MockToken.sol";
+
 
 contract BankrollTest is Test {
     address admin;
@@ -14,6 +22,7 @@ contract BankrollTest is Test {
     address player;
     address bankrollManager;
 
+    DGBankrollManager dgBankrollManager;
     Bankroll bankroll;
     MockToken token;
 
@@ -23,14 +32,18 @@ contract BankrollTest is Test {
         lpOne = address(0x3);
         lpTwo = address(0x4);
         player = address(0x5);
-        bankrollManager = address(0x6);
+        //bankrollManager = address(0x6);
         uint256 maxRisk = 10_000;
+        
+        dgBankrollManager = new DGBankrollManager(admin);
         token = new MockToken("token", "MTK");
-        bankroll = new Bankroll(admin, address(token), bankrollManager, maxRisk);
+        bankroll = new Bankroll(admin, address(token), address(dgBankrollManager), maxRisk);
 
         token.mint(lpOne, 1_000_000);
         token.mint(lpTwo, 1_000_000);
         token.mint(admin, 1_000_000);
+
+        dgBankrollManager.addOperator(operator);
     }
 
     function test_depositFunds() public {

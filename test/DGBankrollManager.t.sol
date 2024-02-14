@@ -36,7 +36,7 @@ contract DGBankrollManagerTest is Test {
 
         bankroll = new Bankroll(admin, address(mockToken), address(dgBankrollManager), maxRisk);
 
-        dgBankrollManager.approveBankroll(address(bankroll));
+        dgBankrollManager.approveBankroll(address(bankroll), 650);
 
         dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
 
@@ -50,6 +50,8 @@ contract DGBankrollManagerTest is Test {
     function test_claimProfit() public {    
         vm.prank(admin);
         bankroll.credit(1_000_000, operator);
+
+        bankroll.maxBankrollManagerApprove();
 
         dgBankrollManager.claimProfit(address(bankroll));
     }

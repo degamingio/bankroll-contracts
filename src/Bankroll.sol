@@ -12,6 +12,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /* DeGaming Interfaces */
 import {IBankroll} from "src/interfaces/IBankroll.sol";
+import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";
 
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
@@ -67,7 +68,10 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     mapping(address lp => bool authorized) public lpWhitelist; 
     
     /// @dev bankroll liquidity token
-    IERC20 public immutable ERC20; 
+    IERC20 public immutable ERC20;
+
+    /// @dev Bankroll manager instance
+    IDGBankrollManager dgBankrollManager; 
     
     /// @dev if false, only whitelisted lps can deposit
     bool public isPublic = true; 
@@ -91,10 +95,12 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
 
         // Set the max risk percentage
         maxRiskPercentage = _maxRiskPercentage;
-        
+
+        dgBankrollManager = IDGBankrollManager(_bankrollManager);
+
         // Grant Admin role
         _grantRole(ADMIN, _admin);
-        
+
         // Grant Bankroll manager role
         _grantRole(BANKROLL_MANAGER, _bankrollManager);
     }
@@ -172,6 +178,9 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      *
      */
     function debit(address _player, uint256 _amount, address _operator) external onlyRole(ADMIN) {
+        // Check that operator is approved
+        if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
+        
         // pay what is left if amount is bigger than bankroll balance
         uint256 maxRisk = getMaxRisk();
         if (_amount > maxRisk) {
@@ -204,6 +213,9 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      *
      */
     function credit(uint256 _amount, address _operator) external onlyRole(ADMIN) {
+        // Check that operator is approved
+        if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
+        
         // Add to total GGR
         GGR += int256(_amount);
         
@@ -228,7 +240,9 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      * @param _isAuthorized If false, LP will not be able to deposit
      *
      */
-    function setInvestorWhitelist(address _lp, bool _isAuthorized) external onlyRole(ADMIN) {
+    function setInvestorWhitelist(address _lp, bool _isAuthorized) external {
+        if (!dgBankrollManager.isApproved(msg.sender) && !hasRole(ADMIN, msg.sender) ) revert DGErrors.NO_LP_ACCESS_PERMISSION();
+        
         // Add toggle LPs _isAuthorized status
         lpWhitelist[_lp] = _isAuthorized;
     }
@@ -290,7 +304,17 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         
         // Grant the new bankroll manager the BANKROLL_MANAGER role
         _grantRole(BANKROLL_MANAGER, _newBankrollManager);
+
+        // Update BankrollManager Contract
+        dgBankrollManager = IDGBankrollManager(_newBankrollManager);
     }
+
+    function maxBankrollManagerApprove() external {
+        ERC20.approve(
+            address(dgBankrollManager),
+            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+        );
+    } 
 
     //   _    ___                 ______                 __  _
     //  | |  / (_)__ _      __   / ____/_  ______  _____/ /_(_)___  ____  _____

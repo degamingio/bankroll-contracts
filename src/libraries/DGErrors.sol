@@ -18,4 +18,10 @@ library DGErrors {
 
     /// @dev Error thrown if GGR < 1 or even negative
     error NOTHING_TO_CLAIM();
+
+    /// @dev Error thrown when address sent to credit/debit is not a valid operator
+    error NOT_AN_OPERATOR();
+
+    /// @dev Error thrown when 
+    error NO_LP_ACCESS_PERMISSION();
 }
