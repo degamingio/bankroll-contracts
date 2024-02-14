@@ -309,6 +309,13 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         dgBankrollManager = IDGBankrollManager(_newBankrollManager);
     }
 
+    function maxBankrollManagerApprove() external {
+        ERC20.approve(
+            address(dgBankrollManager),
+            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+        );
+    } 
+
     //   _    ___                 ______                 __  _
     //  | |  / (_)__ _      __   / ____/_  ______  _____/ /_(_)___  ____  _____
     //  | | / / / _ \ | /| / /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/

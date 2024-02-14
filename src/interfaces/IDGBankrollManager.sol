@@ -16,7 +16,7 @@ interface IDGBankrollManager {
      * @param _bankroll bankroll contract address to be approved
      *
      */
-    function approveBankroll(address _bankroll) external;
+    function approveBankroll(address _bankroll, uint256 _fee) external;
 
     /**
      * @notice

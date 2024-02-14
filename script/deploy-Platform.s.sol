@@ -33,6 +33,8 @@ contract DeployPlatform is Script {
 
     uint256 maxRisk = 10_000;
 
+    uint256 lpFee = 650;
+
     function setUp() public {
         deGaming = address(0x2);
 
@@ -40,7 +42,7 @@ contract DeployPlatform is Script {
 
         bankroll = new Bankroll(admin, address(token), address(dgBankrollManager), maxRisk);
 
-        dgBankrollManager.approveBankroll(address(bankroll));
+        dgBankrollManager.approveBankroll(address(bankroll), lpFee);
 
         dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
 
