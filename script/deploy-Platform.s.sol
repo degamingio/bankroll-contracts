@@ -35,8 +35,13 @@ contract DeployPlatform is Script {
 
     uint256 lpFee = 650;
 
-    function setUp() public {
-        deGaming = address(0x2);
+    function run() public {
+
+        vm.startBroadcast(deployerPrivateKey);
+
+        console.log("deployer: ", vm.addr(deployerPrivateKey));
+        console.log("admin:    ", admin);
+        console.log("token:    ", token);
 
         dgBankrollManager = new DGBankrollManager(deGaming);
 
@@ -46,11 +51,18 @@ contract DeployPlatform is Script {
 
         dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
 
-        vm.prank(admin);
+        bankroll.maxBankrollManagerApprove();
+
+        vm.stopBroadcast();
+
+        // Set bankroll max allowance
+        vm.startBroadcast(adminPrivateKey);
     
         IERC20(token).approve(
             address(bankroll),
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         );
+
+        vm.stopBroadcast();
     }
 }
