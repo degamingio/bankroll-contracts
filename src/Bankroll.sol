@@ -185,7 +185,9 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         uint256 maxRisk = getMaxRisk();
         if (_amount > maxRisk) {
             _amount = maxRisk;
-            emit DGEvents.BankrollSwept(_player, _amount);
+            // Emit event that the bankroll is sweppt
+            //(emit DGEvents.BankrollSwept(_player, _amount))
+            dgBankrollManager.emitEvent(4, _player, 0x0, _amount);
         }
 
         // substract from total GGR
@@ -201,7 +203,8 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         ERC20.safeTransfer(_player, _amount);
 
         // Emit debit event
-        emit DGEvents.Debit(msg.sender, _player, _amount);
+        // (emit DGEvents.Debit(msg.sender, _player, _amount)
+        dgBankrollManager.emitEvent(2, msg.sender, _player, _amount);
     }
 
     /**
@@ -229,7 +232,8 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         ERC20.safeTransferFrom(msg.sender, address(this), _amount);
 
         // Emit credit event
-        emit DGEvents.Credit(msg.sender, _amount);
+        // (emit DGEvents.Credit(msg.sender, _amount))
+        dgBankrollManager.emitEvent(3, msg.sender, 0x0, _amount);
     }
 
     /**
