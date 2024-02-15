@@ -8,17 +8,20 @@ pragma solidity ^0.8.18;
  */
 library DGEvents {
     /// @dev Event emitted when LPs have deposited funds
-    event FundsDeposited(address lp, uint256 amount);
+    event FundsDeposited(address bankroll, address lp, uint256 amount);
 
     /// @dev Event emitted when LPs have withdrawn funds
-    event FundsWithdrawn(address lp, uint256 amount);
+    event FundsWithdrawn(address bankroll, address lp, uint256 amount);
     
     /// @dev Event emitted when debit function is called
-    event Debit(address manager, address player, uint256 amount);
+    event Debit(address bankroll, address manager, address player, uint256 amount);
     
     /// @dev Event emitted when Credit function is called
-    event Credit(address manager, uint256 amount);
+    event Credit(address bankroll, address manager, uint256 amount);
     
     /// @dev Event emitted when the bankroll is emptied or reached max risk
-    event BankrollSwept(address player, uint256 amount);
+    event BankrollSwept(address bankroll, address player, uint256 amount);
+
+    /// @dev Event emitted when profits are claimed
+    event ProfitsClaimed(address bankroll, uint256 amount);
 }

@@ -16,7 +16,6 @@ import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";
 
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
-import {DGEvents} from "src/libraries/DGEvents.sol";
 
 /**
  * @title Bankroll V1
@@ -142,8 +141,9 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         // transfer ERC20 from the user to the vault
         ERC20.safeTransferFrom(msg.sender, address(this), _amount);
 
-        // Emit a funds deposited event
-        emit DGEvents.FundsDeposited(msg.sender, _amount);
+        // Emit a funds deposited event 
+        // (emit DGEvents.FundsDeposited(msg.sender, _amount))
+        dgBankrollManager.emitEvent(0, msg.sender, 0x0, _amount);
     }
 
     /**
@@ -464,6 +464,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         ERC20.transfer(msg.sender, amount);
     
         // Emit an event that funds are withdrawn
-        emit DGEvents.FundsWithdrawn(msg.sender, amount);
+        // (emit DGEvents.FundsWithdrawn(msg.sender, amount))
+        dgBankrollManager.emitEvent(1, msg.sender, 0x0, amount);
     }
 }
