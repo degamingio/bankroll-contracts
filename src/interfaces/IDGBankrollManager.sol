@@ -56,5 +56,23 @@ interface IDGBankrollManager {
      */
     function claimProfit(address _bankroll) external;
 
+    /**
+     * @notice Event handler for bankrolls
+     *  General event emitter function that is used from bankroll contract
+     *  In order for all events to be fetched from the same place for the frontend 
+     *
+     * @param _eventSpecifier choose what event to emit 
+     * @param _address1 first address sent to event
+     * @param _address2 second address sent to event (optional that it is used) 
+     * @param _number uint256 type sent to the event
+     *
+     */
+    function emitEvent(
+        uint256 _eventSpecifier,
+        address _address1,
+        address _address2,
+        uint256 _number
+    ) external;
+
     function isApproved(address operator) external view returns(bool approved); 
 } 

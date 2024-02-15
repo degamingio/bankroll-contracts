@@ -195,6 +195,8 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
 
         uint256 amount;
 
+        uint256 totalAmount;
+
         // Loop over the operator list and perform the claim process over each operator
         for (uint256 i = 0; i < operators.length; i++) {
             if (bankroll.ggrOf(operators[i]) > 0) {
@@ -208,9 +210,48 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
                     amount
                 );
 
+                totalAmount += uint256(bankroll.ggrOf(operators[i]));
+
                 // Zero out the GGR
                 bankroll.nullGgrOf(operators[i]);
             }
+        }
+
+        emit DGEvents.ProfitsClaimed(_bankroll, totalAmount);
+    }
+
+
+    /**
+     * @notice Event handler for bankrolls
+     *  General event emitter function that is used from bankroll contract
+     *  In order for all events to be fetched from the same place for the frontend 
+     *
+     * @param _eventSpecifier choose what event to emit 
+     * @param _address1 first address sent to event
+     * @param _address2 second address sent to event (optional that it is used) 
+     * @param _number uint256 type sent to the event
+     *
+     */
+    function emitEvent(
+        uint256 _eventSpecifier,
+        address _address1,
+        address _address2,
+        uint256 _number
+    ) external {
+        // Check that the bankroll is an approved DeGaming Bankroll
+        if (!bankrollStatus[msg.sender]) revert DGErrors.BANKROLL_NOT_APPROVED();
+        
+        // Chose what event to emit
+        if (_eventSpecifier == 0) {
+            emit DGEvents.FundsDeposited(msg.sender, _address1, _number);
+        } else if (_eventSpecifier == 1) {
+            emit DGEvents.FundsWithdrawn(msg.sender, _address1, _number);
+        } else if (_eventSpecifier == 2) {
+            emit DGEvents.Debit(msg.sender, _address1, _address2, _number);
+        } else if (_eventSpecifier == 3) {
+            emit DGEvents.Credit(msg.sender, _address1, _number);
+        } else if (_eventSpecifier == 4) {
+            emit DGEvents.BankrollSwept(msg.sender, _address1, _number);
         }
     }
 }

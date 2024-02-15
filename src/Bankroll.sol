@@ -16,7 +16,6 @@ import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";
 
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
-import {DGEvents} from "src/libraries/DGEvents.sol";
 
 /**
  * @title Bankroll V1
@@ -74,7 +73,9 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     IDGBankrollManager dgBankrollManager; 
     
     /// @dev if false, only whitelisted lps can deposit
-    bool public isPublic = true; 
+    bool public isPublic = true;
+
+    address constant NULL =  0x0000000000000000000000000000000000000000;
 
     //     ______                 __                  __
     //    / ____/___  ____  _____/ /________  _______/ /_____  _____
@@ -142,8 +143,9 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         // transfer ERC20 from the user to the vault
         ERC20.safeTransferFrom(msg.sender, address(this), _amount);
 
-        // Emit a funds deposited event
-        emit DGEvents.FundsDeposited(msg.sender, _amount);
+        // Emit a funds deposited event 
+        // (emit DGEvents.FundsDeposited(msg.sender, _amount))
+        dgBankrollManager.emitEvent(0, msg.sender, NULL, _amount);
     }
 
     /**
@@ -185,7 +187,9 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         uint256 maxRisk = getMaxRisk();
         if (_amount > maxRisk) {
             _amount = maxRisk;
-            emit DGEvents.BankrollSwept(_player, _amount);
+            // Emit event that the bankroll is sweppt
+            //(emit DGEvents.BankrollSwept(_player, _amount))
+            dgBankrollManager.emitEvent(4, _player, NULL, _amount);
         }
 
         // substract from total GGR
@@ -201,7 +205,8 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         ERC20.safeTransfer(_player, _amount);
 
         // Emit debit event
-        emit DGEvents.Debit(msg.sender, _player, _amount);
+        // (emit DGEvents.Debit(msg.sender, _player, _amount)
+        dgBankrollManager.emitEvent(2, msg.sender, _player, _amount);
     }
 
     /**
@@ -229,7 +234,8 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         ERC20.safeTransferFrom(msg.sender, address(this), _amount);
 
         // Emit credit event
-        emit DGEvents.Credit(msg.sender, _amount);
+        // (emit DGEvents.Credit(msg.sender, _amount))
+        dgBankrollManager.emitEvent(3, msg.sender, NULL, _amount);
     }
 
     /**
@@ -464,6 +470,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         ERC20.transfer(msg.sender, amount);
     
         // Emit an event that funds are withdrawn
-        emit DGEvents.FundsWithdrawn(msg.sender, amount);
+        // (emit DGEvents.FundsWithdrawn(msg.sender, amount))
+        dgBankrollManager.emitEvent(1, msg.sender, NULL, amount);
     }
 }
