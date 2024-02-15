@@ -44,6 +44,7 @@ contract BankrollTest is Test {
         token.mint(admin, 1_000_000);
 
         dgBankrollManager.addOperator(operator);
+        dgBankrollManager.approveBankroll(address(bankroll), 0);
     }
 
     function test_depositFunds() public {

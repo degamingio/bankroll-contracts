@@ -73,7 +73,9 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     IDGBankrollManager dgBankrollManager; 
     
     /// @dev if false, only whitelisted lps can deposit
-    bool public isPublic = true; 
+    bool public isPublic = true;
+
+    address constant NULL =  0x0000000000000000000000000000000000000000;
 
     //     ______                 __                  __
     //    / ____/___  ____  _____/ /________  _______/ /_____  _____
@@ -143,7 +145,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
 
         // Emit a funds deposited event 
         // (emit DGEvents.FundsDeposited(msg.sender, _amount))
-        dgBankrollManager.emitEvent(0, msg.sender, 0x0, _amount);
+        dgBankrollManager.emitEvent(0, msg.sender, NULL, _amount);
     }
 
     /**
@@ -187,7 +189,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
             _amount = maxRisk;
             // Emit event that the bankroll is sweppt
             //(emit DGEvents.BankrollSwept(_player, _amount))
-            dgBankrollManager.emitEvent(4, _player, 0x0, _amount);
+            dgBankrollManager.emitEvent(4, _player, NULL, _amount);
         }
 
         // substract from total GGR
@@ -233,7 +235,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
 
         // Emit credit event
         // (emit DGEvents.Credit(msg.sender, _amount))
-        dgBankrollManager.emitEvent(3, msg.sender, 0x0, _amount);
+        dgBankrollManager.emitEvent(3, msg.sender, NULL, _amount);
     }
 
     /**
@@ -469,6 +471,6 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     
         // Emit an event that funds are withdrawn
         // (emit DGEvents.FundsWithdrawn(msg.sender, amount))
-        dgBankrollManager.emitEvent(1, msg.sender, 0x0, amount);
+        dgBankrollManager.emitEvent(1, msg.sender, NULL, amount);
     }
 }

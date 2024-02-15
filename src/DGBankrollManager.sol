@@ -210,14 +210,14 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
                     amount
                 );
 
-                totalAmount += bankroll.ggrOf(operators[i]);
+                totalAmount += uint256(bankroll.ggrOf(operators[i]));
 
                 // Zero out the GGR
                 bankroll.nullGgrOf(operators[i]);
             }
         }
 
-        DGEvents.ProfitsClaimed(_bankroll, totalAmount);
+        emit DGEvents.ProfitsClaimed(_bankroll, totalAmount);
     }
 
 
