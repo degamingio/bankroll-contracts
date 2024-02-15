@@ -31,6 +31,15 @@
 | Casin0x   | Staging     | mUSDT |                  | https://explorer.apothem.network/address/0x05fb034b05d42abd5deeead5c528e42cf465629a |             |
 | Casin0x   | Production  | USDT  |                  |                                                                                     | https://xdcscan.io/address/xdcb6e7daef92c0ba5420ea2c394f9f654f259ec6c4 | 
 
+
+## Bankroll V2 XDC-Apothem
+
+| Contract Name     | Adress                                     | Explorer                                                                            |
+|-------------------|--------------------------------------------|-------------------------------------------------------------------------------------|
+| Bankroll          | 0xEA990A45aE714C93762d2aB760042A5664D2f49E | https://explorer.apothem.network/address/0xea990a45ae714c93762d2ab760042a5664d2f49e |
+| DGBankrollManager | 0x68e829FD363be4B5fCEA26e6d6dCDd0ea93e9B26 | https://explorer.apothem.network/address/0x68e829fd363be4b5fcea26e6d6dcdd0ea93e9b26 |
+## Bankroll V2 Arbitrum-Sepolia
+
 ## Compile Project
 
 ```sh
