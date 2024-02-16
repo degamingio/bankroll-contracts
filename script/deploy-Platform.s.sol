@@ -7,6 +7,9 @@ import "forge-std/Script.sol";
 /* OpenZeppelin Interfaces */
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+/* OpenZeppelin Contract */
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol"; 
+
 /* DeGaming Contracts */
 import {Bankroll} from "src/Bankroll.sol";
 import {DGBankrollManager} from "src/DGBankrollManager.sol";
@@ -15,6 +18,9 @@ import {DGBankrollManager} from "src/DGBankrollManager.sol";
 import {DGErrors} from "src/libraries/DGErrors.sol";
 
 contract DeployPlatform is Script {
+    /// @dev Using SafeERC20 for safer token interaction
+    using SafeERC20 for IERC20;
+
     DGBankrollManager public dgBankrollManager;
     Bankroll public bankroll;
 
@@ -58,7 +64,7 @@ contract DeployPlatform is Script {
         // Set bankroll max allowance
         vm.startBroadcast(adminPrivateKey);
     
-        IERC20(token).approve(
+        IERC20(token).forceApprove(
             address(bankroll),
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         );
