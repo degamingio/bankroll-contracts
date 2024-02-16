@@ -190,7 +190,7 @@ contract BankrollTest is Test {
         vm.stopPrank();
 
         // profit is not available for LPs before managers has claimed it
-        assertEq(bankroll.liquidity(), 1000_000);
+        assertEq(bankroll.liquidity(), 1_000_000);
         assertEq(bankroll.GGR(), 500_000);
         assertEq(bankroll.lpsProfit(), 0);
     }
