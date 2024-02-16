@@ -165,23 +165,23 @@ contract BankrollTest is Test {
         bankroll.depositFunds(1_000_000);
         vm.stopPrank();
 
-        assertEq(bankroll.liquidity(), 1000_000);
+        assertEq(bankroll.liquidity(), 1_000_000);
 
         vm.prank(admin);
         bankroll.debit(player, 5000_000, address(operator));
 
         assertEq(bankroll.liquidity(), 0);
-        assertEq(token.balanceOf(address(player)), 1000_000);
+        assertEq(token.balanceOf(address(player)), 1_000_000);
         assertEq(token.balanceOf(address(lpOne)), 0);
 
-        assertEq(bankroll.sharesOf(address(lpOne)), 1000_000);
+        assertEq(bankroll.sharesOf(address(lpOne)), 1_000_000);
         assertEq(bankroll.getLpValue(address(lpOne)), 0);
     }
 
     function test_credit() public {
         vm.startPrank(lpOne);
-        token.approve(address(bankroll), 1000_000);
-        bankroll.depositFunds(1000_000);
+        token.approve(address(bankroll), 1_000_000);
+        bankroll.depositFunds(1_000_000);
         vm.stopPrank();
 
         vm.startPrank(admin);

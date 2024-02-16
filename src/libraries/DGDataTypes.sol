@@ -6,7 +6,6 @@ pragma solidity ^0.8.18;
  * @author DeGaming Technical Team
  * @notice Library containing DeGaming contracts' custom data types
  */
-
 library DGDataTypes {
     /// @dev Enum for specifying events
     enum EventSpecifier {
