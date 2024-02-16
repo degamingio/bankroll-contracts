@@ -16,6 +16,7 @@ import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";
 
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
+import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
 
 /**
  * @title Bankroll V1
@@ -72,8 +73,8 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     /// @dev Bankroll manager instance
     IDGBankrollManager dgBankrollManager; 
     
-    /// @dev if false, only whitelisted lps can deposit
-    bool public isPublic = true;
+    /// @dev set status regarding if LP is open or whitelisted
+    DGDataTypes.LpIs public lpIs = DGDataTypes.LpIs.OPEN;
 
     address constant NULL =  0x0000000000000000000000000000000000000000;
 
@@ -121,7 +122,10 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      */
     function depositFunds(uint256 _amount) external {
         // check if the user is allowed to deposit if the bankroll is not public
-        if (!isPublic && !lpWhitelist[msg.sender]) revert DGErrors.LP_IS_NOT_WHITELISTED();
+        if (
+            lpIs == DGDataTypes.LpIs.WHITELISTED && 
+            !lpWhitelist[msg.sender]
+        ) revert DGErrors.LP_IS_NOT_WHITELISTED();
 
         // calculate the amount of shares to mint
         uint256 shares;
@@ -145,7 +149,12 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
 
         // Emit a funds deposited event 
         // (emit DGEvents.FundsDeposited(msg.sender, _amount))
-        dgBankrollManager.emitEvent(0, msg.sender, NULL, _amount);
+        dgBankrollManager.emitEvent(
+            DGDataTypes.EventSpecifier.FUNDS_DEPOSITED,
+            msg.sender,
+            NULL,
+            _amount
+        );
     }
 
     /**
@@ -155,7 +164,10 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      */
     function withdrawAll() external {
         // check if the user is allowed to deposit if the bankroll is not public
-        if (!isPublic && !lpWhitelist[msg.sender]) revert DGErrors.LP_IS_NOT_WHITELISTED();
+        if (
+            lpIs == DGDataTypes.LpIs.WHITELISTED && 
+            !lpWhitelist[msg.sender]
+        ) revert DGErrors.LP_IS_NOT_WHITELISTED();
         
         // decrement total deposit
         totalDeposit -= depositOf[msg.sender];
@@ -189,7 +201,12 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
             _amount = maxRisk;
             // Emit event that the bankroll is sweppt
             //(emit DGEvents.BankrollSwept(_player, _amount))
-            dgBankrollManager.emitEvent(4, _player, NULL, _amount);
+            dgBankrollManager.emitEvent(
+                DGDataTypes.EventSpecifier.BANKROLL_SWEPT,
+                _player,
+                NULL, 
+                _amount
+            );
         }
 
         // substract from total GGR
@@ -206,7 +223,12 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
 
         // Emit debit event
         // (emit DGEvents.Debit(msg.sender, _player, _amount)
-        dgBankrollManager.emitEvent(2, msg.sender, _player, _amount);
+        dgBankrollManager.emitEvent(
+            DGDataTypes.EventSpecifier.DEBIT,
+            msg.sender,
+            _player,
+            _amount
+        );
     }
 
     /**
@@ -235,7 +257,12 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
 
         // Emit credit event
         // (emit DGEvents.Credit(msg.sender, _amount))
-        dgBankrollManager.emitEvent(3, msg.sender, NULL, _amount);
+        dgBankrollManager.emitEvent(
+            DGDataTypes.EventSpecifier.CREDIT,
+            msg.sender,
+            NULL,
+            _amount
+        );
     }
 
     /**
@@ -260,12 +287,12 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      * @notice Make bankroll permissionless for LPs or not
      *  Called by Admin
      *
-     * @param _isPublic If false, only whitelisted lps can deposit
+     * @param _lpIs Toggle enum betwen OPEN and WHITELISTED
      *
      */
-    function setPublic(bool _isPublic) external onlyRole(ADMIN) {
-        // Toggle _isPublic status
-        isPublic = _isPublic;
+    function setPublic(DGDataTypes.LpIs _lpIs) external onlyRole(ADMIN) {
+        // Toggle lpIs status
+        lpIs = _lpIs;
     }
 
     /**
@@ -471,6 +498,11 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     
         // Emit an event that funds are withdrawn
         // (emit DGEvents.FundsWithdrawn(msg.sender, amount))
-        dgBankrollManager.emitEvent(1, msg.sender, NULL, amount);
+        dgBankrollManager.emitEvent(
+            DGDataTypes.EventSpecifier.FUNDS_WITHDRAWN,
+            msg.sender,
+            NULL,
+            amount
+        );
     }
 }

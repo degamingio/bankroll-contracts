@@ -9,6 +9,7 @@ import {DGBankrollManager} from "src/DGBankrollManager.sol";
 
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
+import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
 
 /* Mock Contracts */
 import {MockToken} from "test/mock/MockToken.sol";
@@ -75,7 +76,7 @@ contract BankrollTest is Test {
 
     function test_depositFundsWithInvestorWhitelist() public {
         vm.prank(admin);
-        bankroll.setPublic(false);
+        bankroll.setPublic(DGDataTypes.LpIs.WHITELISTED);
 
         // lp one deposits 1000_000
         vm.startPrank(lpOne);
@@ -220,12 +221,12 @@ contract BankrollTest is Test {
     }
 
     function test_setPublic() public {
-        assertEq(bankroll.isPublic(), true);
+        assertEq(uint256(bankroll.lpIs()), 0);
 
         vm.prank(admin);
-        bankroll.setPublic(false);
+        bankroll.setPublic(DGDataTypes.LpIs.WHITELISTED);
 
-        assertEq(bankroll.isPublic(), false);
+        assertEq(uint256(bankroll.lpIs()), 1);
     }
 
     function test_getLpStake() public {
