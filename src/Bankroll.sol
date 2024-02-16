@@ -351,7 +351,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      *
      */
     function maxBankrollManagerApprove() external {
-        ERC20.approve(
+        ERC20.forceApprove(
             address(dgBankrollManager),
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         );

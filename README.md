@@ -36,8 +36,9 @@
 
 | Contract Name     | Adress                                     | Explorer                                                                            |
 |-------------------|--------------------------------------------|-------------------------------------------------------------------------------------|
-| Bankroll          | 0xEA990A45aE714C93762d2aB760042A5664D2f49E | https://explorer.apothem.network/address/0xea990a45ae714c93762d2ab760042a5664d2f49e |
-| DGBankrollManager | 0x68e829FD363be4B5fCEA26e6d6dCDd0ea93e9B26 | https://explorer.apothem.network/address/0x68e829fd363be4b5fcea26e6d6dcdd0ea93e9b26 |
+| Bankroll          | 0xe0e943e7D5070840d6d0C026a69F07787c5132Cf | https://explorer.apothem.network/address/0xe0e943e7D5070840d6d0C026a69F07787c5132Cf |
+| DGBankrollManager | 0x6052DA350b789E8FEF2307Ea0Bc8464568325906 | https://explorer.apothem.network/address/0x6052DA350b789E8FEF2307Ea0Bc8464568325906 |
+
 ## Bankroll V2 Arbitrum-Sepolia
 
 ## Compile Project
