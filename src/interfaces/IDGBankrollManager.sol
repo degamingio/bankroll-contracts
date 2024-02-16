@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
+import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
+
 /**
  * @title IDGBankrollManager V1
  * @author DeGaming Technical Team
@@ -68,7 +70,7 @@ interface IDGBankrollManager {
      *
      */
     function emitEvent(
-        uint256 _eventSpecifier,
+        DGDataTypes.EventSpecifier _eventSpecifier,
         address _address1,
         address _address2,
         uint256 _number

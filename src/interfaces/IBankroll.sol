@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
+import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
+
 /**
  * @title IBankroll V1
  * @author DeGaming Technical Team
@@ -65,10 +67,10 @@ interface IBankroll {
      * @notice Make bankroll permissionless for LPs or not
      *  Called by Admin
      *
-     * @param _isPublic If false, only whitelisted lps can deposit
+     * @param _lpIs Toggle enum betwen OPEN and WHITELISTED
      *
      */
-    function setPublic(bool _isPublic) external;
+    function setPublic(DGDataTypes.LpIs _lpIs) external;
 
     /**
      * @notice Remove the GGR of a specified operator from the total GGR, 

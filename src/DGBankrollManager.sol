@@ -19,6 +19,7 @@ import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";
 /* DeGaming Libraries */
 import {DGEvents} from "src/libraries/DGEvents.sol";
 import {DGErrors} from "src/libraries/DGErrors.sol";
+import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
 
 /**
  * @title DGBankrollManager
@@ -233,7 +234,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      *
      */
     function emitEvent(
-        uint256 _eventSpecifier,
+        DGDataTypes.EventSpecifier _eventSpecifier,
         address _address1,
         address _address2,
         uint256 _number
@@ -242,15 +243,15 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
         if (!bankrollStatus[msg.sender]) revert DGErrors.BANKROLL_NOT_APPROVED();
         
         // Chose what event to emit
-        if (_eventSpecifier == 0) {
+        if (_eventSpecifier == DGDataTypes.EventSpecifier.FUNDS_DEPOSITED) {
             emit DGEvents.FundsDeposited(msg.sender, _address1, _number);
-        } else if (_eventSpecifier == 1) {
+        } else if (_eventSpecifier == DGDataTypes.EventSpecifier.FUNDS_WITHDRAWN) {
             emit DGEvents.FundsWithdrawn(msg.sender, _address1, _number);
-        } else if (_eventSpecifier == 2) {
+        } else if (_eventSpecifier == DGDataTypes.EventSpecifier.DEBIT) {
             emit DGEvents.Debit(msg.sender, _address1, _address2, _number);
-        } else if (_eventSpecifier == 3) {
+        } else if (_eventSpecifier == DGDataTypes.EventSpecifier.CREDIT) {
             emit DGEvents.Credit(msg.sender, _address1, _number);
-        } else if (_eventSpecifier == 4) {
+        } else if (_eventSpecifier == DGDataTypes.EventSpecifier.BANKROLL_SWEPT) {
             emit DGEvents.BankrollSwept(msg.sender, _address1, _number);
         }
     }
