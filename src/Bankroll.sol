@@ -75,6 +75,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     /// @dev set status regarding if LP is open or whitelisted
     DGDataTypes.LpIs public lpIs = DGDataTypes.LpIs.OPEN;
 
+    /// @dev zero address, used for calling the universal event emitter when no second address is needed
     address constant NULL =  0x0000000000000000000000000000000000000000;
 
     //     ______                 __                  __
@@ -344,6 +345,11 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
         dgBankrollManager = IDGBankrollManager(_newBankrollManager);
     }
 
+    /**
+     *
+     * @notice Max out the approval for DGBankrollManager.sol to spend on behalf of the bankroll contract
+     *
+     */
     function maxBankrollManagerApprove() external {
         ERC20.approve(
             address(dgBankrollManager),
