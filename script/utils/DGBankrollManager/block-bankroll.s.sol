@@ -15,16 +15,12 @@ contract Credit is Script {
     // PASTE IN ADDRESS HERE                              V
     DGBankrollManager bankrollManager = DGBankrollManager(0x6052DA350b789E8FEF2307Ea0Bc8464568325906);
 
-    // PASTE IN        |
-    // ADDRESS HERE    V
-    address bankroll = 0xe0e943e7D5070840d6d0C026a69F07787c5132Cf;
-
-    address tempOperator = address(0x0);
+    address tempBankroll = address(0x0);
 
     function run() external {
 
         vm.startBroadcast(adminPrivateKey);
 
-        bankrollManager.addOperator(tempOperator);
+        bankrollManager.blockBankroll(tempBankroll);
     }
 }
