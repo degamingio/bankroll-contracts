@@ -11,23 +11,20 @@ contract Credit is Script {
 
     address token = vm.envAddress("TOKEN_ADDRESS");
 
-    uint256 operatorPrivateKey = vm.envUint("MANAGER_PRIVATE_KEY");
-
-    address operator = vm.addr(operatorPrivateKey);
-
     //                                                    |
     // PASTE IN ADDRESS HERE                              V
     DGBankrollManager bankrollManager = DGBankrollManager(0x6052DA350b789E8FEF2307Ea0Bc8464568325906);
 
+    // PASTE IN        |
+    // ADDRESS HERE    V
     address bankroll = 0xe0e943e7D5070840d6d0C026a69F07787c5132Cf;
 
-    uint256 constant amount = 100;
+    address tempOperator = address(0x0);
 
     function run() external {
 
         vm.startBroadcast(adminPrivateKey);
 
-        //bankroll.credit(amount, operator);
-        bankrollManager.claimProfit(bankroll);
+        bankrollManager.blockOperator(tempOperator);
     }
 }
