@@ -85,14 +85,30 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
     //               /____/
 
     /**
+     * @notice Update the ADMIN role
+     *  Only calleable by contract owner
+     *
+     * @param _oldAdmin address of the old admin
+     * @param _newAdmin address of the new admin
+     *
+     */
+    function updateAdmin(address _oldAdmin, address _newAdmin) external onlyOwner {
+        // Revoke the old admins role
+        _revokeRole(ADMIN, _oldAdmin);
+
+        // Grant the new admin the ADMIN role
+        _grantRole(ADMIN, _newAdmin);
+    }
+
+    /**
      * @notice
      *  Approve a bankroll to use the DeGaming Bankroll Manager
-     *  Only the contract owner can execute this operation
+     *  Only the admin role can execute this operation
      *
      * @param _bankroll bankroll contract address to be approved
      *
      */
-    function approveBankroll(address _bankroll, uint256 _fee) external onlyOwner {
+    function approveBankroll(address _bankroll, uint256 _fee) external onlyRole(ADMIN) {
         // Check so that fee is withing range
         if (_fee > DENOMINATOR) revert DGErrors.TO_HIGH_FEE();
 
@@ -106,12 +122,12 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
     /**
      * @notice
      *  Prevent a bankroll from using the DeGaming Bankroll Manager
-     *  Only the contract owner can execute this operation
+     *  Only the admin role can execute this operation
      *
      * @param _bankroll bankroll contract address to be blocked
      *
      */
-    function blockBankroll(address _bankroll) external onlyOwner {
+    function blockBankroll(address _bankroll) external onlyRole(ADMIN) {
         // Toggle bankroll status
         bankrollStatus[_bankroll] = false;
 
@@ -122,13 +138,13 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
     /**
      * @notice 
      *  Adding list of operator to list of operators associated with a bankroll
-     *  Only calleable by owner
+     *  Only calleable by admin role
      *
      * @param _bankroll the bankroll contract address
      * @param _operator address of the operator we want to add to the list of associated operators
      *
      */
-    function setOperatorToBankroll(address _bankroll, address _operator) external onlyOwner {
+    function setOperatorToBankroll(address _bankroll, address _operator) external onlyRole(ADMIN) {
         // Add operator into array of associated operators to bankroll
         operatorsOf[_bankroll].push(_operator);
 
@@ -140,7 +156,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      * @notice
      *  Adding an operator to bankroll ecosystem
      *
-     * @param _operator address of the operaotr
+     * @param _operator address of the operator
      *
      */
     function addOperator(address _operator) external onlyRole(ADMIN) {
@@ -223,7 +239,6 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
 
         emit DGEvents.ProfitsClaimed(_bankroll, totalAmount);
     }
-
 
     /**
      * @notice Event handler for bankrolls
