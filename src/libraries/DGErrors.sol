@@ -22,6 +22,9 @@ library DGErrors {
     /// @dev Error thrown when address sent to credit/debit is not a valid operator
     error NOT_AN_OPERATOR();
 
-    /// @dev Error thrown when 
+    /// @dev Error thrown when lp has no access
     error NO_LP_ACCESS_PERMISSION();
+
+    /// @dev Error thrown when bankroll with a > 100% fee is being requested to be added  
+    error TO_HIGH_FEE();
 }

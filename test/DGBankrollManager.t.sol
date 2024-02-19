@@ -100,4 +100,11 @@ contract DGBankrollManagerTest is Test {
         vm.expectRevert(DGErrors.BANKROLL_NOT_APPROVED.selector);
         dgBankrollManager.claimProfit(address(bankroll));
     }
+
+    function test_feeOutOfRangeError(uint256 _fee, address _newBankroll) public {
+        vm.assume(_fee > 10_000);
+
+        vm.expectRevert(DGErrors.TO_HIGH_FEE.selector);
+        dgBankrollManager.approveBankroll(_newBankroll, _fee);
+    } 
 }

@@ -11,6 +11,16 @@ import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
  */
 interface IDGBankrollManager {
     /**
+     * @notice Update the ADMIN role
+     *  Only calleable by contract owner
+     *
+     * @param _oldAdmin address of the old admin
+     * @param _newAdmin address of the new admin
+     *
+     */
+    function updateAdmin(address _oldAdmin, address _newAdmin) external;
+    
+    /**
      * @notice
      *  Approve a bankroll to use the DeGaming Bankroll Manager
      *  Only the contract owner can execute this operation
@@ -43,7 +53,6 @@ interface IDGBankrollManager {
 
     function blockOperator(address _operator) external;
 
-
     //     ______     __                        __   ______                 __  _
     //    / ____/  __/ /____  _________  ____ _/ /  / ____/_  ______  _____/ /_(_)___  ____  _____
     //   / __/ | |/_/ __/ _ \/ ___/ __ \/ __ `/ /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
@@ -57,6 +66,8 @@ interface IDGBankrollManager {
      *
      */
     function claimProfit(address _bankroll) external;
+
+
 
     /**
      * @notice Event handler for bankrolls

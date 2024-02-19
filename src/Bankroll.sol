@@ -274,6 +274,7 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      *
      */
     function setInvestorWhitelist(address _lp, bool _isAuthorized) external {
+        // Check if caller is either an approved operator or admin wallet
         if (
             !dgBankrollManager.isApproved(msg.sender) &&
             !hasRole(ADMIN, msg.sender)
