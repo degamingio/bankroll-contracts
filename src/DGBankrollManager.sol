@@ -93,6 +93,9 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      *
      */
     function approveBankroll(address _bankroll, uint256 _fee) external onlyOwner {
+        // Check so that fee is withing range
+        if (_fee > DENOMINATOR) revert DGErrors.TO_HIGH_FEE();
+
         // Toggle bankroll status
         bankrollStatus[_bankroll] = true;
 
