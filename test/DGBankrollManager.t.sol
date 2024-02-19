@@ -106,5 +106,22 @@ contract DGBankrollManagerTest is Test {
 
         vm.expectRevert(DGErrors.TO_HIGH_FEE.selector);
         dgBankrollManager.approveBankroll(_newBankroll, _fee);
-    } 
+    }
+
+    function test_updateAdmin(address _newAdmin, address _newOperator) public {
+        vm.prank(_newAdmin);
+        vm.expectRevert();
+        dgBankrollManager.addOperator(_newOperator);
+
+        vm.prank(admin);
+        vm.expectRevert(DGErrors.NOT_AN_OPERATOR.selector);
+        bankroll.debit(address(0x4), 10, _newOperator);
+
+        dgBankrollManager.updateAdmin(msg.sender, _newAdmin);
+        vm.prank(_newAdmin);
+        dgBankrollManager.addOperator(_newOperator);
+
+        vm.prank(admin);
+        bankroll.debit(address(0x4), 10, _newOperator);
+    }
 }
