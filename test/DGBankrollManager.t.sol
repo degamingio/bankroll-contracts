@@ -44,8 +44,6 @@ contract DGBankrollManagerTest is Test {
 
         dgBankrollManager = new DGBankrollManager(deGaming, address(dgBankrollFactory));
 
-        //bankroll = new Bankroll();
-
         proxyAdmin = new ProxyAdmin(msg.sender);
 
         bankrollProxy = new TransparentUpgradeableProxy(
@@ -62,7 +60,6 @@ contract DGBankrollManagerTest is Test {
         );
 
         bankroll = Bankroll(address(bankrollProxy));
-        //admin, address(mockToken), address(dgBankrollManager), maxRisk);
 
         dgBankrollManager.approveBankroll(address(bankroll), 650);
 
