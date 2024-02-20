@@ -8,13 +8,15 @@ import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 /* DeGaming Contract */
 import {Bankroll} from "src/Bankroll.sol";
 
+/* DeGaming Interfaces */
+import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";
+
 /**
  * @title
  * @author DeGaming Technical Team
  * @notice Contract responsible for deploying DeGaming Bankrolls
  *
  */
-
 contract DGBankrollFactory is AccessControlUpgradeable {
     //     _____ __        __
     //    / ___// /_____ _/ /____  _____
@@ -32,10 +34,13 @@ contract DGBankrollFactory is AccessControlUpgradeable {
     address public bankrollImpl;
 
     /// @dev DeGaming Bankroll Manager Contract address
-    address dgBankrollManager;
+    address public dgBankrollManager;
 
     /// @dev DeGaming admin account
     address public dgAdmin;
+
+    /// @dev DeGaming address
+    address public deGaming;
 
     /// @dev Storage gap used for future upgrades (30 * 32 bytes)
     uint256[30] __gap;
@@ -65,10 +70,10 @@ contract DGBankrollFactory is AccessControlUpgradeable {
         dgAdmin = _dgAdmin;
 
         __AccessControl_init();
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function deployBankroll(address _operator, bytes32 _salt) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function deployBankroll(/* address _operator, */ bytes32 _salt) external onlyRole(DEFAULT_ADMIN_ROLE) {
         Bankroll newBankroll = Bankroll(Clones.cloneDeterministic(bankrollImpl, _salt));
 
         //newBankroll.initialize();

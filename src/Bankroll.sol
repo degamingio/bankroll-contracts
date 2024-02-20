@@ -70,7 +70,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     mapping(address lp => bool authorized) public lpWhitelist; 
     
     /// @dev bankroll liquidity token
-    IERC20 public immutable ERC20;
+    IERC20 public ERC20;
 
     /// @dev Bankroll manager instance
     IDGBankrollManager dgBankrollManager; 
