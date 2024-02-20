@@ -72,9 +72,10 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      *   Just sets the deployer of this contract as the owner
      *
      */
-    constructor(address _deGaming) Ownable(msg.sender) {
+    constructor(address _deGaming, address _factory) Ownable(msg.sender) {
         deGaming = _deGaming;
         _grantRole(ADMIN, msg.sender);
+        _grantRole(ADMIN, _factory);
     }
 
     //     ____        __         ____                              ______                 __  _
