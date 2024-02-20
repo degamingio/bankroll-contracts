@@ -3,7 +3,7 @@ pragma solidity ^0.8.18;
 
 /* Openzeppelin Contract */
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 /* DeGaming Contract */
 import {Bankroll} from "src/Bankroll.sol";
