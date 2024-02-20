@@ -3,6 +3,10 @@ pragma solidity ^0.8.18;
 
 import "forge-std/Test.sol";
 
+/* OpenZeppelin contract */
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+
 /* DeGaming Contracts */
 import {Bankroll} from "src/Bankroll.sol";
 import {DGBankrollManager} from "src/DGBankrollManager.sol";
@@ -19,6 +23,9 @@ contract DGBankrollManagerTest is Test {
     DGBankrollManager public dgBankrollManager;
     Bankroll public bankroll;
     DGBankrollFactory public dgBankrollFactory;
+    TransparentUpgradeableProxy public bankrollProxy;
+
+    ProxyAdmin public proxyAdmin;
 
     address admin;
     address deGaming;
@@ -37,7 +44,25 @@ contract DGBankrollManagerTest is Test {
 
         dgBankrollManager = new DGBankrollManager(deGaming, address(dgBankrollFactory));
 
-        bankroll = new Bankroll(admin, address(mockToken), address(dgBankrollManager), maxRisk);
+        //bankroll = new Bankroll();
+
+        proxyAdmin = new ProxyAdmin(msg.sender);
+
+        bankrollProxy = new TransparentUpgradeableProxy(
+            address(new Bankroll()),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                Bankroll.initialize.selector,
+                admin,
+                address(mockToken),
+                address(dgBankrollManager),
+                msg.sender,
+                maxRisk
+            )
+        );
+
+        bankroll = Bankroll(address(bankrollProxy));
+        //admin, address(mockToken), address(dgBankrollManager), maxRisk);
 
         dgBankrollManager.approveBankroll(address(bankroll), 650);
 
