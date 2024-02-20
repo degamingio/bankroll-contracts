@@ -9,6 +9,8 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+
 /* DeGaming Interfaces */
 import {IBankroll} from "src/interfaces/IBankroll.sol";
 import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";

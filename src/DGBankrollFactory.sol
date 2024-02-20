@@ -15,7 +15,7 @@ import {Bankroll} from "src/Bankroll.sol";
  *
  */
 
-contract DGBankrollFactory is AccessControl {
+contract DGBankrollFactory is AccessControlUpgradeable {
     //     _____ __        __
     //    / ___// /_____ _/ /____  _____
     //    \__ \/ __/ __ `/ __/ _ \/ ___/
