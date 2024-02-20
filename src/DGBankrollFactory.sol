@@ -69,7 +69,12 @@ contract DGBankrollFactory is AccessControl {
     }
 
     function deployBankroll(address _operator, bytes32 _salt) external onlyRole(ADMIN) {
+        Bankroll newBankroll = Bankroll(Clones.cloneDeterministic(bankrollImpl, _salt));
 
+        //newBankroll.initialize();
+
+        bankrolls.push(address(newBakroll));
+        ++bankrollCount;
     }
 
     function setBankrollImplementation(address _newImpl) external onlyRole(ADMIN) {
@@ -101,5 +106,4 @@ contract DGBankrollFactory is AccessControl {
     function predictBankrollAddress(bytes32 _salt) external view returns (address _predicted) {
         _predicted = Clones.predictDeterministicAddress(bankrollImpl, _salt, address(this));
     }
-
 }
