@@ -65,6 +65,23 @@ contract DGBankrollFactory is AccessControl {
         dgAdmin = _dgAdmin;
 
         __AccessControl_init();
+        _setupRole(ADMIN, msg.sender);
+    }
+
+    function deployBankroll(address _operator, bytes32 _salt) external onlyRole(ADMIN) {
+
+    }
+
+    function setBankrollImplementation(address _newImpl) external onlyRole(ADMIN) {
+        bankrollImpl = _newImpl;
+    }
+
+    function setDgBankrollManager(address _dgBankrollManager) external onlyRole(ADMIN) {
+        dgBankrollManager = _dgBankrollManager;
+    }
+
+    function setDgAdmin(address _dgAdmin) external onlyRole(ADMIN) {
+        dgAdmin = _dgAdmin;
     }
 
     //   _    ___                 ______                 __  _
