@@ -6,10 +6,11 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /* Openzeppelin Contracts */
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+//import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+//import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /* DeGaming Interfaces */
 import {IBankroll} from "src/interfaces/IBankroll.sol";
@@ -25,7 +26,7 @@ import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
  * @notice Operator and Game Bankroll Contract
  *
  */
-contract Bankroll is IBankroll, Ownable, AccessControl{
+contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
 
@@ -85,6 +86,14 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
     //   / /   / __ \/ __ \/ ___/ __/ ___/ / / / ___/ __/ __ \/ ___/
     //  / /___/ /_/ / / / (__  ) /_/ /  / /_/ / /__/ /_/ /_/ / /
     //  \____/\____/_/ /_/____/\__/_/   \__,_/\___/\__/\____/_/
+    /**
+     * @notice
+     *  Contract Constructor
+     */
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     /**
      * @notice Bankroll constructor
@@ -93,7 +102,18 @@ contract Bankroll is IBankroll, Ownable, AccessControl{
      * @param _ERC20 Bankroll liquidity token address
      *
      */
-    constructor(address _admin, address _ERC20, address _bankrollManager, uint256 _maxRiskPercentage) Ownable(msg.sender) {
+    //constructor(address _admin, address _ERC20, address _bankrollManager, uint256 _maxRiskPercentage) Ownable(msg.sender) {
+    function initialize(
+        address _admin,
+        address _ERC20,
+        address _bankrollManager,
+        address _owner,
+        uint256 _maxRiskPercentage
+    ) external initializer {
+        __AccessControl_init();
+
+        __Ownable_init(_owner);
+
         // Initializing erc20 token associated with bankroll
         ERC20 = IERC20(_ERC20);
 

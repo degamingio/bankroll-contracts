@@ -65,27 +65,27 @@ contract DGBankrollFactory is AccessControlUpgradeable {
         dgAdmin = _dgAdmin;
 
         __AccessControl_init();
-        _setupRole(ADMIN, msg.sender);
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function deployBankroll(address _operator, bytes32 _salt) external onlyRole(ADMIN) {
+    function deployBankroll(address _operator, bytes32 _salt) external onlyRole(DEFAULT_ADMIN_ROLE) {
         Bankroll newBankroll = Bankroll(Clones.cloneDeterministic(bankrollImpl, _salt));
 
         //newBankroll.initialize();
 
-        bankrolls.push(address(newBakroll));
+        bankrolls.push(address(newBankroll));
         ++bankrollCount;
     }
 
-    function setBankrollImplementation(address _newImpl) external onlyRole(ADMIN) {
+    function setBankrollImplementation(address _newImpl) external onlyRole(DEFAULT_ADMIN_ROLE) {
         bankrollImpl = _newImpl;
     }
 
-    function setDgBankrollManager(address _dgBankrollManager) external onlyRole(ADMIN) {
+    function setDgBankrollManager(address _dgBankrollManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
         dgBankrollManager = _dgBankrollManager;
     }
 
-    function setDgAdmin(address _dgAdmin) external onlyRole(ADMIN) {
+    function setDgAdmin(address _dgAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
         dgAdmin = _dgAdmin;
     }
 
