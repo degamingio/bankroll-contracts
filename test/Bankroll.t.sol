@@ -26,7 +26,6 @@ contract BankrollTest is Test {
     address lpOne;
     address lpTwo;
     address player;
-    address bankrollManager;
     TransparentUpgradeableProxy public bankrollProxy;
 
     ProxyAdmin public proxyAdmin;
@@ -48,7 +47,6 @@ contract BankrollTest is Test {
 
         dgBankrollManager = new DGBankrollManager(admin, address(dgBankrollFactory));
         token = new MockToken("token", "MTK");
-        //bankroll = new Bankroll(admin, address(token), address(dgBankrollManager), maxRisk);
 
         proxyAdmin = new ProxyAdmin(msg.sender);
 
