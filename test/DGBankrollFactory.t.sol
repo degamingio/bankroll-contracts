@@ -90,4 +90,38 @@ contract DGBankrollFactoryTest is Test {
             _salt
         );
     }
+
+    function test_setBankrollImplementation(address _sender, address _bankroll) public {
+        vm.assume(_sender != address(proxyAdmin));
+        vm.assume(dgBankrollFactory.bankrollImpl() != _bankroll);
+
+        dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
+    
+        vm.prank(_sender);
+        dgBankrollFactory.setBankrollImplementation(_bankroll);
+
+        assertEq(dgBankrollFactory.bankrollImpl(), _bankroll);
+    }
+
+    function test_setDgBankrollManager(address _sender, address _bankrollManager) public {
+        vm.assume(_sender != address(proxyAdmin));
+       
+        dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
+    
+        vm.prank(_sender);
+        dgBankrollFactory.setDgBankrollManager(_bankrollManager);
+
+        assertEq(dgBankrollFactory.dgBankrollManager(), _bankrollManager);
+    }
+
+    function test_setDgAdmin(address _sender, address _admin) public {
+        vm.assume(_sender != address(proxyAdmin));
+        
+        dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
+
+        vm.prank(_sender);
+        dgBankrollFactory.setDgAdmin(_admin);
+
+        assertEq(dgBankrollFactory.dgAdmin(), _admin);
+    }
 }
