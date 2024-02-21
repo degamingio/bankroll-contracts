@@ -103,6 +103,15 @@ contract DGBankrollFactoryTest is Test {
         assertEq(dgBankrollFactory.bankrollImpl(), _bankroll);
     }
 
+    function test_setBankrollImplementation_incorrectRole(address _sender, address _bankroll) public {
+        vm.assume(_sender != address(proxyAdmin));
+        vm.assume(dgBankrollFactory.hasRole(DEFAULT_ADMIN_ROLE_HASH, _sender) != true);
+
+        vm.prank(_sender);
+        vm.expectRevert();
+        dgBankrollFactory.setBankrollImplementation(_bankroll);
+    }
+
     function test_setDgBankrollManager(address _sender, address _bankrollManager) public {
         vm.assume(_sender != address(proxyAdmin));
        
@@ -114,6 +123,17 @@ contract DGBankrollFactoryTest is Test {
         assertEq(dgBankrollFactory.dgBankrollManager(), _bankrollManager);
     }
 
+    
+    function test_setDgBankrollManager_incorrectRole(address _sender, address _bankrollManager) public {
+        vm.assume(_sender != address(proxyAdmin));
+        vm.assume(dgBankrollFactory.hasRole(DEFAULT_ADMIN_ROLE_HASH, _sender) != true);
+
+        vm.prank(_sender);
+        vm.expectRevert();
+
+        dgBankrollFactory.setDgBankrollManager(_bankrollManager);
+    }
+
     function test_setDgAdmin(address _sender, address _admin) public {
         vm.assume(_sender != address(proxyAdmin));
         
@@ -123,5 +143,15 @@ contract DGBankrollFactoryTest is Test {
         dgBankrollFactory.setDgAdmin(_admin);
 
         assertEq(dgBankrollFactory.dgAdmin(), _admin);
+    }
+
+    function test_setDgAdmin_incorrectRole(address _sender, address _admin) public {
+        vm.assume(_sender != address(proxyAdmin));
+        vm.assume(dgBankrollFactory.hasRole(DEFAULT_ADMIN_ROLE_HASH, _sender) != true);
+
+        vm.prank(_sender);
+        vm.expectRevert();
+
+        dgBankrollFactory.setDgAdmin(_admin);
     }
 }
