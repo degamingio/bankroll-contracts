@@ -30,4 +30,39 @@ contract DGBankrollFactoryTest is Test {
 
     DGBankrollFactory public dgBankrollFactory;
     DGBankrollManager public dgBankrollManager;
+    Bankroll public bankroll;
+    MockToken public token;
+    
+
+    function setUp() public {
+        admin = address(0x1);
+        operator = address(0x2);
+        lp = address(0x3);
+        player = address(0x4);
+
+        uint256 maxRisk = 10_000;
+
+        dgBankrollFactory = new DGBankrollFactory();
+
+        dgBankrollManager = new DGBankrollManager(admin, address(dgBankrollFactory));
+
+        token = new MockToken("token", "MTK");
+
+        proxyAdmin = new ProxyAdmin(msg.sender);
+
+        bankrollProxy = new TransparentUpgradeableProxy(
+            address(new Bankroll()),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                Bankroll.initialize.selector,
+                admin,
+                address(token),
+                address(dgBankrollManager),
+                msg.sender,
+                maxRisk
+            )
+        );
+
+        bankroll = Bankroll(address(bankrollProxy));
+    }
 }
