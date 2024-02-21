@@ -24,6 +24,8 @@ contract DGBankrollFactoryTest is Test {
     address operator;
     address lp;
     address player;
+    uint256 maxRisk;
+    uint256 lpFee;
 
     TransparentUpgradeableProxy public bankrollProxy;
     ProxyAdmin public proxyAdmin;
@@ -40,7 +42,9 @@ contract DGBankrollFactoryTest is Test {
         lp = address(0x3);
         player = address(0x4);
 
-        uint256 maxRisk = 10_000;
+        maxRisk = 10_000;
+
+        lpFee = 650;
 
         dgBankrollFactory = new DGBankrollFactory();
 
@@ -64,5 +68,18 @@ contract DGBankrollFactoryTest is Test {
         );
 
         bankroll = Bankroll(address(bankrollProxy));
+
+        dgBankrollManager.addOperator(operator);
+        dgBankrollManager.approveBankroll(address(bankroll), lpFee);
+    }
+
+    function test_deployBankroll(address _operator, bytes32 _salt) public {
+        dgBankrollFactory.deployBankroll(
+            _operator, 
+            address(token), 
+            maxRisk, 
+            lpFee, 
+            _salt
+        );
     }
 }
