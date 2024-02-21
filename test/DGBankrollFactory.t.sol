@@ -22,12 +22,13 @@ import {MockToken} from "test/mock/MockToken.sol";
 contract DGBankrollFactoryTest is Test {
     address admin;
     address operator;
+    address deGaming;
     address lp;
     address player;
     uint256 maxRisk;
     uint256 lpFee;
 
-    TransparentUpgradeableProxy public bankrollProxy;
+    TransparentUpgradeableProxy public bankrollFactoryProxy;
     ProxyAdmin public proxyAdmin;
 
     DGBankrollFactory public dgBankrollFactory;
@@ -35,18 +36,21 @@ contract DGBankrollFactoryTest is Test {
     Bankroll public bankroll;
     MockToken public token;
     
+    bytes32 public constant DEFAULT_ADMIN_ROLE_HASH = 0x0;
+
 
     function setUp() public {
         admin = address(0x1);
         operator = address(0x2);
         lp = address(0x3);
         player = address(0x4);
+        deGaming = address(0x5);
 
         maxRisk = 10_000;
 
         lpFee = 650;
 
-        dgBankrollFactory = new DGBankrollFactory();
+        //dgBankrollFactory = new DGBankrollFactory();
 
         dgBankrollManager = new DGBankrollManager(admin, address(dgBankrollFactory));
 
@@ -54,29 +58,33 @@ contract DGBankrollFactoryTest is Test {
 
         proxyAdmin = new ProxyAdmin(msg.sender);
 
-        bankrollProxy = new TransparentUpgradeableProxy(
-            address(new Bankroll()),
+        bankroll = new Bankroll();
+   
+        bankrollFactoryProxy = new TransparentUpgradeableProxy(
+            address(new DGBankrollFactory()),
             address(proxyAdmin),
             abi.encodeWithSelector(
-                Bankroll.initialize.selector,
-                admin,
-                address(token),
+                DGBankrollFactory.initialize.selector,
+                address(bankroll),
                 address(dgBankrollManager),
-                msg.sender,
-                maxRisk
+                admin
             )
         );
 
-        bankroll = Bankroll(address(bankrollProxy));
+        dgBankrollFactory = DGBankrollFactory(address(bankrollFactoryProxy));
+
+        //bankroll = Bankroll(address(bankrollProxy));
 
         dgBankrollManager.addOperator(operator);
         dgBankrollManager.approveBankroll(address(bankroll), lpFee);
     }
 
     function test_deployBankroll(address _operator, bytes32 _salt) public {
+        // vm.assume(_operator != address(0));
         dgBankrollFactory.deployBankroll(
             _operator, 
             address(token), 
+            deGaming,
             maxRisk, 
             lpFee, 
             _salt
