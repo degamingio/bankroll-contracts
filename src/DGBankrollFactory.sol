@@ -74,11 +74,9 @@ contract DGBankrollFactory is AccessControlUpgradeable {
     }
 
     function deployBankroll(
-        address _operator,
         address _token,
         address _deGaming,
         uint256 _maxRiskPercentage,
-        uint256 _lpFee,
         bytes32 _salt 
     ) external  onlyRole(DEFAULT_ADMIN_ROLE) {
         Bankroll newBankroll = Bankroll(Clones.cloneDeterministic(bankrollImpl, _salt));
@@ -91,19 +89,17 @@ contract DGBankrollFactory is AccessControlUpgradeable {
             _maxRiskPercentage
         );
 
-        IDGBankrollManager bankrollManager = IDGBankrollManager(dgBankrollManager);
+        // IDGBankrollManager bankrollManager = IDGBankrollManager(dgBankrollManager);
 
-        bankrollManager.approveBankroll(
-            address(newBankroll),
-            _lpFee
-        );
+        // bankrollManager.approveBankroll(
+            // address(newBankroll),
+            // _lpFee
+        // );
 
-        bankrollManager.setOperatorToBankroll(
-            address(newBankroll),
-            _operator
-        );
-
-        newBankroll.maxBankrollManagerApprove();
+        // bankrollManager.setOperatorToBankroll(
+            // address(newBankroll),
+            // _operator
+        // );
 
         bankrolls.push(address(newBankroll));
         ++bankrollCount;

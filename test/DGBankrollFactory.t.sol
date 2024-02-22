@@ -72,18 +72,24 @@ contract DGBankrollFactoryTest is Test {
         dgBankrollManager = new DGBankrollManager(admin, address(dgBankrollFactory));
 
         dgBankrollManager.addOperator(operator);
-        dgBankrollManager.approveBankroll(address(bankroll), lpFee);
     }
 
     function test_deployBankroll(address _operator, bytes32 _salt) public {
-        //vm.assume(_operator != address(0));
         dgBankrollFactory.deployBankroll(
-            operator, 
             address(token), 
             deGaming,
             maxRisk, 
-            lpFee, 
             _salt
+        );
+
+        dgBankrollManager.approveBankroll(
+            dgBankrollFactory.bankrolls(0),
+            lpFee
+        );
+
+        dgBankrollManager.setOperatorToBankroll(
+            dgBankrollFactory.bankrolls(0),
+            _operator
         );
     }
 
