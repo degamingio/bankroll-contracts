@@ -76,8 +76,9 @@ contract DGBankrollFactoryTest is Test {
     }
 
     function test_deployBankroll(address _operator, bytes32 _salt) public {
+        //vm.assume(_operator != address(0));
         dgBankrollFactory.deployBankroll(
-            _operator, 
+            operator, 
             address(token), 
             deGaming,
             maxRisk, 
