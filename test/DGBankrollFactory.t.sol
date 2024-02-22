@@ -55,7 +55,9 @@ contract DGBankrollFactoryTest is Test {
         proxyAdmin = new ProxyAdmin(msg.sender);
 
         bankroll = new Bankroll();
-   
+
+        dgBankrollManager = new DGBankrollManager(admin, address(dgBankrollFactory));
+
         bankrollFactoryProxy = new TransparentUpgradeableProxy(
             address(new DGBankrollFactory()),
             address(proxyAdmin),
@@ -67,9 +69,7 @@ contract DGBankrollFactoryTest is Test {
             )
         );
 
-        dgBankrollFactory = DGBankrollFactory(address(bankrollFactoryProxy));
-        
-        dgBankrollManager = new DGBankrollManager(admin, address(dgBankrollFactory));
+        dgBankrollFactory = DGBankrollFactory(address(bankrollFactoryProxy));         
 
         dgBankrollManager.addOperator(operator);
     }

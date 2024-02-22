@@ -1,73 +1,78 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-// import "forge-std/Script.sol";
+import "forge-std/Script.sol";
 
-// /* OpenZeppelin Interfaces */
-// import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+/* OpenZeppelin Interfaces */
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-// /* OpenZeppelin Contract */
-// import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol"; 
+/* OpenZeppelin Contract */
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol"; 
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
-// /* DeGaming Contracts */
-// import {Bankroll} from "src/Bankroll.sol";
-// import {DGBankrollManager} from "src/DGBankrollManager.sol";
 
-// /* DeGaming Libraries */
-// import {DGErrors} from "src/libraries/DGErrors.sol";
+/* DeGaming Contracts */
+import {Bankroll} from "src/Bankroll.sol";
+import {DGBankrollManager} from "src/DGBankrollManager.sol";
 
-// contract DeployPlatform is Script {
-    // /// @dev Using SafeERC20 for safer token interaction
-    // using SafeERC20 for IERC20;
+/* DeGaming Libraries */
+import {DGErrors} from "src/libraries/DGErrors.sol";
 
-    // DGBankrollManager public dgBankrollManager;
-    // Bankroll public bankroll;
+contract DeployPlatform is Script {
+    /// @dev Using SafeERC20 for safer token interaction
+    using SafeERC20 for IERC20;
 
-    // uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
-    // uint256 adminPrivateKey = vm.envUint("ADMIN_PRIVATE_KEY");
-    // uint256 managerPrivateKey = vm.envUint("MANAGER_PRIVATE_KEY");
+    DGBankrollManager public dgBankrollManager;
+    Bankroll public bankroll;
 
-    // address deGaming = 0x1d424382e8e09CC6F8425c9F32D2c695E7698db7;
+    uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
+    uint256 adminPrivateKey = vm.envUint("ADMIN_PRIVATE_KEY");
+    uint256 managerPrivateKey = vm.envUint("MANAGER_PRIVATE_KEY");
 
-    // // Addresses
-    // address admin = vm.addr(adminPrivateKey);
-    // address token = vm.envAddress("TOKEN_ADDRESS");
+    address deGaming = 0x1d424382e8e09CC6F8425c9F32D2c695E7698db7;
 
-    // // replace with actual address
-    // address operator = vm.addr(managerPrivateKey);
+    // Addresses
+    address admin = vm.addr(adminPrivateKey);
+    address token = vm.envAddress("TOKEN_ADDRESS");
 
-    // uint256 maxRisk = 10_000;
+    // replace with actual address
+    address operator = vm.addr(managerPrivateKey);
 
-    // uint256 lpFee = 650;
+    uint256 maxRisk = 10_000;
 
-    // function run() public {
+    uint256 lpFee = 650;
 
-        // vm.startBroadcast(deployerPrivateKey);
+    function run() public {
 
-        // console.log("deployer: ", vm.addr(deployerPrivateKey));
-        // console.log("admin:    ", admin);
-        // console.log("token:    ", token);
+        vm.startBroadcast(deployerPrivateKey);
 
-        // dgBankrollManager = new DGBankrollManager(deGaming);
+        console.log("deployer: ", vm.addr(deployerPrivateKey));
+        console.log("admin:    ", admin);
+        console.log("token:    ", token);
 
-        // bankroll = new Bankroll(admin, address(token), address(dgBankrollManager), maxRisk);
+        //dgBankrollManager = new DGBankrollManager(deGaming);
 
-        // dgBankrollManager.approveBankroll(address(bankroll), lpFee);
+        //bankroll = new Bankroll(admin, address(token), address(dgBankrollManager), maxRisk);
 
-        // dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
+        bankroll = new Bankroll();
 
-        // bankroll.maxBankrollManagerApprove();
+        dgBankrollManager.approveBankroll(address(bankroll), lpFee);
 
-        // vm.stopBroadcast();
+        dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
 
-        // // Set bankroll max allowance
-        // vm.startBroadcast(adminPrivateKey);
+        bankroll.maxBankrollManagerApprove();
+
+        vm.stopBroadcast();
+
+        // Set bankroll max allowance
+        vm.startBroadcast(adminPrivateKey);
     
-        // IERC20(token).forceApprove(
-            // address(bankroll),
-            // 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-        // );
+        IERC20(token).forceApprove(
+            address(bankroll),
+            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+        );
 
-        // vm.stopBroadcast();
-    // }
-// }
+        vm.stopBroadcast();
+    }
+}
