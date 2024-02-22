@@ -138,6 +138,9 @@ contract DGBankrollManagerTest is Test {
     }
 
     function test_updateAdmin(address _newAdmin, address _newOperator) public {
+        vm.assume(_newAdmin != admin);
+        vm.assume(_newOperator != operator);
+
         vm.prank(_newAdmin);
         vm.expectRevert();
         dgBankrollManager.addOperator(_newOperator);
@@ -146,7 +149,7 @@ contract DGBankrollManagerTest is Test {
         vm.expectRevert(DGErrors.NOT_AN_OPERATOR.selector);
         bankroll.debit(address(0x4), 10, _newOperator);
 
-        dgBankrollManager.updateAdmin(msg.sender, _newAdmin);
+        dgBankrollManager.updateAdmin(admin, _newAdmin);
         vm.prank(_newAdmin);
         dgBankrollManager.addOperator(_newOperator);
 

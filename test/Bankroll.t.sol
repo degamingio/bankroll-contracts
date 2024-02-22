@@ -26,6 +26,7 @@ contract BankrollTest is Test {
     address lpOne;
     address lpTwo;
     address player;
+    address owner;
     TransparentUpgradeableProxy public bankrollProxy;
 
     ProxyAdmin public proxyAdmin;
@@ -41,6 +42,7 @@ contract BankrollTest is Test {
         lpOne = address(0x3);
         lpTwo = address(0x4);
         player = address(0x5);
+        owner = address(0x6);
         uint256 maxRisk = 10_000;
 
         dgBankrollFactory = new DGBankrollFactory();
@@ -58,7 +60,7 @@ contract BankrollTest is Test {
                 admin,
                 address(token),
                 address(dgBankrollManager),
-                msg.sender,
+                owner,
                 maxRisk
             )
         );
@@ -229,21 +231,26 @@ contract BankrollTest is Test {
         assertEq(bankroll.lpWhitelist(lpOne), true);
     }
 
-    // function test_updateAdmin(address _newAdmin) public {
-        // token.mint(_newAdmin, 10);
+    function test_updateAdmin(address _newAdmin) public {
+        vm.assume(_newAdmin != address(0));
+        vm.assume(_newAdmin != admin);
 
-        // vm.prank(_newAdmin);
-        // token.approve(address(bankroll), 10);
-        // vm.expectRevert();
-        // bankroll.credit(10, operator);
-        // vm.stopPrank(); 
+        token.mint(_newAdmin, 10);
+
+        vm.prank(_newAdmin);
+        token.approve(address(bankroll), 10);
+        vm.expectRevert();
+        bankroll.credit(10, operator);
+        vm.stopPrank(); 
      
-        // bankroll.updateAdmin(admin, _newAdmin);
-        // vm.startPrank(_newAdmin);
-        // token.approve(address(bankroll), 10);
-        // bankroll.credit(10, operator);
-        // vm.stopPrank();
-    // }
+        vm.prank(owner);
+        bankroll.updateAdmin(admin, _newAdmin);
+        
+        vm.startPrank(_newAdmin);
+        token.approve(address(bankroll), 10);
+        bankroll.credit(10, operator);
+        vm.stopPrank();
+    }
 
     function test_setPublic() public {
         assertEq(uint256(bankroll.lpIs()), 0);

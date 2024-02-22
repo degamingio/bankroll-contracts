@@ -73,14 +73,11 @@ contract DGBankrollFactoryTest is Test {
 
         dgBankrollFactory = DGBankrollFactory(address(bankrollFactoryProxy));
 
-        //bankroll = Bankroll(address(bankrollProxy));
-
         dgBankrollManager.addOperator(operator);
         dgBankrollManager.approveBankroll(address(bankroll), lpFee);
     }
 
     function test_deployBankroll(address _operator, bytes32 _salt) public {
-        // vm.assume(_operator != address(0));
         dgBankrollFactory.deployBankroll(
             _operator, 
             address(token), 
@@ -114,6 +111,7 @@ contract DGBankrollFactoryTest is Test {
 
     function test_setDgBankrollManager(address _sender, address _bankrollManager) public {
         vm.assume(_sender != address(proxyAdmin));
+        vm.assume(dgBankrollFactory.dgBankrollManager() != _bankrollManager);
        
         dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
     
@@ -136,6 +134,7 @@ contract DGBankrollFactoryTest is Test {
 
     function test_setDgAdmin(address _sender, address _admin) public {
         vm.assume(_sender != address(proxyAdmin));
+        vm.assume(dgBankrollFactory.dgAdmin() != _admin);
         
         dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
 

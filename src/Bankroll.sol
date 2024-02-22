@@ -342,6 +342,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      *
      */
     function updateAdmin(address _oldAdmin, address _newAdmin) external onlyOwner {
+    // function updateAdmin(address _oldAdmin, address _newAdmin) external {
         // Revoke the old admins role
         _revokeRole(ADMIN, _oldAdmin);
 
