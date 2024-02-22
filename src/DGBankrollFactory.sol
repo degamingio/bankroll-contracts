@@ -122,14 +122,35 @@ contract DGBankrollFactory is AccessControlUpgradeable {
         ++bankrollCount;
     }
 
+    /**
+     * @notice
+     *  Set Bankroll implementation address
+     *  Only the caller with role `DEFAULT_ADMIN_ROLE` can perform this operation
+     *
+     * @param _newImpl address of the new implementation contract
+     */
     function setBankrollImplementation(address _newImpl) external onlyRole(DEFAULT_ADMIN_ROLE) {
         bankrollImpl = _newImpl;
     }
 
+    /**
+     * @notice
+     *  Set DeGaming Bankroll Manager contract address
+     *  Only the caller with role `DEFAULT_ADMIN_ROLE` can perform this operation
+     *
+     * @param _admin DeGaming admin account
+     */
     function setDgBankrollManager(address _dgBankrollManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
         dgBankrollManager = _dgBankrollManager;
     }
 
+    /**
+     * @notice
+     *  Set DeGaming admin account
+     *  Only the caller with role `DEFAULT_ADMIN_ROLE` can perform this operation
+     *
+     * @param _dgAdmin DeGaming admin account
+     */
     function setDgAdmin(address _dgAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
         dgAdmin = _dgAdmin;
     }
