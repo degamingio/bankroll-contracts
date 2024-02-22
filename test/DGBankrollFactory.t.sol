@@ -50,10 +50,6 @@ contract DGBankrollFactoryTest is Test {
 
         lpFee = 650;
 
-        //dgBankrollFactory = new DGBankrollFactory();
-
-        dgBankrollManager = new DGBankrollManager(admin, address(dgBankrollFactory));
-
         token = new MockToken("token", "MTK");
 
         proxyAdmin = new ProxyAdmin(msg.sender);
@@ -72,6 +68,8 @@ contract DGBankrollFactoryTest is Test {
         );
 
         dgBankrollFactory = DGBankrollFactory(address(bankrollFactoryProxy));
+        
+        dgBankrollManager = new DGBankrollManager(admin, address(dgBankrollFactory));
 
         dgBankrollManager.addOperator(operator);
         dgBankrollManager.approveBankroll(address(bankroll), lpFee);

@@ -109,7 +109,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      * @param _bankroll bankroll contract address to be approved
      *
      */
-    // function approveBankroll(address _bankroll, uint256 _fee) external onlyRole(ADMIN) {
+    //function approveBankroll(address _bankroll, uint256 _fee) external onlyRole(ADMIN) {
     function approveBankroll(address _bankroll, uint256 _fee) external {
         // Check so that fee is withing range
         if (_fee > DENOMINATOR) revert DGErrors.TO_HIGH_FEE();
@@ -146,8 +146,8 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      * @param _operator address of the operator we want to add to the list of associated operators
      *
      */
-    //function setOperatorToBankroll(address _bankroll, address _operator) external onlyRole(ADMIN) {
-    function setOperatorToBankroll(address _bankroll, address _operator) external {
+    function setOperatorToBankroll(address _bankroll, address _operator) external onlyRole(ADMIN) {
+    //function setOperatorToBankroll(address _bankroll, address _operator) external {
         // Add operator into array of associated operators to bankroll
         operatorsOf[_bankroll].push(_operator);
 

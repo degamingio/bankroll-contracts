@@ -80,8 +80,7 @@ contract DGBankrollFactory is AccessControlUpgradeable {
         uint256 _maxRiskPercentage,
         uint256 _lpFee,
         bytes32 _salt 
-    //) external  onlyRole(DEFAULT_ADMIN_ROLE) {
-    ) external {
+    ) external  onlyRole(DEFAULT_ADMIN_ROLE) {
         Bankroll newBankroll = Bankroll(Clones.cloneDeterministic(bankrollImpl, _salt));
 
         newBankroll.initialize(

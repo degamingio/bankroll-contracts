@@ -102,7 +102,6 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      * @param _ERC20 Bankroll liquidity token address
      *
      */
-    //constructor(address _admin, address _ERC20, address _bankrollManager, uint256 _maxRiskPercentage) Ownable(msg.sender) {
     function initialize(
         address _admin,
         address _ERC20,
@@ -342,7 +341,6 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      *
      */
     function updateAdmin(address _oldAdmin, address _newAdmin) external onlyOwner {
-    // function updateAdmin(address _oldAdmin, address _newAdmin) external {
         // Revoke the old admins role
         _revokeRole(ADMIN, _oldAdmin);
 
