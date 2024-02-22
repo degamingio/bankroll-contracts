@@ -60,27 +60,53 @@ contract DGBankrollFactory is AccessControlUpgradeable {
         _disableInitializers();
     }
 
+    /**
+     * @notice
+     *  Contract Initializer
+     *
+     * @param _bankrollImpl address of DeGaming implementation of Bankroll contract
+     * @param _dgBankrollManager DeGaming bankroll manager  contract address
+     * @param _dgAdmin DeGaming admin account
+     *
+     */
     function initialize(
         address _bankrollImpl,
         address _dgBankrollManager,
         address _dgAdmin
     ) external initializer {
+
+        // Initialize global variables
         bankrollImpl = _bankrollImpl;
         dgBankrollManager = _dgBankrollManager;
         dgAdmin = _dgAdmin;
 
+        // initialize access controll
         __AccessControl_init();
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
+
+    /**
+     * @notice
+     *  Deploy a new Bankroll instance
+     *  Only the caller with role `DEFAULT_ADMIN_ROLE` can perform this operation
+     *
+     * @param _token address of token asociated with bankroll
+     * @param _deGaming deGaming wallet address
+     * @param _maxRiskPercentage max risk percentage in numbers (denominator 10_000 = 100)
+     * @param _salt bytes used for deterministic deployment
+     *
+     */
     function deployBankroll(
         address _token,
         address _deGaming,
         uint256 _maxRiskPercentage,
         bytes32 _salt 
     ) external  onlyRole(DEFAULT_ADMIN_ROLE) {
+        // Deploy new Bankroll contract
         Bankroll newBankroll = Bankroll(Clones.cloneDeterministic(bankrollImpl, _salt));
 
+        // Initialize Bankroll contract
         newBankroll.initialize(
             dgAdmin,
             _token,
@@ -89,19 +115,10 @@ contract DGBankrollFactory is AccessControlUpgradeable {
             _maxRiskPercentage
         );
 
-        // IDGBankrollManager bankrollManager = IDGBankrollManager(dgBankrollManager);
-
-        // bankrollManager.approveBankroll(
-            // address(newBankroll),
-            // _lpFee
-        // );
-
-        // bankrollManager.setOperatorToBankroll(
-            // address(newBankroll),
-            // _operator
-        // );
-
+        // Add address to list of bankrolls
         bankrolls.push(address(newBankroll));
+        
+        // Increment bankroll counter
         ++bankrollCount;
     }
 

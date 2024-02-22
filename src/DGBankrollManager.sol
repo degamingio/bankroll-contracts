@@ -73,8 +73,13 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      *
      */
     constructor(address _deGaming, address _factory) Ownable(msg.sender) {
+        // Set DeGaming global variable
         deGaming = _deGaming;
+
+        // Grant Admin role to deployer
         _grantRole(ADMIN, msg.sender);
+
+        // Grant admin role to factory contract
         _grantRole(ADMIN, _factory);
     }
 
@@ -214,8 +219,10 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
         // Update event period ends unix timestamp to one <EVENT_PERIOD> from now
         eventPeriodEnds[_bankroll] = block.timestamp + EVENT_PERIOD;
 
+        // variable for amount per operator
         uint256 amount;
 
+        // variable for total amount
         uint256 totalAmount;
 
         // Loop over the operator list and perform the claim process over each operator
@@ -231,6 +238,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
                     amount
                 );
 
+                // Increment total amount
                 totalAmount += uint256(bankroll.ggrOf(operators[i]));
 
                 // Zero out the GGR
