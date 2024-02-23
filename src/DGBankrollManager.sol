@@ -31,9 +31,6 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
 
-    /// @dev Event period, the minimum time between each claim
-    uint256 public constant EVENT_PERIOD = 30 days;
-
     /// @dev used to calculate percentages
     uint256 public constant DENOMINATOR = 10_000; 
 
@@ -45,6 +42,8 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
 
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
+
+    mapping(address bankroll => uint256 timeStamp) public eventPeriodOf;
 
     /// @dev store bankroll status
     mapping(address bankroll => bool isApproved) public bankrollStatus;
@@ -76,11 +75,11 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
         // Set DeGaming global variable
         deGaming = _deGaming;
 
-        // Grant Admin role to deployer
-        _grantRole(ADMIN, msg.sender);
-
         // Grant admin role to factory contract
         _grantRole(ADMIN, _factory);
+    
+        // Grant Admin role to deployer
+        _grantRole(ADMIN, msg.sender);
     }
 
     //     ____        __         ____                              ______                 __  _
@@ -126,6 +125,9 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
 
         // set LP fee
         lpFeeOf[_bankroll] = _fee;
+    
+        // set default eventPeriod
+        eventPeriodOf[_bankroll] = 30 days;
     }
 
     /**
@@ -161,6 +163,14 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
 
         // set new LP fee
         lpFeeOf[_bankroll] = _newFee;
+    }
+
+    function updateEventPeriod(address _bankroll, uint256 _eventPeriod) external onlyRole(ADMIN) {
+        // Check that the bankroll is an approved DeGaming Bankroll
+        if (!bankrollStatus[_bankroll]) revert DGErrors.BANKROLL_NOT_APPROVED();
+
+        // Set new eventperiod
+        eventPeriodOf[_bankroll] = _eventPeriod;
     }
 
     /**
@@ -238,8 +248,8 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
         // Check if Casino GGR is posetive
         if (GGR < 1) revert DGErrors.NOTHING_TO_CLAIM();
 
-        // Update event period ends unix timestamp to one <EVENT_PERIOD> from now
-        eventPeriodEnds[_bankroll] = block.timestamp + EVENT_PERIOD;
+        // Update event period ends unix timestamp to the eventperiod of specified bankroll
+        eventPeriodEnds[_bankroll] = block.timestamp + eventPeriodOf[_bankroll];
 
         // variable for amount per operator
         uint256 amount;
