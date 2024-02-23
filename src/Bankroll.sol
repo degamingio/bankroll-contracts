@@ -34,7 +34,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     int256 public GGR; 
     
     ///  @dev the current aggregated profit of the bankroll balance allocated for lps
-    int256 public lpsProfit;
+    // int256 public lpsProfit;
     
     /// @dev total amount of ERC20 deposited by LPs
     uint256 public totalDeposit; 
@@ -191,13 +191,37 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
         totalDeposit -= depositOf[msg.sender];
 
         // decrement total LP profit
-        lpsProfit -= getLpProfit(msg.sender);
+        //lpsProfit -= getLpProfit(msg.sender);
 
         // zero lp deposit
         depositOf[msg.sender] = 0;
 
         // call internal withdrawal function
         _withdraw(sharesOf[msg.sender]);
+    }
+
+
+    function withdraw(uint256 _amount) external {
+        // check if the user is allowed to deposit if the bankroll is not public
+        if (
+            lpIs == DGDataTypes.LpIs.WHITELISTED && 
+            !lpWhitelist[msg.sender]
+        ) revert DGErrors.LP_IS_NOT_WHITELISTED();
+
+        if (_amount > sharesOf[msg.sender]) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
+
+        // decrement total deposit
+        totalDeposit -= _amount;
+
+        // decrement total LP profit
+        // lpsProfit -= int256(_amount);
+
+        // remove amount from deposit of 
+        // CHECK if this is actually correct
+        depositOf[msg.sender] -= _amount;
+
+        // call internal withdrawal function
+        _withdraw(_amount);
     }
 
     /**

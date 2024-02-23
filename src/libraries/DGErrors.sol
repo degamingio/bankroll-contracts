@@ -36,4 +36,7 @@ library DGErrors {
 
     /// @dev Error thrown when trying to redundantly add operators to bankrolls
     error OPERATOR_ALREADY_ADDED_TO_BANKROLL();
+
+    /// @dev Error thrown when LP is trying to withdraw more than they have
+    error LP_REQUESTED_AMOUNT_OVERFLOW();
 }
