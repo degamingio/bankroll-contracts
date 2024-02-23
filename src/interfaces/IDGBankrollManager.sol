@@ -98,4 +98,6 @@ interface IDGBankrollManager {
     ) external;
 
     function isApproved(address operator) external view returns(bool approved); 
+
+    function operatorOfBankroll(address _operator, address _bankroll) external view returns (bool _isRelated);
 } 

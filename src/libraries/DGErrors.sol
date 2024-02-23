@@ -30,4 +30,10 @@ library DGErrors {
 
     /// @dev Error thrown if we are trying to update a role with the previous role holder not being valid
     error ADDRESS_DOES_NOT_HOLD_ROLE();
+
+    /// @dev Error thrown if operator is not associated with this specific bankroll
+    error OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
+
+    /// @dev Error thrown when trying to redundantly add operators to bankrolls
+    error OPERATOR_ALREADY_ADDED_TO_BANKROLL();
 }

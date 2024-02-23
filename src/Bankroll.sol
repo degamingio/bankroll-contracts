@@ -210,6 +210,9 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      *
      */
     function debit(address _player, uint256 _amount, address _operator) external onlyRole(ADMIN) {
+        // Check so that operator is associated with this bankroll
+        if (!dgBankrollManager.operatorOfBankroll(_operator, address(this))) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
+        
         // Check that operator is approved
         if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
         
@@ -258,6 +261,9 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      *
      */
     function credit(uint256 _amount, address _operator) external onlyRole(ADMIN) {
+        // Check so that operator is associated with this bankroll
+        if (!dgBankrollManager.operatorOfBankroll(_operator, address(this))) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
+        
         // Check that operator is approved
         if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
         

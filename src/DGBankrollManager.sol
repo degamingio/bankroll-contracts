@@ -183,6 +183,9 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      *
      */
     function setOperatorToBankroll(address _bankroll, address _operator) external onlyRole(ADMIN) {
+        // Check so that operator isnt added to bankroll already
+        if (operatorOfBankroll(_operator, _bankroll)) revert DGErrors.OPERATOR_ALREADY_ADDED_TO_BANKROLL();
+        
         // Add operator into array of associated operators to bankroll
         operatorsOf[_bankroll].push(_operator);
 
@@ -312,6 +315,16 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
             emit DGEvents.Credit(msg.sender, _address1, _number);
         } else if (_eventSpecifier == DGDataTypes.EventSpecifier.BANKROLL_SWEPT) {
             emit DGEvents.BankrollSwept(msg.sender, _address1, _number);
+        }
+    }
+
+    function operatorOfBankroll(address _operator, address _bankroll) public view returns (bool _isRelated) {
+        _isRelated = false;
+        address[] memory operatorList = operatorsOf[_bankroll];
+        for (uint256 i; i < operatorList.length; i++) {
+            if (operatorList[i] == _operator) {
+                _isRelated = true;
+            }
         }
     }
 }
