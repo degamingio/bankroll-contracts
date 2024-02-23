@@ -27,4 +27,7 @@ library DGErrors {
 
     /// @dev Error thrown when bankroll with a > 100% fee is being requested to be added  
     error TO_HIGH_FEE();
+
+    /// @dev Error thrown if we are trying to update a role with the previous role holder not being valid
+    error ADDRESS_DOES_NOT_HOLD_ROLE();
 }

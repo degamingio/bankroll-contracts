@@ -142,6 +142,25 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
     }
 
     /**
+     * @notice
+     *  Update existing bankrolls fee
+     *
+     * @param _bankroll bankroll contract address to be blocked
+     * @param _newFee bankroll contract address to be blocked
+     *
+     */
+    function updateLpFee(address _bankroll, uint256 _newFee) external onlyRole(ADMIN) {
+        // Check that the bankroll is an approved DeGaming Bankroll
+        if (!bankrollStatus[_bankroll]) revert DGErrors.BANKROLL_NOT_APPROVED();
+
+        // Check so that fee is withing range
+        if (_newFee > DENOMINATOR) revert DGErrors.TO_HIGH_FEE();
+
+        // set new LP fee
+        lpFeeOf[_bankroll] = _newFee;
+    }
+
+    /**
      * @notice 
      *  Adding list of operator to list of operators associated with a bankroll
      *  Only calleable by admin role

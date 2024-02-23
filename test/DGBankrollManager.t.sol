@@ -120,6 +120,26 @@ contract DGBankrollManagerTest is Test {
         bankroll.credit(500_000, _operator);
     }
 
+    function test_updateFee(uint256 _newFee, uint256 _faultyFee, address _faultyBankroll, address _notAdmin) public {
+        vm.assume(_newFee < 10_000);
+        vm.assume(_faultyFee > 10_000);
+
+
+        vm.expectRevert();
+        vm.prank(_notAdmin);
+        dgBankrollManager.updateLpFee(address(bankroll), _newFee);
+
+        vm.expectRevert(DGErrors.BANKROLL_NOT_APPROVED.selector);
+        dgBankrollManager.updateLpFee(_faultyBankroll, _newFee);
+
+        vm.expectRevert(DGErrors.TO_HIGH_FEE.selector);
+        dgBankrollManager.updateLpFee(address(bankroll), _faultyFee);
+
+        dgBankrollManager.updateLpFee(address(bankroll), _newFee);
+
+        assertEq(dgBankrollManager.lpFeeOf(address(bankroll)), _newFee);
+    }
+
     function test_blockBankroll() public {
         vm.prank(admin);
         bankroll.credit(1_000_000, operator);
