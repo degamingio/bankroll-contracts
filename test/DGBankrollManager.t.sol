@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.18;
 
 import "forge-std/Test.sol";
 
+/* OpenZeppelin contract */
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+
 /* DeGaming Contracts */
 import {Bankroll} from "src/Bankroll.sol";
 import {DGBankrollManager} from "src/DGBankrollManager.sol";
+import {DGBankrollFactory} from "src/DGBankrollFactory.sol";
 
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
@@ -18,6 +22,10 @@ contract DGBankrollManagerTest is Test {
     MockToken public mockToken;
     DGBankrollManager public dgBankrollManager;
     Bankroll public bankroll;
+    DGBankrollFactory public dgBankrollFactory;
+    TransparentUpgradeableProxy public bankrollProxy;
+
+    ProxyAdmin public proxyAdmin;
 
     address admin;
     address deGaming;
@@ -32,9 +40,26 @@ contract DGBankrollManagerTest is Test {
 
         mockToken = new MockToken("Mock USDC", "mUSDC");
 
-        dgBankrollManager = new DGBankrollManager(deGaming);
+        dgBankrollFactory = new DGBankrollFactory();
 
-        bankroll = new Bankroll(admin, address(mockToken), address(dgBankrollManager), maxRisk);
+        dgBankrollManager = new DGBankrollManager(deGaming, address(dgBankrollFactory));
+
+        proxyAdmin = new ProxyAdmin(msg.sender);
+
+        bankrollProxy = new TransparentUpgradeableProxy(
+            address(new Bankroll()),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                Bankroll.initialize.selector,
+                admin,
+                address(mockToken),
+                address(dgBankrollManager),
+                msg.sender,
+                maxRisk
+            )
+        );
+
+        bankroll = Bankroll(address(bankrollProxy));
 
         dgBankrollManager.approveBankroll(address(bankroll), 650);
 
@@ -113,6 +138,9 @@ contract DGBankrollManagerTest is Test {
     }
 
     function test_updateAdmin(address _newAdmin, address _newOperator) public {
+        vm.assume(_newAdmin != admin);
+        vm.assume(_newOperator != operator);
+
         vm.prank(_newAdmin);
         vm.expectRevert();
         dgBankrollManager.addOperator(_newOperator);
@@ -121,7 +149,7 @@ contract DGBankrollManagerTest is Test {
         vm.expectRevert(DGErrors.NOT_AN_OPERATOR.selector);
         bankroll.debit(address(0x4), 10, _newOperator);
 
-        dgBankrollManager.updateAdmin(msg.sender, _newAdmin);
+        dgBankrollManager.updateAdmin(admin, _newAdmin);
         vm.prank(_newAdmin);
         dgBankrollManager.addOperator(_newOperator);
 

@@ -3,9 +3,14 @@ pragma solidity ^0.8.18;
 
 import "forge-std/Test.sol";
 
+/* OpenZeppelin contract */
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+
 /* DeGaming Contracts */
 import {Bankroll} from "src/Bankroll.sol";
 import {DGBankrollManager} from "src/DGBankrollManager.sol";
+import {DGBankrollFactory} from "src/DGBankrollFactory.sol";
 
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
@@ -21,11 +26,15 @@ contract BankrollTest is Test {
     address lpOne;
     address lpTwo;
     address player;
-    address bankrollManager;
+    address owner;
+    TransparentUpgradeableProxy public bankrollProxy;
 
-    DGBankrollManager dgBankrollManager;
-    Bankroll bankroll;
-    MockToken token;
+    ProxyAdmin public proxyAdmin;
+
+    DGBankrollFactory public dgBankrollFactory;
+    DGBankrollManager public dgBankrollManager;
+    Bankroll public bankroll;
+    MockToken public token;
 
     function setUp() public {
         admin = address(0x1);
@@ -33,12 +42,30 @@ contract BankrollTest is Test {
         lpOne = address(0x3);
         lpTwo = address(0x4);
         player = address(0x5);
-        //bankrollManager = address(0x6);
+        owner = address(0x6);
         uint256 maxRisk = 10_000;
-        
-        dgBankrollManager = new DGBankrollManager(admin);
+
+        dgBankrollFactory = new DGBankrollFactory();
+
+        dgBankrollManager = new DGBankrollManager(admin, address(dgBankrollFactory));
         token = new MockToken("token", "MTK");
-        bankroll = new Bankroll(admin, address(token), address(dgBankrollManager), maxRisk);
+
+        proxyAdmin = new ProxyAdmin(msg.sender);
+
+        bankrollProxy = new TransparentUpgradeableProxy(
+            address(new Bankroll()),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                Bankroll.initialize.selector,
+                admin,
+                address(token),
+                address(dgBankrollManager),
+                owner,
+                maxRisk
+            )
+        );
+
+        bankroll = Bankroll(address(bankrollProxy));
 
         token.mint(lpOne, 1_000_000);
         token.mint(lpTwo, 1_000_000);
@@ -205,6 +232,9 @@ contract BankrollTest is Test {
     }
 
     function test_updateAdmin(address _newAdmin) public {
+        vm.assume(_newAdmin != address(0));
+        vm.assume(_newAdmin != admin);
+
         token.mint(_newAdmin, 10);
 
         vm.prank(_newAdmin);
@@ -213,7 +243,9 @@ contract BankrollTest is Test {
         bankroll.credit(10, operator);
         vm.stopPrank(); 
      
+        vm.prank(owner);
         bankroll.updateAdmin(admin, _newAdmin);
+        
         vm.startPrank(_newAdmin);
         token.approve(address(bankroll), 10);
         bankroll.credit(10, operator);

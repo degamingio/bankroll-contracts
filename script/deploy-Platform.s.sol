@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.18;
 
 import "forge-std/Script.sol";
@@ -9,6 +8,9 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /* OpenZeppelin Contract */
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol"; 
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+
 
 /* DeGaming Contracts */
 import {Bankroll} from "src/Bankroll.sol";
@@ -49,9 +51,11 @@ contract DeployPlatform is Script {
         console.log("admin:    ", admin);
         console.log("token:    ", token);
 
-        dgBankrollManager = new DGBankrollManager(deGaming);
+        //dgBankrollManager = new DGBankrollManager(deGaming);
 
-        bankroll = new Bankroll(admin, address(token), address(dgBankrollManager), maxRisk);
+        //bankroll = new Bankroll(admin, address(token), address(dgBankrollManager), maxRisk);
+
+        bankroll = new Bankroll();
 
         dgBankrollManager.approveBankroll(address(bankroll), lpFee);
 
