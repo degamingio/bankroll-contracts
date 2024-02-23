@@ -138,7 +138,7 @@ contract DGBankrollFactory is AccessControlUpgradeable {
      *  Set DeGaming Bankroll Manager contract address
      *  Only the caller with role `DEFAULT_ADMIN_ROLE` can perform this operation
      *
-     * @param _admin DeGaming admin account
+     * @param _dgBankrollManager DeGaming admin account
      */
     function setDgBankrollManager(address _dgBankrollManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
         dgBankrollManager = _dgBankrollManager;
