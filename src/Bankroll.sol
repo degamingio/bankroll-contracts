@@ -338,6 +338,9 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      *
      */
     function updateAdmin(address _oldAdmin, address _newAdmin) external onlyOwner {
+        // Check that _oldAdmin address is valid
+        if (!hasRole(ADMIN, _oldAdmin)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
+        
         // Revoke the old admins role
         _revokeRole(ADMIN, _oldAdmin);
 
@@ -354,6 +357,9 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      *
      */
     function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external onlyOwner {
+        // Check that _oldBankrollManager is valid
+        if (!hasRole(BANKROLL_MANAGER, _oldBankrollManager)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
+        
         // Revoke the old bankroll managers role
         _revokeRole(BANKROLL_MANAGER, _oldBankrollManager);
         

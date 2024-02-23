@@ -99,6 +99,9 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      *
      */
     function updateAdmin(address _oldAdmin, address _newAdmin) external onlyOwner {
+        // Check that _oldAdmin address is valid
+        if (!hasRole(ADMIN, _oldAdmin)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
+        
         // Revoke the old admins role
         _revokeRole(ADMIN, _oldAdmin);
 
