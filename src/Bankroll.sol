@@ -23,6 +23,8 @@ import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
  * @notice Operator and Game Bankroll Contract
  *
  */
+
+ /// NOTE : you probably dont need Ownable if you use AccessControl
 contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
@@ -39,6 +41,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     /// @dev used to calculate percentages
     uint256 public constant DENOMINATOR = 10_000; 
     
+    /// NOTE : No setters for this state
     /// @dev Max percentage of liquidity risked
     uint256 public maxRiskPercentage; 
     
@@ -48,6 +51,8 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     /// @dev Status regarding if bankroll has minimum for LPs to pool
     bool public hasMinimumLP = false;
 
+    /// NOTE : AccessControl provides a DEFAULT_ADMIN_ROLE by default
+    /// you dont need to declare this one unless you want to have 2 different types of ADMIN with different privileges
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
 
@@ -70,6 +75,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     mapping(address lp => bool authorized) public lpWhitelist; 
     
     /// @dev bankroll liquidity token
+    /// NOTE : i think this state name makes it confusing (call it `token` for better readibility)
     IERC20 public ERC20;
 
     /// @dev Bankroll manager instance
@@ -78,6 +84,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     /// @dev set status regarding if LP is open or whitelisted
     DGDataTypes.LpIs public lpIs = DGDataTypes.LpIs.OPEN;
 
+    /// NOTE : This state is not needed, you can use address(0) where needed.
     /// @dev zero address, used for calling the universal event emitter when no second address is needed
     address constant NULL =  0x0000000000000000000000000000000000000000;
 
@@ -95,6 +102,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
         _disableInitializers();
     }
 
+    /// NOTE: Missing param in natspec comments
     /**
      * @notice Bankroll constructor
      *
@@ -116,6 +124,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
         // Initializing erc20 token associated with bankroll
         ERC20 = IERC20(_ERC20);
 
+        /// NOTE : could be wise to check that this value is not greater than DENOMINATOR
         // Set the max risk percentage
         maxRiskPercentage = _maxRiskPercentage;
 
@@ -176,6 +185,8 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
 
         // Emit a funds deposited event 
         // (emit DGEvents.FundsDeposited(msg.sender, _amount))
+
+        /// NOTE : why do you call another contract to emit an event ? not gas efficient imo
         dgBankrollManager.emitEvent(
             DGDataTypes.EventSpecifier.FUNDS_DEPOSITED,
             msg.sender,
@@ -191,6 +202,13 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      */
     function withdrawAll() external {
         // check if the user is allowed to deposit if the bankroll is not public
+
+        /// NOTE : this means that an LP could have their funds locked in our contract :
+        /// whitelist LP1 
+        /// LP1 deposit
+        /// remove LP1 from whitelist
+        /// LP1 cannot withdraw
+         
         if (
             lpIs == DGDataTypes.LpIs.WHITELISTED && 
             !lpWhitelist[msg.sender]
@@ -209,6 +227,12 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
 
     function withdraw(uint256 _amount) external {
         // check if the user is allowed to deposit if the bankroll is not public
+
+        /// NOTE : this means that an LP could have their funds locked in our contract :
+        /// whitelist LP1 
+        /// LP1 deposit
+        /// remove LP1 from whitelist
+        /// LP1 cannot withdraw
         if (
             lpIs == DGDataTypes.LpIs.WHITELISTED && 
             !lpWhitelist[msg.sender]
@@ -398,6 +422,8 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      * @param _newAdmin address of the new admin
      *
      */
+
+     /// NOTE : Ok, so you seem to need two different admin roles. This function can be protected by onlyRole(DEFAULT_ADMIN_ROLE)
     function updateAdmin(address _oldAdmin, address _newAdmin) external onlyOwner {
         // Check that _oldAdmin address is valid
         if (!hasRole(ADMIN, _oldAdmin)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
@@ -417,6 +443,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      * @param _newBankrollManager address of the new bankroll manager
      *
      */
+     /// NOTE : This function can be protected by onlyRole(DEFAULT_ADMIN_ROLE)
     function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external onlyOwner {
         // Check that _oldBankrollManager is valid
         if (!hasRole(BANKROLL_MANAGER, _oldBankrollManager)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
