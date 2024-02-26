@@ -39,4 +39,7 @@ library DGErrors {
 
     /// @dev Error thrown when LP is trying to withdraw more than they have
     error LP_REQUESTED_AMOUNT_OVERFLOW();
+
+    /// @dev Error thrown when a bankroll has a minimum lp amount which the depositor does not satisfy
+    error DEPOSITION_TO_LOW();
 }

@@ -44,6 +44,12 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     
     /// @dev Max percentage of liquidity risked
     uint256 public maxRiskPercentage; 
+    
+    /// @dev amount for minimum pool in case it exists
+    uint256 public minimumLp;
+
+    /// @dev Status regarding if bankroll has minimum for LPs to pool
+    bool public hasMinimumLP = false;
 
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
@@ -144,6 +150,11 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
             lpIs == DGDataTypes.LpIs.WHITELISTED && 
             !lpWhitelist[msg.sender]
         ) revert DGErrors.LP_IS_NOT_WHITELISTED();
+
+        if (
+            hasMinimumLP &&
+            _amount < minimumLp
+        ) revert DGErrors.DEPOSITION_TO_LOW(); 
 
         // calculate the amount of shares to mint
         uint256 shares;
@@ -342,6 +353,33 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     function setPublic(DGDataTypes.LpIs _lpIs) external onlyRole(ADMIN) {
         // Toggle lpIs status
         lpIs = _lpIs;
+    }
+
+    /**
+     * @notice Set the minimum LP status for bankroll
+     *  Called by Admin
+     *
+     * @param _status Toggle minimum lp status true or false
+     *
+     */
+    function setMinimumLPStatus(bool _status) external onlyRole(ADMIN) {
+        // toggle status of has minimum lp variable
+        hasMinimumLP = _status;
+    }
+
+    /**
+     * @notice Set the minimum LP amount for bankroll
+     *  Called by Admin
+     *
+     * @param _amount Set tthe minimum lp amount
+     *
+     */
+    function setMinimumLp(uint256 _amount) external onlyRole(admin) {
+        // toggle status  of minimum lp variable
+        hasMinimumLP = true;
+
+        // set minimum lp
+        minimumLp = _amount;
     }
 
     /**
