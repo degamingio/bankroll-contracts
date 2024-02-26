@@ -207,6 +207,13 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     }
 
 
+    /**
+     * @notice Withdraw some ERC20 tokens held by LP from the bankroll
+     *  Called by Liquidity Providers
+     *
+     * @param _amount how many shares that should be withdrawn
+     *
+     */
     function withdraw(uint256 _amount) external {
         // check if the user is allowed to deposit if the bankroll is not public
         if (
