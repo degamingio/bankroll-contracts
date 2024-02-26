@@ -127,7 +127,9 @@ contract DGBankrollManagerTest is Test {
     function test_updateFee(uint256 _newFee, uint256 _faultyFee, address _faultyBankroll, address _notAdmin) public {
         vm.assume(_newFee < 10_000);
         vm.assume(_faultyFee > 10_000);
-
+        vm.assume(_faultyBankroll != address(bankroll));
+        vm.assume(_notAdmin != address(dgBankrollFactory));
+        vm.assume(_notAdmin != msg.sender);
 
         vm.expectRevert();
         vm.prank(_notAdmin);
@@ -163,6 +165,7 @@ contract DGBankrollManagerTest is Test {
 
     function test_updateAdmin(address _newAdmin, address _newOperator) public {
         vm.assume(_newAdmin != msg.sender);
+        vm.assume(_newAdmin != address(dgBankrollFactory));
         vm.assume(_newOperator != operator);
 
         vm.prank(_newAdmin);
