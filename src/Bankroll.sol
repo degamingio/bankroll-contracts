@@ -220,9 +220,14 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
         // decrement total deposit
         totalDeposit -= _amount;
 
+        // Calculate how many percentages of senders total shares they want to withdraw
+        uint256 percentage = (_amount * DENOMINATOR) / sharesOf[msg.sender];
+
+        // calculate what that same percentage is from that deposit of
+        uint256 decrementFromDeposit = (depositOf[msg.sender] * percentage) / DENOMINATOR;
+
         // remove amount from deposit of 
-        // CHECK if this is actually correct
-        depositOf[msg.sender] -= _amount;
+        depositOf[msg.sender] -= decrementFromDeposit;
 
         // call internal withdrawal function
         _withdraw(_amount);
