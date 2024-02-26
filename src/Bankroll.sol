@@ -245,11 +245,11 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      *
      */
     function debit(address _player, uint256 _amount, address _operator) external onlyRole(ADMIN) {
-        // Check so that operator is associated with this bankroll
-        if (!dgBankrollManager.operatorOfBankroll(_operator, address(this))) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
-        
         // Check that operator is approved
         if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
+        
+        // Check so that operator is associated with this bankroll
+        if (!dgBankrollManager.operatorOfBankroll(_operator, address(this))) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
         
         // pay what is left if amount is bigger than bankroll balance
         uint256 maxRisk = getMaxRisk();
@@ -295,12 +295,12 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      * @param _operator The operator from which the call comes from
      *
      */
-    function credit(uint256 _amount, address _operator) external onlyRole(ADMIN) {
-        // Check so that operator is associated with this bankroll
-        if (!dgBankrollManager.operatorOfBankroll(_operator, address(this))) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
-        
+    function credit(uint256 _amount, address _operator) external onlyRole(ADMIN) {    
         // Check that operator is approved
         if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
+        
+        // Check so that operator is associated with this bankroll
+        if (!dgBankrollManager.operatorOfBankroll(_operator, address(this))) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
         
         // Add to total GGR
         GGR += int256(_amount);
@@ -374,7 +374,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      * @param _amount Set tthe minimum lp amount
      *
      */
-    function setMinimumLp(uint256 _amount) external onlyRole(admin) {
+    function setMinimumLp(uint256 _amount) external onlyRole(ADMIN) {
         // toggle status  of minimum lp variable
         hasMinimumLP = true;
 

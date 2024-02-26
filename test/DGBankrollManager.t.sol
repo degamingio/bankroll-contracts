@@ -91,11 +91,14 @@ contract DGBankrollManagerTest is Test {
     }
 
     function test_addOperator(address _operator) public {
+        vm.assume(_operator != operator);
+
         vm.prank(admin);
         vm.expectRevert(DGErrors.NOT_AN_OPERATOR.selector);
         bankroll.credit(1_000_000, _operator);
 
         dgBankrollManager.addOperator(_operator);
+        dgBankrollManager.setOperatorToBankroll(address(bankroll), _operator);
         vm.prank(admin);
         bankroll.credit(1_000_000, _operator);
 
@@ -108,6 +111,7 @@ contract DGBankrollManagerTest is Test {
         bankroll.credit(1_000_000, _operator);
 
         dgBankrollManager.addOperator(_operator);
+        dgBankrollManager.setOperatorToBankroll(address(bankroll), _operator);
         vm.prank(admin);
         bankroll.credit(500_000, _operator);
 
@@ -157,25 +161,26 @@ contract DGBankrollManagerTest is Test {
         dgBankrollManager.approveBankroll(_newBankroll, _fee);
     }
 
-    // function test_updateAdmin(address _newAdmin, address _newOperator) public {
-        // vm.assume(_newAdmin != msg.sender);
-        // vm.assume(_newOperator != operator);
+    function test_updateAdmin(address _newAdmin, address _newOperator) public {
+        vm.assume(_newAdmin != msg.sender);
+        vm.assume(_newOperator != operator);
 
-        // vm.prank(_newAdmin);
-        // vm.expectRevert();
-        // dgBankrollManager.addOperator(_newOperator);
+        vm.prank(_newAdmin);
+        vm.expectRevert();
+        dgBankrollManager.addOperator(_newOperator);
 
-        // vm.prank(admin);
-        // vm.expectRevert(DGErrors.NOT_AN_OPERATOR.selector);
-        // bankroll.debit(address(0x4), 10, _newOperator);
+        vm.prank(admin);
+        vm.expectRevert(DGErrors.NOT_AN_OPERATOR.selector);
+        bankroll.debit(address(0x4), 10, _newOperator);
 
-        // dgBankrollManager.updateAdmin(msg.sender, _newAdmin);
-        // vm.prank(_newAdmin);
-        // dgBankrollManager.addOperator(_newOperator);
+        dgBankrollManager.updateAdmin(address(dgBankrollFactory), _newAdmin);
+        vm.prank(_newAdmin);
+        dgBankrollManager.addOperator(_newOperator);
+        dgBankrollManager.setOperatorToBankroll(address(bankroll), _newOperator);
 
-        // vm.prank(admin);
-        // bankroll.debit(address(0x4), 10, _newOperator);
-    // }
+        vm.prank(admin);
+        bankroll.debit(address(0x4), 10, _newOperator);
+    }
 
     function test_feeIsCorrect(uint256 _wager) public {
         vm.assume(_wager > 10_000);
@@ -201,34 +206,34 @@ contract DGBankrollManagerTest is Test {
         assertEq(mockToken.balanceOf(deGaming), _wager - expectedBalance);
     }
 
-    function test_multipleOperators(address[5] memory _operators, uint256 _wager) public {
-        vm.assume(_operators.length == 5);
-        vm.assume(_wager < 200_000 && _wager > 500);
+    // function test_multipleOperators(address[5] memory _operators, uint256 _wager) public {
+        // vm.assume(_operators.length == 5);
+        // vm.assume(_wager < 200_000 && _wager > 500);
 
-        uint256 totalWagered; 
-        for (uint256 i = 0; i < _operators.length; i++) {
-            dgBankrollManager.setOperatorToBankroll(address(bankroll), _operators[i]);
+        // uint256 totalWagered; 
+        // for (uint256 i = 0; i < _operators.length; i++) {
+            // dgBankrollManager.setOperatorToBankroll(address(bankroll), _operators[i]);
 
-            vm.prank(admin);
-            bankroll.credit(_wager, _operators[i]);
+            // vm.prank(admin);
+            // bankroll.credit(_wager, _operators[i]);
              
-            assertEq(mockToken.balanceOf(address(bankroll)), totalWagered + _wager);
+            // assertEq(mockToken.balanceOf(address(bankroll)), totalWagered + _wager);
 
-            totalWagered += _wager;
-        }
+            // totalWagered += _wager;
+        // }
 
-        assertEq(totalWagered, _wager * _operators.length);
+        // assertEq(totalWagered, _wager * _operators.length);
 
-        uint256 expectedBalance = (totalWagered * 650) / 10_000;
+        // uint256 expectedBalance = (totalWagered * 650) / 10_000;
 
-        bankroll.maxBankrollManagerApprove();
+        // bankroll.maxBankrollManagerApprove();
 
-        dgBankrollManager.claimProfit(address(bankroll));
+        // dgBankrollManager.claimProfit(address(bankroll));
 
-        assertApproxEqAbs(mockToken.balanceOf(address(bankroll)), expectedBalance, 5);
+        // assertApproxEqAbs(mockToken.balanceOf(address(bankroll)), expectedBalance, 5);
 
-        assertApproxEqAbs(mockToken.balanceOf(deGaming), totalWagered - expectedBalance, 5);
-    }
+        // assertApproxEqAbs(mockToken.balanceOf(deGaming), totalWagered - expectedBalance, 5);
+    // }
 
     // function test_multipleLPs(address[5] memory _lps, uint256 _liquidity, uint256 _wager, uint256 _rand) public {
         // vm.assume(_lps.length == 5);

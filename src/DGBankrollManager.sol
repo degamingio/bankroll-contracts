@@ -75,11 +75,11 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
         // Set DeGaming global variable
         deGaming = _deGaming;
 
-        // Grant admin role to factory contract
-        _grantRole(ADMIN, _factory);
-    
         // Grant Admin role to deployer
         _grantRole(ADMIN, msg.sender);
+        
+        // Grant admin role to factory contract
+        _grantRole(ADMIN, _factory);
     }
 
     //     ____        __         ____                              ______                 __  _
