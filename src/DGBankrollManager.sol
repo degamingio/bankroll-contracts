@@ -318,9 +318,24 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
         }
     }
 
+
+    /**
+     * @notice Check if a operator is associated to a bankroll
+     *
+     * @param _operator address of operator we want to check
+     * @param _bankroll address of bankroll contract we want to check operator against
+     *
+     * @return _isRelated return a bool if operator is associated or not
+     *
+     */
     function operatorOfBankroll(address _operator, address _bankroll) public view returns (bool _isRelated) {
+        // Initialize variable as false 
         _isRelated = false;
+        
+        // load an array of operators of bankroll
         address[] memory operatorList = operatorsOf[_bankroll];
+        
+        // If operator arg match any operator found in list, change _isRelated variable to true
         for (uint256 i; i < operatorList.length; i++) {
             if (operatorList[i] == _operator) {
                 _isRelated = true;

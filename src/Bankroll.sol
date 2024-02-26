@@ -33,9 +33,6 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     /// @dev the current aggregated profit of the bankroll balance
     int256 public GGR; 
     
-    ///  @dev the current aggregated profit of the bankroll balance allocated for lps
-    // int256 public lpsProfit;
-    
     /// @dev total amount of ERC20 deposited by LPs
     uint256 public totalDeposit; 
     
@@ -151,6 +148,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
             !lpWhitelist[msg.sender]
         ) revert DGErrors.LP_IS_NOT_WHITELISTED();
 
+        // Check if the bankroll has a minimum lp and if so that the deposition exceeds it
         if (
             hasMinimumLP &&
             _amount < minimumLp
@@ -201,9 +199,6 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
         // decrement total deposit
         totalDeposit -= depositOf[msg.sender];
 
-        // decrement total LP profit
-        //lpsProfit -= getLpProfit(msg.sender);
-
         // zero lp deposit
         depositOf[msg.sender] = 0;
 
@@ -219,13 +214,11 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
             !lpWhitelist[msg.sender]
         ) revert DGErrors.LP_IS_NOT_WHITELISTED();
 
+        // Check that the requested withdraw amount does not exceed the shares of
         if (_amount > sharesOf[msg.sender]) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
 
         // decrement total deposit
         totalDeposit -= _amount;
-
-        // decrement total LP profit
-        // lpsProfit -= int256(_amount);
 
         // remove amount from deposit of 
         // CHECK if this is actually correct
