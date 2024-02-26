@@ -32,6 +32,7 @@ contract DGBankrollManagerTest is Test {
     address operator;
 
     address[] operators;
+    address[] lps;
 
     uint256 maxRisk = 10_000;
 
@@ -48,6 +49,16 @@ contract DGBankrollManagerTest is Test {
             address(0x59),
             address(0x60)
         ];
+
+        lps = [ 
+            address(0x65), 
+            address(0x66), 
+            address(0x67),
+            address(0x68),
+            address(0x69),
+            address(0x70)
+        ];
+
 
         mockToken = new MockToken("Mock USDC", "mUSDC");
 
@@ -251,40 +262,39 @@ contract DGBankrollManagerTest is Test {
         assertApproxEqAbs(mockToken.balanceOf(deGaming), totalWagered - expectedBalance, 5);
     }
 
-    // function test_multipleLPs(address[5] memory _lps, uint256 _liquidity, uint256 _wager, uint256 _rand) public {
-        // vm.assume(_lps.length == 5);
-        // vm.assume(_liquidity > 500 && _liquidity < 1_000_000_000);
-        // vm.assume(_wager < 1_000_000 && _wager > 500);
+    function test_multipleLPs(uint256 _liquidity, uint256 _wager, uint256 _rand) public {
+        vm.assume(_liquidity > 500 && _liquidity < 1_000_000_000);
+        vm.assume(_wager < 1_000_000 && _wager > 500);
 
-        // uint256 rand = _rand % 5;
+        uint256 rand = _rand % 5;
 
-        // for (uint256 i = 0; i < _lps.length; i++) {
-            // vm.assume(_lps[i] != address(0));
-            // mockToken.mint(_lps[i], _liquidity);
+        for (uint256 i = 0; i < lps.length; i++) {
+            vm.assume(lps[i] != address(0));
+            mockToken.mint(lps[i], _liquidity);
 
-            // vm.startPrank(_lps[i]);
-            // mockToken.approve(address(bankroll), _liquidity);
-            // bankroll.depositFunds(_liquidity);
-            // vm.stopPrank();
-        // }
+            vm.startPrank(lps[i]);
+            mockToken.approve(address(bankroll), _liquidity);
+            bankroll.depositFunds(_liquidity);
+            vm.stopPrank();
+        }
 
-        // for (uint256 i = 0; i < _lps.length; i++) {
-            // mockToken.mint(admin, _wager);
-            // vm.startPrank(admin);
-            // mockToken.approve(address(bankroll), _wager);
-            // bankroll.credit(_wager, operator);
-            // vm.stopPrank();
-        // }
+        for (uint256 i = 0; i < lps.length; i++) {
+            mockToken.mint(admin, _wager);
+            vm.startPrank(admin);
+            mockToken.approve(address(bankroll), _wager);
+            bankroll.credit(_wager, operator);
+            vm.stopPrank();
+        }
 
-        // bankroll.maxBankrollManagerApprove();
+        bankroll.maxBankrollManagerApprove();
 
-        // assertEq(mockToken.balanceOf(address(bankroll)), (_wager + _liquidity) * _lps.length);
+        assertEq(mockToken.balanceOf(address(bankroll)), (_wager + _liquidity) * lps.length);
 
-        // dgBankrollManager.claimProfit(address(bankroll));
+        dgBankrollManager.claimProfit(address(bankroll));
 
-        // uint256 expectedValue = _liquidity + (_wager * 650)/ 10_000;
+        uint256 expectedValue = _liquidity + (_wager * 650)/ 10_000;
 
-        // assertApproxEqAbs(expectedValue, bankroll.getLpValue(_lps[rand]), 5);
+        assertApproxEqAbs(expectedValue, bankroll.getLpValue(lps[rand]), 5);
 
-    // }
+    }
 }
