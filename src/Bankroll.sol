@@ -33,9 +33,6 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     /// @dev the current aggregated profit of the bankroll balance
     int256 public GGR; 
     
-    ///  @dev the current aggregated profit of the bankroll balance allocated for lps
-    int256 public lpsProfit;
-    
     /// @dev total amount of ERC20 deposited by LPs
     uint256 public totalDeposit; 
     
@@ -44,6 +41,12 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     
     /// @dev Max percentage of liquidity risked
     uint256 public maxRiskPercentage; 
+    
+    /// @dev amount for minimum pool in case it exists
+    uint256 public minimumLp;
+
+    /// @dev Status regarding if bankroll has minimum for LPs to pool
+    bool public hasMinimumLP = false;
 
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
@@ -145,6 +148,12 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
             !lpWhitelist[msg.sender]
         ) revert DGErrors.LP_IS_NOT_WHITELISTED();
 
+        // Check if the bankroll has a minimum lp and if so that the deposition exceeds it
+        if (
+            hasMinimumLP &&
+            _amount < minimumLp
+        ) revert DGErrors.DEPOSITION_TO_LOW(); 
+
         // calculate the amount of shares to mint
         uint256 shares;
         if (totalSupply == 0) {
@@ -190,14 +199,33 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
         // decrement total deposit
         totalDeposit -= depositOf[msg.sender];
 
-        // decrement total LP profit
-        lpsProfit -= getLpProfit(msg.sender);
-
         // zero lp deposit
         depositOf[msg.sender] = 0;
 
         // call internal withdrawal function
         _withdraw(sharesOf[msg.sender]);
+    }
+
+
+    function withdraw(uint256 _amount) external {
+        // check if the user is allowed to deposit if the bankroll is not public
+        if (
+            lpIs == DGDataTypes.LpIs.WHITELISTED && 
+            !lpWhitelist[msg.sender]
+        ) revert DGErrors.LP_IS_NOT_WHITELISTED();
+
+        // Check that the requested withdraw amount does not exceed the shares of
+        if (_amount > sharesOf[msg.sender]) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
+
+        // decrement total deposit
+        totalDeposit -= _amount;
+
+        // remove amount from deposit of 
+        // CHECK if this is actually correct
+        depositOf[msg.sender] -= _amount;
+
+        // call internal withdrawal function
+        _withdraw(_amount);
     }
 
     /**
@@ -212,6 +240,9 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     function debit(address _player, uint256 _amount, address _operator) external onlyRole(ADMIN) {
         // Check that operator is approved
         if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
+        
+        // Check so that operator is associated with this bankroll
+        if (!dgBankrollManager.operatorOfBankroll(_operator, address(this))) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
         
         // pay what is left if amount is bigger than bankroll balance
         uint256 maxRisk = getMaxRisk();
@@ -257,9 +288,12 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      * @param _operator The operator from which the call comes from
      *
      */
-    function credit(uint256 _amount, address _operator) external onlyRole(ADMIN) {
+    function credit(uint256 _amount, address _operator) external onlyRole(ADMIN) {    
         // Check that operator is approved
         if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
+        
+        // Check so that operator is associated with this bankroll
+        if (!dgBankrollManager.operatorOfBankroll(_operator, address(this))) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
         
         // Add to total GGR
         GGR += int256(_amount);
@@ -315,6 +349,33 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     }
 
     /**
+     * @notice Set the minimum LP status for bankroll
+     *  Called by Admin
+     *
+     * @param _status Toggle minimum lp status true or false
+     *
+     */
+    function setMinimumLPStatus(bool _status) external onlyRole(ADMIN) {
+        // toggle status of has minimum lp variable
+        hasMinimumLP = _status;
+    }
+
+    /**
+     * @notice Set the minimum LP amount for bankroll
+     *  Called by Admin
+     *
+     * @param _amount Set tthe minimum lp amount
+     *
+     */
+    function setMinimumLp(uint256 _amount) external onlyRole(ADMIN) {
+        // toggle status  of minimum lp variable
+        hasMinimumLP = true;
+
+        // set minimum lp
+        minimumLp = _amount;
+    }
+
+    /**
      * @notice Remove the GGR of a specified operator from the total GGR, 
      *  then null out the operator GGR. Only callable by the bankroll manager
      *
@@ -338,6 +399,9 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      *
      */
     function updateAdmin(address _oldAdmin, address _newAdmin) external onlyOwner {
+        // Check that _oldAdmin address is valid
+        if (!hasRole(ADMIN, _oldAdmin)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
+        
         // Revoke the old admins role
         _revokeRole(ADMIN, _oldAdmin);
 
@@ -354,6 +418,9 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      *
      */
     function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external onlyOwner {
+        // Check that _oldBankrollManager is valid
+        if (!hasRole(BANKROLL_MANAGER, _oldBankrollManager)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
+        
         // Revoke the old bankroll managers role
         _revokeRole(BANKROLL_MANAGER, _oldBankrollManager);
         

@@ -128,6 +128,7 @@ contract DGBankrollFactory is AccessControlUpgradeable {
      *  Only the caller with role `DEFAULT_ADMIN_ROLE` can perform this operation
      *
      * @param _newImpl address of the new implementation contract
+     *
      */
     function setBankrollImplementation(address _newImpl) external onlyRole(DEFAULT_ADMIN_ROLE) {
         bankrollImpl = _newImpl;
@@ -139,6 +140,7 @@ contract DGBankrollFactory is AccessControlUpgradeable {
      *  Only the caller with role `DEFAULT_ADMIN_ROLE` can perform this operation
      *
      * @param _dgBankrollManager DeGaming admin account
+     *
      */
     function setDgBankrollManager(address _dgBankrollManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
         dgBankrollManager = _dgBankrollManager;
@@ -150,6 +152,7 @@ contract DGBankrollFactory is AccessControlUpgradeable {
      *  Only the caller with role `DEFAULT_ADMIN_ROLE` can perform this operation
      *
      * @param _dgAdmin DeGaming admin account
+     *
      */
     function setDgAdmin(address _dgAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
         dgAdmin = _dgAdmin;
@@ -168,6 +171,7 @@ contract DGBankrollFactory is AccessControlUpgradeable {
      * @param _salt salt used for the deterministic deployment
      *
      * @return _predicted predicted address for the given `_salt`
+     *
      */
     function predictBankrollAddress(bytes32 _salt) external view returns (address _predicted) {
         _predicted = Clones.predictDeterministicAddress(bankrollImpl, _salt, address(this));

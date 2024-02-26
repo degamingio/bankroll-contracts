@@ -41,6 +41,16 @@ interface IDGBankrollManager {
     function blockBankroll(address _bankroll) external;
 
     /**
+     * @notice
+     *  Update existing bankrolls fee
+     *
+     * @param _bankroll bankroll contract address to be blocked
+     * @param _newFee bankroll contract address to be blocked
+     *
+     */
+    function updateLpFee(address _bankroll, uint256 _newFee) external;
+
+    /**
      * @notice 
      *  Adding list of operator to list of operators associated with a bankroll
      *  Only calleable by owner
@@ -88,4 +98,6 @@ interface IDGBankrollManager {
     ) external;
 
     function isApproved(address operator) external view returns(bool approved); 
+
+    function operatorOfBankroll(address _operator, address _bankroll) external view returns (bool _isRelated);
 } 

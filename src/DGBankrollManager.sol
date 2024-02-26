@@ -31,9 +31,6 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
 
-    /// @dev Event period, the minimum time between each claim
-    uint256 public constant EVENT_PERIOD = 30 days;
-
     /// @dev used to calculate percentages
     uint256 public constant DENOMINATOR = 10_000; 
 
@@ -45,6 +42,8 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
 
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
+
+    mapping(address bankroll => uint256 timeStamp) public eventPeriodOf;
 
     /// @dev store bankroll status
     mapping(address bankroll => bool isApproved) public bankrollStatus;
@@ -78,7 +77,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
 
         // Grant Admin role to deployer
         _grantRole(ADMIN, msg.sender);
-
+        
         // Grant admin role to factory contract
         _grantRole(ADMIN, _factory);
     }
@@ -99,6 +98,9 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      *
      */
     function updateAdmin(address _oldAdmin, address _newAdmin) external onlyOwner {
+        // Check that _oldAdmin address is valid
+        if (!hasRole(ADMIN, _oldAdmin)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
+        
         // Revoke the old admins role
         _revokeRole(ADMIN, _oldAdmin);
 
@@ -123,6 +125,9 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
 
         // set LP fee
         lpFeeOf[_bankroll] = _fee;
+    
+        // set default eventPeriod
+        eventPeriodOf[_bankroll] = 30 days;
     }
 
     /**
@@ -142,6 +147,33 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
     }
 
     /**
+     * @notice
+     *  Update existing bankrolls fee
+     *
+     * @param _bankroll bankroll contract address to be blocked
+     * @param _newFee bankroll contract address to be blocked
+     *
+     */
+    function updateLpFee(address _bankroll, uint256 _newFee) external onlyRole(ADMIN) {
+        // Check that the bankroll is an approved DeGaming Bankroll
+        if (!bankrollStatus[_bankroll]) revert DGErrors.BANKROLL_NOT_APPROVED();
+
+        // Check so that fee is withing range
+        if (_newFee > DENOMINATOR) revert DGErrors.TO_HIGH_FEE();
+
+        // set new LP fee
+        lpFeeOf[_bankroll] = _newFee;
+    }
+
+    function updateEventPeriod(address _bankroll, uint256 _eventPeriod) external onlyRole(ADMIN) {
+        // Check that the bankroll is an approved DeGaming Bankroll
+        if (!bankrollStatus[_bankroll]) revert DGErrors.BANKROLL_NOT_APPROVED();
+
+        // Set new eventperiod
+        eventPeriodOf[_bankroll] = _eventPeriod;
+    }
+
+    /**
      * @notice 
      *  Adding list of operator to list of operators associated with a bankroll
      *  Only calleable by admin role
@@ -151,6 +183,9 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      *
      */
     function setOperatorToBankroll(address _bankroll, address _operator) external onlyRole(ADMIN) {
+        // Check so that operator isnt added to bankroll already
+        if (operatorOfBankroll(_operator, _bankroll)) revert DGErrors.OPERATOR_ALREADY_ADDED_TO_BANKROLL();
+        
         // Add operator into array of associated operators to bankroll
         operatorsOf[_bankroll].push(_operator);
 
@@ -216,8 +251,8 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
         // Check if Casino GGR is posetive
         if (GGR < 1) revert DGErrors.NOTHING_TO_CLAIM();
 
-        // Update event period ends unix timestamp to one <EVENT_PERIOD> from now
-        eventPeriodEnds[_bankroll] = block.timestamp + EVENT_PERIOD;
+        // Update event period ends unix timestamp to the eventperiod of specified bankroll
+        eventPeriodEnds[_bankroll] = block.timestamp + eventPeriodOf[_bankroll];
 
         // variable for amount per operator
         uint256 amount;
@@ -280,6 +315,31 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
             emit DGEvents.Credit(msg.sender, _address1, _number);
         } else if (_eventSpecifier == DGDataTypes.EventSpecifier.BANKROLL_SWEPT) {
             emit DGEvents.BankrollSwept(msg.sender, _address1, _number);
+        }
+    }
+
+
+    /**
+     * @notice Check if a operator is associated to a bankroll
+     *
+     * @param _operator address of operator we want to check
+     * @param _bankroll address of bankroll contract we want to check operator against
+     *
+     * @return _isRelated return a bool if operator is associated or not
+     *
+     */
+    function operatorOfBankroll(address _operator, address _bankroll) public view returns (bool _isRelated) {
+        // Initialize variable as false 
+        _isRelated = false;
+        
+        // load an array of operators of bankroll
+        address[] memory operatorList = operatorsOf[_bankroll];
+        
+        // If operator arg match any operator found in list, change _isRelated variable to true
+        for (uint256 i; i < operatorList.length; i++) {
+            if (operatorList[i] == _operator) {
+                _isRelated = true;
+            }
         }
     }
 }

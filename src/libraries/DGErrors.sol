@@ -27,4 +27,19 @@ library DGErrors {
 
     /// @dev Error thrown when bankroll with a > 100% fee is being requested to be added  
     error TO_HIGH_FEE();
+
+    /// @dev Error thrown if we are trying to update a role with the previous role holder not being valid
+    error ADDRESS_DOES_NOT_HOLD_ROLE();
+
+    /// @dev Error thrown if operator is not associated with this specific bankroll
+    error OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
+
+    /// @dev Error thrown when trying to redundantly add operators to bankrolls
+    error OPERATOR_ALREADY_ADDED_TO_BANKROLL();
+
+    /// @dev Error thrown when LP is trying to withdraw more than they have
+    error LP_REQUESTED_AMOUNT_OVERFLOW();
+
+    /// @dev Error thrown when a bankroll has a minimum lp amount which the depositor does not satisfy
+    error DEPOSITION_TO_LOW();
 }
