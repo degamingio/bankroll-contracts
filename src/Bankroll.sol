@@ -224,14 +224,14 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
         // Check that the requested withdraw amount does not exceed the shares of
         if (_amount > sharesOf[msg.sender]) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
 
-        // decrement total deposit
-        totalDeposit -= _amount;
-
         // Calculate how many percentages of senders total shares they want to withdraw
         uint256 percentage = (_amount * DENOMINATOR) / sharesOf[msg.sender];
 
         // calculate what that same percentage is from that deposit of
         uint256 decrementFromDeposit = (depositOf[msg.sender] * percentage) / DENOMINATOR;
+
+        // decrement total deposit
+        totalDeposit -= decrementFromDeposit;
 
         // remove amount from deposit of 
         depositOf[msg.sender] -= decrementFromDeposit;
