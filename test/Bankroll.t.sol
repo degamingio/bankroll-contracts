@@ -159,6 +159,15 @@ contract BankrollTest is Test {
         assertEq(token.balanceOf(address(lpTwo)), 0);
     }
 
+    function test_withdraw(uint256 _toHighAmount) public {
+        vm.assume(_toHighAmount > 1_000_000);
+        
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000);
+        bankroll.depositFunds(1_000_000);
+        vm.stopPrank();
+    }
+
     function test_debit() public {
         vm.startPrank(lpOne);
         token.approve(address(bankroll), 1_000_000);
