@@ -114,6 +114,7 @@ contract DGBankrollManagerTest is Test {
 
     function test_addOperator(address _operator) public {
         vm.assume(_operator != operator);
+        vm.assume(!_isContract(_operator));
 
         vm.prank(admin);
         vm.expectRevert(DGErrors.NOT_AN_OPERATOR.selector);
@@ -129,6 +130,7 @@ contract DGBankrollManagerTest is Test {
 
     function test_removeOperator(address _operator) public {
         vm.assume(_operator != operator);
+        vm.assume(!_isContract(_operator));
 
         vm.prank(admin);
         
@@ -192,6 +194,7 @@ contract DGBankrollManagerTest is Test {
         vm.assume(_newAdmin != msg.sender);
         vm.assume(_newAdmin != address(dgBankrollFactory));
         vm.assume(_newOperator != operator);
+        vm.assume(!_isContract(_newOperator));
 
         vm.prank(_newAdmin);
         vm.expectRevert();
@@ -296,5 +299,24 @@ contract DGBankrollManagerTest is Test {
 
         assertApproxEqAbs(expectedValue, bankroll.getLpValue(lps[rand]), 5);
 
+    }
+
+    /**
+     * @notice
+     *  Allows contract to check if the Token address actually is a contract
+     *
+     * @param _address address we want to  check
+     *
+     * @return _isAddressContract returns true if token is a contract, otherwise returns false
+     *
+     */
+    function _isContract(address _address) internal view returns (bool _isAddressContract) {
+        uint256 size;
+
+        assembly {
+            size := extcodesize(_address)
+        }
+
+        _isAddressContract = size > 0;
     }
 }
