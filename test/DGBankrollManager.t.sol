@@ -301,6 +301,23 @@ contract DGBankrollManagerTest is Test {
 
     }
 
+    function test_operatorOfBankroll(address _wrongOperator) public {
+        vm.assume(_wrongOperator != operator);
+        assertTrue(dgBankrollManager.operatorOfBankroll(operator, address(bankroll)));
+        assertFalse(dgBankrollManager.operatorOfBankroll(_wrongOperator, address(bankroll)));
+    }
+
+    function test_updateEventPeriod(uint256 _newEventPeriod, address _wrongBankroll) public {
+        assertEq(dgBankrollManager.eventPeriodOf(address(bankroll)), 30 days);
+
+        vm.expectRevert(DGErrors.BANKROLL_NOT_APPROVED.selector);
+        dgBankrollManager.updateEventPeriod(_wrongBankroll, _newEventPeriod);
+
+        dgBankrollManager.updateEventPeriod(address(bankroll), _newEventPeriod);
+
+        assertEq(dgBankrollManager.eventPeriodOf(address(bankroll)), _newEventPeriod);
+    }
+
     /**
      * @notice
      *  Allows contract to check if the Token address actually is a contract

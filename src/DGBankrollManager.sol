@@ -43,7 +43,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
 
-    mapping(address bankroll => uint256 timeStamp) public eventPeriodOf;
+    mapping(address bankroll => uint256 eventPeriod) public eventPeriodOf;
 
     /// @dev store bankroll status
     mapping(address bankroll => bool isApproved) public bankrollStatus;
