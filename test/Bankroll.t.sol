@@ -307,6 +307,36 @@ contract BankrollTest is Test {
         assertEq(bankroll.getLpStake(address(lpTwo)), 3333);
     }
 
+    function test_minimumLp(uint256 _newLpMinimum, uint256 _toLittle, uint256 _enough) public {
+        vm.assume(_toLittle < 250_000);
+        vm.assume(_newLpMinimum < 500_000);
+        vm.assume(_enough < 750_000);
+        vm.assume(_toLittle < _newLpMinimum);
+        vm.assume(_enough > _newLpMinimum);
+
+        token.mint(lpOne, _enough * 2);
+
+        vm.prank(admin);
+        bankroll.setMinimumLp(_newLpMinimum);
+
+        vm.startPrank(lpOne);
+
+        token.approve(address(bankroll), _enough * 2);
+
+        vm.expectRevert(DGErrors.DEPOSITION_TO_LOW.selector);
+        bankroll.depositFunds(_toLittle);
+
+        bankroll.depositFunds(_enough);
+        vm.stopPrank();
+
+        vm.prank(admin);
+        bankroll.setMinimumLPStatus(false);
+
+        vm.prank(lpOne);
+        bankroll.depositFunds(_toLittle);
+
+    }
+
     function _isContract(address _address) internal view returns (bool _isAddressContract) {
         uint256 size;
 
