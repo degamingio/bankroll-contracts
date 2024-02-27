@@ -9,6 +9,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
+/// NOTE : unused imports
 /* DeGaming Contracts */
 import {Bankroll} from "src/Bankroll.sol";
 
@@ -27,6 +28,8 @@ import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
  * @notice Fee management of GGR 
  *
  */
+
+ /// NOTE : probably the same as in Bankroll, Ownable + AccessControl is overkill, AccessControl is sufficient
 contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
@@ -37,12 +40,17 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
     /// @dev DeGaming Wallet
     address deGaming;
 
+    /// NOTE : This state is not needed
     /// @dev Set up bankroll instance
     IBankroll bankroll;
 
+    /// NOTE : same comment as in Bankroll.sol : do we need 2 different ADMIN roles ? if not, then we should use DEFAULT_ADMIN_ROLE
+    /// NOTE : if indeed there is two types of admin :
+    ///  then DEFAULT_ADMIN_ROLE should be used as "owner" and ADMIN (maybe rename it to something more inline with the repsonsibility) should be used for the other tasks
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
 
+    /// NOTE : missing natspec comment
     mapping(address bankroll => uint256 timeStamp) public eventPeriodOf;
 
     /// @dev store bankroll status
@@ -239,6 +247,9 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
         // Fetch list of operators we will claim from
         address[] memory operators = operatorsOf[_bankroll];
 
+        /// NOTE : here you write to storage (cost gas) when it is not really needed.
+        /// NOTE : you could just instanciate a bankroll instance without updating the state :
+        /// IBankroll bankroll = IBankroll(_bankroll)
         // Setup bankroll instance
         bankroll = IBankroll(_bankroll);
         
@@ -266,7 +277,11 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
                 // Amount to send
                 amount = uint256(bankroll.ggrOf(operators[i])) - ((lpFeeOf[_bankroll] * uint256(bankroll.ggrOf(operators[i]))) / DENOMINATOR);
 
+                /// NOTE : Potential reentrancy herem this doesnt follow the CEI pattern (cf Kenny's feedback in discord)
+                /// This instruction should occur after the `totalAmount +=` and after the `nullGgrOf` calls
                 // transfer the GGR to DeGaming
+                /// NOTE 2 : is it normal that the fees are sent to DeGaming for everytransfer ?
+                /// NOTE 2 : if yes, then we only need to perform 1 transfer call, not as many transfer as operators in the bankroll
                 token.safeTransferFrom(
                     _bankroll, 
                     deGaming, 
@@ -281,6 +296,9 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
             }
         }
 
+        /// NOTE : this event will not be returning the EXACT amount transferred. 
+        /// NOTE : totalAmount doesnt account for the LP fees (this means that totalAmount will be larger than the actual amount trasnferred to operators)
+        /// NOTE : is it by design ?
         emit DGEvents.ProfitsClaimed(_bankroll, totalAmount);
     }
 
@@ -295,6 +313,10 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      * @param _number uint256 type sent to the event
      *
      */
+     
+     /// NOTE : i understand that this is made to simplify frontend integration but in reality it is not optimal.
+     /// NOTE : ideally, we build a subgraph and frontend fetches the subgraph instead of listining to this contract for event.
+     /// NOTE : on the long run, this approach will cost a lot to users
     function emitEvent(
         DGDataTypes.EventSpecifier _eventSpecifier,
         address _address1,
@@ -329,6 +351,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      *
      */
     function operatorOfBankroll(address _operator, address _bankroll) public view returns (bool _isRelated) {
+        /// NOTE : this instruction is not needed, by default _isRelated is set to `false`
         // Initialize variable as false 
         _isRelated = false;
         
