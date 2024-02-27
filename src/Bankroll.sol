@@ -207,6 +207,13 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     }
 
 
+    /**
+     * @notice Withdraw some ERC20 tokens held by LP from the bankroll
+     *  Called by Liquidity Providers
+     *
+     * @param _amount how many shares that should be withdrawn
+     *
+     */
     function withdraw(uint256 _amount) external {
         // check if the user is allowed to deposit if the bankroll is not public
         if (
@@ -217,12 +224,17 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
         // Check that the requested withdraw amount does not exceed the shares of
         if (_amount > sharesOf[msg.sender]) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
 
+        // Calculate how many percentages of senders total shares they want to withdraw
+        uint256 percentage = (_amount * DENOMINATOR) / sharesOf[msg.sender];
+
+        // calculate what that same percentage is from that deposit of
+        uint256 decrementFromDeposit = (depositOf[msg.sender] * percentage) / DENOMINATOR;
+
         // decrement total deposit
-        totalDeposit -= _amount;
+        totalDeposit -= decrementFromDeposit;
 
         // remove amount from deposit of 
-        // CHECK if this is actually correct
-        depositOf[msg.sender] -= _amount;
+        depositOf[msg.sender] -= decrementFromDeposit;
 
         // call internal withdrawal function
         _withdraw(_amount);
@@ -402,6 +414,9 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
         // Check that _oldAdmin address is valid
         if (!hasRole(ADMIN, _oldAdmin)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
         
+        // Make sure so that admin address is a wallet
+        if (_isContract(_newAdmin)) revert DGErrors.ADDRESS_NOT_A_WALLET();
+
         // Revoke the old admins role
         _revokeRole(ADMIN, _oldAdmin);
 
@@ -421,6 +436,9 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
         // Check that _oldBankrollManager is valid
         if (!hasRole(BANKROLL_MANAGER, _oldBankrollManager)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
         
+        // Check so that bankroll manager actually is a contract
+        if (!_isContract(_newBankrollManager)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+
         // Revoke the old bankroll managers role
         _revokeRole(BANKROLL_MANAGER, _oldBankrollManager);
         
@@ -595,5 +613,24 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
             NULL,
             amount
         );
+    }
+
+    /**
+     * @notice
+     *  Allows contract to check if the Token address actually is a contract
+     *
+     * @param _address address we want to  check
+     *
+     * @return _isAddressContract returns true if token is a contract, otherwise returns false
+     *
+     */
+    function _isContract(address _address) internal view returns (bool _isAddressContract) {
+        uint256 size;
+
+        assembly {
+            size := extcodesize(_address)
+        }
+
+        _isAddressContract = size > 0;
     }
 }

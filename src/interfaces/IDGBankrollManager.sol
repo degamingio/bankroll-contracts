@@ -100,4 +100,6 @@ interface IDGBankrollManager {
     function isApproved(address operator) external view returns(bool approved); 
 
     function operatorOfBankroll(address _operator, address _bankroll) external view returns (bool _isRelated);
+
+    function eventPeriodOf(address bankroll) external view returns(uint256 eventPeriod);
 } 

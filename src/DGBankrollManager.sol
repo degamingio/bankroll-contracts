@@ -43,7 +43,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
 
-    mapping(address bankroll => uint256 timeStamp) public eventPeriodOf;
+    mapping(address bankroll => uint256 eventPeriod) public eventPeriodOf;
 
     /// @dev store bankroll status
     mapping(address bankroll => bool isApproved) public bankrollStatus;
@@ -119,6 +119,9 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
     function approveBankroll(address _bankroll, uint256 _fee) external onlyRole(ADMIN) {
         // Check so that fee is withing range
         if (_fee > DENOMINATOR) revert DGErrors.TO_HIGH_FEE();
+        
+        // Make sure that bankroll is a contract
+        if (!_isContract(_bankroll)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();        
 
         // Toggle bankroll status
         bankrollStatus[_bankroll] = true;
@@ -165,6 +168,15 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
         lpFeeOf[_bankroll] = _newFee;
     }
 
+    /**
+     * @notice
+     *  Allows admins to update eventperiods for bankrolls
+     *  Oly calleable by admin role
+     *
+     * @param _bankroll address of the desired bankroll we want to update event period for
+     * @param _eventPeriod the new updated event period
+     *
+     */
     function updateEventPeriod(address _bankroll, uint256 _eventPeriod) external onlyRole(ADMIN) {
         // Check that the bankroll is an approved DeGaming Bankroll
         if (!bankrollStatus[_bankroll]) revert DGErrors.BANKROLL_NOT_APPROVED();
@@ -186,6 +198,9 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
         // Check so that operator isnt added to bankroll already
         if (operatorOfBankroll(_operator, _bankroll)) revert DGErrors.OPERATOR_ALREADY_ADDED_TO_BANKROLL();
         
+        // Make sure that operator address is a wallet
+        if (_isContract(_operator)) revert DGErrors.ADDRESS_NOT_A_WALLET();
+        
         // Add operator into array of associated operators to bankroll
         operatorsOf[_bankroll].push(_operator);
 
@@ -201,6 +216,9 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      *
      */
     function addOperator(address _operator) external onlyRole(ADMIN) {
+        // Make sure that operator address is a wallet
+        if (_isContract(_operator)) revert DGErrors.ADDRESS_NOT_A_WALLET();
+
         // Sett operators appoved status
         isApproved[_operator] = true;
     }
@@ -341,5 +359,30 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
                 _isRelated = true;
             }
         }
+    }
+
+    //     ____      __                        __   ______                 __  _
+    //    /  _/___  / /____  _________  ____ _/ /  / ____/_  ______  _____/ /_(_)___  ____  _____
+    //    / // __ \/ __/ _ \/ ___/ __ \/ __ `/ /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
+    //  _/ // / / / /_/  __/ /  / / / / /_/ / /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
+    // /___/_/ /_/\__/\___/_/  /_/ /_/\__,_/_/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
+
+    /**
+     * @notice
+     *  Allows contract to check if the Token address actually is a contract
+     *
+     * @param _address address we want to  check
+     *
+     * @return _isAddressContract returns true if token is a contract, otherwise returns false
+     *
+     */
+    function _isContract(address _address) internal view returns (bool _isAddressContract) {
+        uint256 size;
+
+        assembly {
+            size := extcodesize(_address)
+        }
+
+        _isAddressContract = size > 0;
     }
 }

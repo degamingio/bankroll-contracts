@@ -42,4 +42,10 @@ library DGErrors {
 
     /// @dev Error thrown when a bankroll has a minimum lp amount which the depositor does not satisfy
     error DEPOSITION_TO_LOW();
+
+    /// @dev Error thrown when desired bankroll is not a contract
+    error ADDRESS_NOT_A_CONTRACT();
+
+    /// @dev Error thrown when desired operator is not a wallet
+    error ADDRESS_NOT_A_WALLET();
 }
