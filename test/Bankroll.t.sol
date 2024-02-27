@@ -235,6 +235,7 @@ contract BankrollTest is Test {
     function test_updateAdmin(address _newAdmin) public {
         vm.assume(_newAdmin != address(0));
         vm.assume(_newAdmin != admin);
+        vm.assume(!_isContract(_newAdmin));
 
         token.mint(_newAdmin, 10);
 
@@ -283,5 +284,15 @@ contract BankrollTest is Test {
 
         assertEq(bankroll.getLpStake(address(lpOne)), 6666);
         assertEq(bankroll.getLpStake(address(lpTwo)), 3333);
+    }
+
+    function _isContract(address _address) internal view returns (bool _isAddressContract) {
+        uint256 size;
+
+        assembly {
+            size := extcodesize(_address)
+        }
+
+        _isAddressContract = size > 0;
     }
 }
