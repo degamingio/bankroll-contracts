@@ -31,7 +31,7 @@ contract CreateBankroll is Script {
     uint256 maxRisk = 10_000;
     uint256 lpFee = 650;
 
-    function run() external {
+    function run() public {
         //console.log("Deployer:          ", vm.addr(deployerPrivateKey));
         //console.log("Token:             ", token);
         //console.log("Operator:          ", operator);
@@ -41,8 +41,8 @@ contract CreateBankroll is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         dgBankrollFactory.deployBankroll(
-            token, 
-            deGaming, 
+            address(token), 
+            address(deGaming), 
             maxRisk, 
             "0x0"
         );
