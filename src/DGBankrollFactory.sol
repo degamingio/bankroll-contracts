@@ -9,6 +9,7 @@ import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 import {Bankroll} from "src/Bankroll.sol";
 
 /* DeGaming Interfaces */
+/// NOTE : unused imports
 import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";
 
 /**
@@ -97,6 +98,9 @@ contract DGBankrollFactory is AccessControlUpgradeable {
      * @param _salt bytes used for deterministic deployment
      *
      */
+
+    /// NOTE : why do we pass `_deGaming` here ? why not reuse the state that we have in this contract ? 
+    /// can different bankroll have different DeGaming address ? if so, then we should remove the `deGaming` state as it is unused
     function deployBankroll(
         address _token,
         address _deGaming,
