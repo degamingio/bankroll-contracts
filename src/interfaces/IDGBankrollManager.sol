@@ -22,6 +22,15 @@ interface IDGBankrollManager {
     
     /**
      * @notice
+     *  Set the address of the dg factory address
+     *
+     * @param _factory bankroll factory contract address to be approved
+     *
+     */
+    function setFactory(address _factory) external;
+    
+    /**
+     * @notice
      *  Approve a bankroll to use the DeGaming Bankroll Manager
      *  Only the contract owner can execute this operation
      *

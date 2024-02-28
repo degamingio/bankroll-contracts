@@ -25,6 +25,7 @@ contract DeployPlatform is Script {
     using SafeERC20 for IERC20;
 
     TransparentUpgradeableProxy public bankrollProxy;
+    TransparentUpgradeableProxy public bankrollFactoryProxy;
 
     ProxyAdmin public proxyAdmin; 
 
@@ -57,8 +58,18 @@ contract DeployPlatform is Script {
         console.log("admin:    ", admin);
         console.log("token:    ", token);
 
+        bankrollFactoryProxy = new TransparentUpgradeableProxy(
+            address(new DGBankrollFactory()),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                DGBankrollFactory.initialize.selector,
+                address(dgBankrollManager),
+                admin
+            )
+        );
+
         dgBankrollFactory = new DGBankrollFactory();
-        dgBankrollManager = new DGBankrollManager(admin, address(dgBankrollFactory));
+        dgBankrollManager = new DGBankrollManager(admin);
 
         proxyAdmin = new ProxyAdmin(msg.sender);
 
@@ -74,6 +85,8 @@ contract DeployPlatform is Script {
                 maxRisk
             )
         );
+
+        bankroll = Bankroll(address(bankrollProxy));
 
         //dgBankrollManager = new DGBankrollManger(deGaming);
 
