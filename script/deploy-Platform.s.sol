@@ -24,7 +24,7 @@ contract DeployPlatform is Script {
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
 
-    TransparentUpgradeableProxy public bankrollProxy;
+    // TransparentUpgradeableProxy public bankrollProxy;
     TransparentUpgradeableProxy public bankrollFactoryProxy;
 
     ProxyAdmin public proxyAdmin; 
@@ -62,26 +62,30 @@ contract DeployPlatform is Script {
 
         proxyAdmin = new ProxyAdmin(msg.sender);
 
-        bankrollProxy = new TransparentUpgradeableProxy(
-            address(new Bankroll()),
-            address(proxyAdmin),
-            abi.encodeWithSelector(
-                Bankroll.initialize.selector,
-                admin,
-                address(token),
-                address(dgBankrollManager),
-                msg.sender,
-                maxRisk
-            )
-        );
+        // bankrollProxy = new TransparentUpgradeableProxy(
+            // address(new Bankroll()),
+            // address(proxyAdmin),
+            // abi.encodeWithSelector(
+                // Bankroll.initialize.selector,
+                // admin,
+                // address(token),
+                // address(dgBankrollManager),
+                // msg.sender,
+                // maxRisk
+            // )
+        // );
         
-        bankroll = Bankroll(address(bankrollProxy));
-        
+        // Bankroll implementation contract
+        //bankroll = Bankroll(address(bankrollProxy));
+        bankroll = new Bankroll();        
+
+
         bankrollFactoryProxy = new TransparentUpgradeableProxy(
             address(new DGBankrollFactory()),
             address(proxyAdmin),
             abi.encodeWithSelector(
                 DGBankrollFactory.initialize.selector,
+                address(bankroll),
                 address(dgBankrollManager),
                 admin
             )
@@ -90,29 +94,6 @@ contract DeployPlatform is Script {
         dgBankrollFactory = DGBankrollFactory(address(bankrollFactoryProxy));
 
         dgBankrollManager.setFactory(address(dgBankrollFactory));
-
-
-        //dgBankrollManager = new DGBankrollManger(deGaming);
-
-        //bankroll = new Bankroll(admin, address(token), address(dgBankrollManager), maxRisk);
-
-        // bankroll = new Bankroll();
-
-        // dgBankrollManager.approveBankroll(address(bankroll), lpFee);
-
-        // dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
-
-        // bankroll.maxBankrollManagerApprove();
-
-        // vm.stopBroadcast();
-
-        // // Set bankroll max allowance
-        // vm.startBroadcast(adminPrivateKey);
-    
-        IERC20(token).forceApprove(
-            address(bankroll),
-            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-        );
 
         vm.stopBroadcast();
     }
