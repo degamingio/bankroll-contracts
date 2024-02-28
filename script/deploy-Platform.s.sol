@@ -15,6 +15,7 @@ import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.s
 /* DeGaming Contracts */
 import {Bankroll} from "src/Bankroll.sol";
 import {DGBankrollManager} from "src/DGBankrollManager.sol";
+import {DGBankrollFactory} from "src/DGBankrollFactory.sol";
 
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
@@ -23,6 +24,11 @@ contract DeployPlatform is Script {
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
 
+    TransparentUpgradeableProxy public bankrollProxy;
+
+    ProxyAdmin public proxyAdmin; 
+
+    DGBankrollFactory public dgBankrollFactory;
     DGBankrollManager public dgBankrollManager;
     Bankroll public bankroll;
 
@@ -51,22 +57,40 @@ contract DeployPlatform is Script {
         console.log("admin:    ", admin);
         console.log("token:    ", token);
 
-        //dgBankrollManager = new DGBankrollManager(deGaming);
+        dgBankrollFactory = new DGBankrollFactory();
+        dgBankrollManager = new DGBankrollManager(admin, address(dgBankrollFactory));
+
+        proxyAdmin = new ProxyAdmin(msg.sender);
+
+        bankrollProxy = new TransparentUpgradeableProxy(
+            address(new Bankroll()),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                Bankroll.initialize.selector,
+                admin,
+                address(token),
+                address(dgBankrollManager),
+                msg.sender,
+                maxRisk
+            )
+        );
+
+        //dgBankrollManager = new DGBankrollManger(deGaming);
 
         //bankroll = new Bankroll(admin, address(token), address(dgBankrollManager), maxRisk);
 
-        bankroll = new Bankroll();
+        // bankroll = new Bankroll();
 
-        dgBankrollManager.approveBankroll(address(bankroll), lpFee);
+        // dgBankrollManager.approveBankroll(address(bankroll), lpFee);
 
-        dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
+        // dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
 
-        bankroll.maxBankrollManagerApprove();
+        // bankroll.maxBankrollManagerApprove();
 
-        vm.stopBroadcast();
+        // vm.stopBroadcast();
 
-        // Set bankroll max allowance
-        vm.startBroadcast(adminPrivateKey);
+        // // Set bankroll max allowance
+        // vm.startBroadcast(adminPrivateKey);
     
         IERC20(token).forceApprove(
             address(bankroll),
