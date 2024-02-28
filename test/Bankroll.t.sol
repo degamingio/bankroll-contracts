@@ -159,6 +159,27 @@ contract BankrollTest is Test {
         assertEq(token.balanceOf(address(lpTwo)), 0);
     }
 
+    function test_withdraw_(uint256 _toHighAmount, uint256 _amountToWithdraw) public {
+        vm.assume(_toHighAmount > 1_000_000);
+        vm.assume(_amountToWithdraw < 500_000);
+
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000);
+        bankroll.depositFunds(1_000_000);
+        vm.stopPrank();
+
+        assertEq(bankroll.depositOf(address(lpOne)), 1_000_000);
+
+        vm.prank(lpOne);
+        vm.expectRevert(DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW.selector);
+        bankroll.withdraw(_toHighAmount);
+
+        vm.prank(lpOne);
+        bankroll.withdraw(_amountToWithdraw);
+
+        assertEq(token.balanceOf(address(bankroll)), 1_000_000 - _amountToWithdraw);
+    }
+
     function test_debit() public {
         vm.startPrank(lpOne);
         token.approve(address(bankroll), 1_000_000);
@@ -235,6 +256,7 @@ contract BankrollTest is Test {
     function test_updateAdmin(address _newAdmin) public {
         vm.assume(_newAdmin != address(0));
         vm.assume(_newAdmin != admin);
+        vm.assume(!_isContract(_newAdmin));
 
         token.mint(_newAdmin, 10);
 
@@ -283,5 +305,45 @@ contract BankrollTest is Test {
 
         assertEq(bankroll.getLpStake(address(lpOne)), 6666);
         assertEq(bankroll.getLpStake(address(lpTwo)), 3333);
+    }
+
+    function test_minimumLp(uint256 _newLpMinimum, uint256 _toLittle, uint256 _enough) public {
+        vm.assume(_toLittle < 250_000);
+        vm.assume(_newLpMinimum < 500_000);
+        vm.assume(_enough < 750_000);
+        vm.assume(_toLittle < _newLpMinimum);
+        vm.assume(_enough > _newLpMinimum);
+
+        token.mint(lpOne, _enough * 2);
+
+        vm.prank(admin);
+        bankroll.setMinimumLp(_newLpMinimum);
+
+        vm.startPrank(lpOne);
+
+        token.approve(address(bankroll), _enough * 2);
+
+        vm.expectRevert(DGErrors.DEPOSITION_TO_LOW.selector);
+        bankroll.depositFunds(_toLittle);
+
+        bankroll.depositFunds(_enough);
+        vm.stopPrank();
+
+        vm.prank(admin);
+        bankroll.setMinimumLPStatus(false);
+
+        vm.prank(lpOne);
+        bankroll.depositFunds(_toLittle);
+
+    }
+
+    function _isContract(address _address) internal view returns (bool _isAddressContract) {
+        uint256 size;
+
+        assembly {
+            size := extcodesize(_address)
+        }
+
+        _isAddressContract = size > 0;
     }
 }

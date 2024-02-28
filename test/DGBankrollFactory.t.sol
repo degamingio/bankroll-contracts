@@ -75,6 +75,8 @@ contract DGBankrollFactoryTest is Test {
     }
 
     function test_deployBankroll(address _operator, bytes32 _salt) public {
+        vm.assume(!_isContract(_operator));
+        
         dgBankrollFactory.deployBankroll(
             address(token), 
             deGaming,
@@ -157,5 +159,24 @@ contract DGBankrollFactoryTest is Test {
         vm.expectRevert();
 
         dgBankrollFactory.setDgAdmin(_admin);
+    }
+
+    /**
+     * @notice
+     *  Allows contract to check if the Token address actually is a contract
+     *
+     * @param _address address we want to  check
+     *
+     * @return _isAddressContract returns true if token is a contract, otherwise returns false
+     *
+     */
+    function _isContract(address _address) internal view returns (bool _isAddressContract) {
+        uint256 size;
+
+        assembly {
+            size := extcodesize(_address)
+        }
+
+        _isAddressContract = size > 0;
     }
 }
