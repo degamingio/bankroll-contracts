@@ -44,11 +44,11 @@ contract DeployPlatform is Script {
     address token = vm.envAddress("TOKEN_ADDRESS");
 
     // replace with actual address
-    address operator = vm.addr(managerPrivateKey);
+    // address operator = vm.addr(managerPrivateKey);
 
-    uint256 maxRisk = 10_000;
+    //uint256 maxRisk = 10_000;
 
-    uint256 lpFee = 650;
+    //uint256 lpFee = 650;
 
     function run() public {
 
