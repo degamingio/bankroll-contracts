@@ -58,17 +58,6 @@ contract DeployPlatform is Script {
         console.log("admin:    ", admin);
         console.log("token:    ", token);
 
-        bankrollFactoryProxy = new TransparentUpgradeableProxy(
-            address(new DGBankrollFactory()),
-            address(proxyAdmin),
-            abi.encodeWithSelector(
-                DGBankrollFactory.initialize.selector,
-                address(dgBankrollManager),
-                admin
-            )
-        );
-
-        dgBankrollFactory = new DGBankrollFactory();
         dgBankrollManager = new DGBankrollManager(admin);
 
         proxyAdmin = new ProxyAdmin(msg.sender);
@@ -85,8 +74,23 @@ contract DeployPlatform is Script {
                 maxRisk
             )
         );
-
+        
         bankroll = Bankroll(address(bankrollProxy));
+        
+        bankrollFactoryProxy = new TransparentUpgradeableProxy(
+            address(new DGBankrollFactory()),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                DGBankrollFactory.initialize.selector,
+                address(dgBankrollManager),
+                admin
+            )
+        );
+
+        dgBankrollFactory = DGBankrollFactory(address(bankrollFactoryProxy));
+
+        dgBankrollManager.setFactory(address(dgBankrollFactory));
+
 
         //dgBankrollManager = new DGBankrollManger(deGaming);
 
