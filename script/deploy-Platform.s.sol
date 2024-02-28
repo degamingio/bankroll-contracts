@@ -37,6 +37,8 @@ contract DeployPlatform is Script {
     uint256 adminPrivateKey = vm.envUint("ADMIN_PRIVATE_KEY");
     uint256 managerPrivateKey = vm.envUint("MANAGER_PRIVATE_KEY");
 
+    address deployerPubKey = vm.addr(deployerPrivateKey);
+
     address deGaming = 0x1d424382e8e09CC6F8425c9F32D2c695E7698db7;
 
     // Addresses
