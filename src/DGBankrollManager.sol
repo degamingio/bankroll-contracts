@@ -5,7 +5,6 @@ pragma solidity ^0.8.18;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /* Openzeppelin Contracts */
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
@@ -27,7 +26,7 @@ import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
  * @notice Fee management of GGR 
  *
  */
-contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
+contract DGBankrollManager is IDGBankrollManager, AccessControl {
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
 
@@ -69,9 +68,12 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      *   Just sets the deployer of this contract as the owner
      *
      */
-    constructor(address _deGaming) Ownable(msg.sender) {
+    constructor(address _deGaming) {
         // Set DeGaming global variable
         deGaming = _deGaming;
+
+        // Grant default admin role to deployer
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         // Grant Admin role to deployer
         _grantRole(ADMIN, msg.sender);
@@ -92,7 +94,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      * @param _newAdmin address of the new admin
      *
      */
-    function updateAdmin(address _oldAdmin, address _newAdmin) external onlyOwner {
+    function updateAdmin(address _oldAdmin, address _newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
         // Check that _oldAdmin address is valid
         if (!hasRole(ADMIN, _oldAdmin)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
         
@@ -110,7 +112,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      * @param _factory bankroll factory contract address to be approved
      *
      */
-    function setFactory(address _factory) external onlyOwner {
+    function setFactory(address _factory) external onlyRole(DEFAULT_ADMIN_ROLE) {
         // Make sure that factory is a contract
         if (!_isContract(_factory)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
 

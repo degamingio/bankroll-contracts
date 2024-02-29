@@ -7,7 +7,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /* Openzeppelin Contracts */
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /* DeGaming Interfaces */
 import {IBankroll} from "src/interfaces/IBankroll.sol";
@@ -23,7 +22,7 @@ import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
  * @notice Operator and Game Bankroll Contract
  *
  */
-contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
+contract Bankroll is IBankroll, AccessControlUpgradeable{
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
 
@@ -121,15 +120,17 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
 
         __AccessControl_init();
 
-        __Ownable_init(_owner);
-
         // Initializing erc20 token associated with bankroll
         token = IERC20(_token);
 
         // Set the max risk percentage
         maxRiskPercentage = _maxRiskPercentage;
 
+        // Setup bankroll manager
         dgBankrollManager = IDGBankrollManager(_bankrollManager);
+
+        // grant owner default admin role
+        _grantRole(DEFAULT_ADMIN_ROLE, _owner);
 
         // Grant Admin role
         _grantRole(ADMIN, _admin);
@@ -386,6 +387,17 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     }
 
     /**
+     *
+     * @notice allows admins to change the max risk amount
+     *
+     * @param _newAmount new amount in percentage that should be potentially risked per session 
+     *
+     */
+    function changeMaxRisk(uint256 _newAmount) external onlyRole(ADMIN) {
+        maxRiskPercentage = _newAmount;
+    }
+
+    /**
      * @notice Remove the GGR of a specified operator from the total GGR, 
      *  then null out the operator GGR. Only callable by the bankroll manager
      *
@@ -408,7 +420,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      * @param _newAdmin address of the new admin
      *
      */
-    function updateAdmin(address _oldAdmin, address _newAdmin) external onlyOwner {
+    function updateAdmin(address _oldAdmin, address _newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
         // Check that _oldAdmin address is valid
         if (!hasRole(ADMIN, _oldAdmin)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
         
@@ -430,7 +442,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      * @param _newBankrollManager address of the new bankroll manager
      *
      */
-    function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external onlyOwner {
+    function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
         // Check that _oldBankrollManager is valid
         if (!hasRole(BANKROLL_MANAGER, _oldBankrollManager)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
         
@@ -445,17 +457,6 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
 
         // Update BankrollManager Contract
         dgBankrollManager = IDGBankrollManager(_newBankrollManager);
-    }
-
-    /**
-     *
-     * @notice allows admins to change the max risk amount
-     *
-     * @param _newAmount new amount in percentage that should be potentially risked per session 
-     *
-     */
-    function changeMaxRisk(uint256 _newAmount) external onlyOwner {
-        maxRiskPercentage = _newAmount;
     }
 
     /**
