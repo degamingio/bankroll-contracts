@@ -23,5 +23,5 @@ library DGEvents {
     event BankrollSwept(address bankroll, address player, uint256 amount);
 
     /// @dev Event emitted when profits are claimed
-    event ProfitsClaimed(address bankroll, uint256 amount);
+    event ProfitsClaimed(address bankroll, uint256 ggrTotal, uint256 sentToDeGaming);
 }

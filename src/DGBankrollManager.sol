@@ -37,12 +37,10 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
     /// @dev DeGaming Wallet
     address deGaming;
 
-    /// @dev Set up bankroll instance
-    IBankroll bankroll;
-
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
 
+    /// @dev Event period of specific bankroll
     mapping(address bankroll => uint256 eventPeriod) public eventPeriodOf;
 
     /// @dev store bankroll status
@@ -270,7 +268,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
         address[] memory operators = operatorsOf[_bankroll];
 
         // Setup bankroll instance
-        bankroll = IBankroll(_bankroll);
+        IBankroll bankroll = IBankroll(_bankroll);
         
         // Set up a token instance
         IERC20 token = IERC20(bankroll.viewTokenAddress());
@@ -294,14 +292,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
         for (uint256 i = 0; i < operators.length; i++) {
             if (bankroll.ggrOf(operators[i]) > 0) {
                 // Amount to send
-                amount = uint256(bankroll.ggrOf(operators[i])) - ((lpFeeOf[_bankroll] * uint256(bankroll.ggrOf(operators[i]))) / DENOMINATOR);
-
-                // transfer the GGR to DeGaming
-                token.safeTransferFrom(
-                    _bankroll, 
-                    deGaming, 
-                    amount
-                );
+                amount += uint256(bankroll.ggrOf(operators[i])) - ((lpFeeOf[_bankroll] * uint256(bankroll.ggrOf(operators[i]))) / DENOMINATOR);
 
                 // Increment total amount
                 totalAmount += uint256(bankroll.ggrOf(operators[i]));
@@ -311,7 +302,10 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
             }
         }
 
-        emit DGEvents.ProfitsClaimed(_bankroll, totalAmount);
+        // transfer the GGR to DeGaming
+        token.safeTransferFrom(_bankroll, deGaming, amount);
+
+        emit DGEvents.ProfitsClaimed(_bankroll, totalAmount, amount);
     }
 
     /**
@@ -359,9 +353,6 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      *
      */
     function operatorOfBankroll(address _operator, address _bankroll) public view returns (bool _isRelated) {
-        // Initialize variable as false 
-        _isRelated = false;
-        
         // load an array of operators of bankroll
         address[] memory operatorList = operatorsOf[_bankroll];
         
