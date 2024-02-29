@@ -47,7 +47,7 @@ contract BankrollTest is Test {
 
         dgBankrollFactory = new DGBankrollFactory();
 
-        dgBankrollManager = new DGBankrollManager(admin, address(dgBankrollFactory));
+        dgBankrollManager = new DGBankrollManager(admin);
         token = new MockToken("token", "MTK");
 
         proxyAdmin = new ProxyAdmin(msg.sender);

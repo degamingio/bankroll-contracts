@@ -64,7 +64,7 @@ contract DGBankrollManagerTest is Test {
 
         dgBankrollFactory = new DGBankrollFactory();
 
-        dgBankrollManager = new DGBankrollManager(deGaming, address(dgBankrollFactory));
+        dgBankrollManager = new DGBankrollManager(deGaming);
 
         proxyAdmin = new ProxyAdmin(msg.sender);
 
@@ -82,6 +82,8 @@ contract DGBankrollManagerTest is Test {
         );
 
         bankroll = Bankroll(address(bankrollProxy));
+
+        dgBankrollManager.setFactory(address(dgBankrollFactory));
 
         dgBankrollManager.approveBankroll(address(bankroll), 650);
 

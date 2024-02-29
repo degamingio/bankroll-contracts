@@ -71,15 +71,12 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      *   Just sets the deployer of this contract as the owner
      *
      */
-    constructor(address _deGaming, address _factory) Ownable(msg.sender) {
+    constructor(address _deGaming) Ownable(msg.sender) {
         // Set DeGaming global variable
         deGaming = _deGaming;
 
         // Grant Admin role to deployer
         _grantRole(ADMIN, msg.sender);
-        
-        // Grant admin role to factory contract
-        _grantRole(ADMIN, _factory);
     }
 
     //     ____        __         ____                              ______                 __  _
@@ -106,6 +103,21 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
 
         // Grant the new admin the ADMIN role
         _grantRole(ADMIN, _newAdmin);
+    }
+
+    /**
+     * @notice
+     *  Set the address of the dg factory address
+     *
+     * @param _factory bankroll factory contract address to be approved
+     *
+     */
+    function setFactory(address _factory) external onlyOwner {
+        // Make sure that factory is a contract
+        if (!_isContract(_factory)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+
+        // Grant Admin Role to Factory
+        _grantRole(ADMIN, _factory);
     }
 
     /**

@@ -56,7 +56,7 @@ contract DGBankrollFactoryTest is Test {
 
         bankroll = new Bankroll();
 
-        dgBankrollManager = new DGBankrollManager(admin, address(dgBankrollFactory));
+        dgBankrollManager = new DGBankrollManager(admin);
 
         bankrollFactoryProxy = new TransparentUpgradeableProxy(
             address(new DGBankrollFactory()),
