@@ -200,12 +200,6 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      *
      */
     function withdrawAll() external {
-        // check if the user is allowed to deposit if the bankroll is not public
-        if (
-            lpIs == DGDataTypes.LpIs.WHITELISTED && 
-            !lpWhitelist[msg.sender]
-        ) revert DGErrors.LP_IS_NOT_WHITELISTED();
-        
         // decrement total deposit
         totalDeposit -= depositOf[msg.sender];
 
@@ -225,12 +219,6 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      *
      */
     function withdraw(uint256 _amount) external {
-        // check if the user is allowed to deposit if the bankroll is not public
-        if (
-            lpIs == DGDataTypes.LpIs.WHITELISTED && 
-            !lpWhitelist[msg.sender]
-        ) revert DGErrors.LP_IS_NOT_WHITELISTED();
-
         // Check that the requested withdraw amount does not exceed the shares of
         if (_amount > sharesOf[msg.sender]) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
 
