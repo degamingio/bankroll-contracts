@@ -311,41 +311,6 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
     }
 
     /**
-     * @notice Event handler for bankrolls
-     *  General event emitter function that is used from bankroll contract
-     *  In order for all events to be fetched from the same place for the frontend 
-     *
-     * @param _eventSpecifier choose what event to emit 
-     * @param _address1 first address sent to event
-     * @param _address2 second address sent to event (optional that it is used) 
-     * @param _number uint256 type sent to the event
-     *
-     */
-    function emitEvent(
-        DGDataTypes.EventSpecifier _eventSpecifier,
-        address _address1,
-        address _address2,
-        uint256 _number
-    ) external {
-        // Check that the bankroll is an approved DeGaming Bankroll
-        if (!bankrollStatus[msg.sender]) revert DGErrors.BANKROLL_NOT_APPROVED();
-        
-        // Chose what event to emit
-        if (_eventSpecifier == DGDataTypes.EventSpecifier.FUNDS_DEPOSITED) {
-            emit DGEvents.FundsDeposited(msg.sender, _address1, _number);
-        } else if (_eventSpecifier == DGDataTypes.EventSpecifier.FUNDS_WITHDRAWN) {
-            emit DGEvents.FundsWithdrawn(msg.sender, _address1, _number);
-        } else if (_eventSpecifier == DGDataTypes.EventSpecifier.DEBIT) {
-            emit DGEvents.Debit(msg.sender, _address1, _address2, _number);
-        } else if (_eventSpecifier == DGDataTypes.EventSpecifier.CREDIT) {
-            emit DGEvents.Credit(msg.sender, _address1, _number);
-        } else if (_eventSpecifier == DGDataTypes.EventSpecifier.BANKROLL_SWEPT) {
-            emit DGEvents.BankrollSwept(msg.sender, _address1, _number);
-        }
-    }
-
-
-    /**
      * @notice Check if a operator is associated to a bankroll
      *
      * @param _operator address of operator we want to check

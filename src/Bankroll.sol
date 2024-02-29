@@ -15,6 +15,7 @@ import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
 import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
+import {DGEvents} from "src/libraries/DGEvents.sol";
 
 /**
  * @title Bankroll V1
@@ -186,13 +187,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
         token.safeTransferFrom(msg.sender, address(this), _amount);
 
         // Emit a funds deposited event 
-        // (emit DGEvents.FundsDeposited(msg.sender, _amount))
-        dgBankrollManager.emitEvent(
-            DGDataTypes.EventSpecifier.FUNDS_DEPOSITED,
-            msg.sender,
-            NULL,
-            _amount
-        );
+        emit DGEvents.FundsDeposited(msg.sender, _amount);
     }
 
     /**
@@ -260,13 +255,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
         if (_amount > maxRisk) {
             _amount = maxRisk;
             // Emit event that the bankroll is sweppt
-            //(emit DGEvents.BankrollSwept(_player, _amount))
-            dgBankrollManager.emitEvent(
-                DGDataTypes.EventSpecifier.BANKROLL_SWEPT,
-                _player,
-                NULL, 
-                _amount
-            );
+            emit DGEvents.BankrollSwept(_player, _amount);
         }
 
         // substract from total GGR
@@ -282,13 +271,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
         token.safeTransfer(_player, _amount);
 
         // Emit debit event
-        // (emit DGEvents.Debit(msg.sender, _player, _amount)
-        dgBankrollManager.emitEvent(
-            DGDataTypes.EventSpecifier.DEBIT,
-            msg.sender,
-            _player,
-            _amount
-        );
+        emit DGEvents.Debit(msg.sender, _player, _amount);
     }
 
     /**
@@ -319,13 +302,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
         token.safeTransferFrom(msg.sender, address(this), _amount);
 
         // Emit credit event
-        // (emit DGEvents.Credit(msg.sender, _amount))
-        dgBankrollManager.emitEvent(
-            DGDataTypes.EventSpecifier.CREDIT,
-            msg.sender,
-            NULL,
-            _amount
-        );
+        emit DGEvents.Credit(msg.sender, _amount);
     }
 
     /**
@@ -616,13 +593,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
         token.transfer(msg.sender, amount);
     
         // Emit an event that funds are withdrawn
-        // (emit DGEvents.FundsWithdrawn(msg.sender, amount))
-        dgBankrollManager.emitEvent(
-            DGDataTypes.EventSpecifier.FUNDS_WITHDRAWN,
-            msg.sender,
-            NULL,
-            amount
-        );
+        emit DGEvents.FundsWithdrawn(msg.sender, amount);
     }
 
     /**
