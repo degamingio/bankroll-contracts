@@ -65,6 +65,7 @@ contract DGBankrollFactoryTest is Test {
                 DGBankrollFactory.initialize.selector,
                 address(bankroll),
                 address(dgBankrollManager),
+                deGaming,
                 admin
             )
         );
@@ -79,7 +80,6 @@ contract DGBankrollFactoryTest is Test {
         
         dgBankrollFactory.deployBankroll(
             address(token), 
-            deGaming,
             maxRisk, 
             _salt
         );

@@ -64,18 +64,21 @@ contract DGBankrollFactory is AccessControlUpgradeable {
      * @param _bankrollImpl address of DeGaming implementation of Bankroll contract
      * @param _dgBankrollManager DeGaming bankroll manager  contract address
      * @param _dgAdmin DeGaming admin account
+     * @param _deGaming DeGaming wallet
      *
      */
     function initialize(
         address _bankrollImpl,
         address _dgBankrollManager,
-        address _dgAdmin
+        address _dgAdmin,
+        address _deGaming
     ) external initializer {
 
         // Initialize global variables
         bankrollImpl = _bankrollImpl;
         dgBankrollManager = _dgBankrollManager;
         dgAdmin = _dgAdmin;
+        deGaming = _deGaming;
 
         // initialize access controll
         __AccessControl_init();
@@ -89,14 +92,12 @@ contract DGBankrollFactory is AccessControlUpgradeable {
      *  Only the caller with role `DEFAULT_ADMIN_ROLE` can perform this operation
      *
      * @param _token address of token asociated with bankroll
-     * @param _deGaming deGaming wallet address
      * @param _maxRiskPercentage max risk percentage in numbers (denominator 10_000 = 100)
      * @param _salt bytes used for deterministic deployment
      *
      */
     function deployBankroll(
         address _token,
-        address _deGaming,
         uint256 _maxRiskPercentage,
         bytes32 _salt 
     ) external  onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -108,7 +109,7 @@ contract DGBankrollFactory is AccessControlUpgradeable {
             dgAdmin,
             _token,
             dgBankrollManager,
-            _deGaming,
+            deGaming,
             _maxRiskPercentage
         );
 
@@ -153,6 +154,18 @@ contract DGBankrollFactory is AccessControlUpgradeable {
      */
     function setDgAdmin(address _dgAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
         dgAdmin = _dgAdmin;
+    }
+
+    /**
+     * @notice
+     *  Set DeGaming wallet address 
+     *  Only the caller with role `DEFAULT_ADMIN_ROLE` can perform this operation
+     *
+     * @param _deGaming DeGaming wallet
+     *
+     */
+    function setDeGaming(address _deGaming) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        deGaming = _deGaming;
     }
 
     //   _    ___                 ______                 __  _

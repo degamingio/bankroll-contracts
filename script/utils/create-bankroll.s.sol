@@ -42,7 +42,6 @@ contract CreateBankroll is Script {
 
         dgBankrollFactory.deployBankroll(
             address(token), 
-            address(deGaming), 
             maxRisk, 
             "0x0"
         );
