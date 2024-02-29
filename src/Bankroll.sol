@@ -461,6 +461,17 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
 
     /**
      *
+     * @notice allows admins to change the max risk amount
+     *
+     * @param _newAmount new amount in percentage that should be potentially risked per session 
+     *
+     */
+    function changeMaxRisk(uint256 _newAmount) external onlyOwner {
+        maxRiskPercentage = _newAmount;
+    }
+
+    /**
+     *
      * @notice Max out the approval for DGBankrollManager.sol to spend on behalf of the bankroll contract
      *
      */
