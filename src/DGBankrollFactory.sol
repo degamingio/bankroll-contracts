@@ -8,9 +8,6 @@ import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 /* DeGaming Contract */
 import {Bankroll} from "src/Bankroll.sol";
 
-/* DeGaming Interfaces */
-import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";
-
 /**
  * @title
  * @author DeGaming Technical Team
