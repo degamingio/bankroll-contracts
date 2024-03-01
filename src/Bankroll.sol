@@ -79,9 +79,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
     /// @dev set status regarding if LP is open or whitelisted
     DGDataTypes.LpIs public lpIs = DGDataTypes.LpIs.OPEN;
 
-    /// @dev zero address, used for calling the universal event emitter when no second address is needed
-    address constant NULL =  0x0000000000000000000000000000000000000000;
-
     //     ______                 __                  __
     //    / ____/___  ____  _____/ /________  _______/ /_____  _____
     //   / /   / __ \/ __ \/ ___/ __/ ___/ / / / ___/ __/ __ \/ ___/
@@ -118,6 +115,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
         
         // Check so that owner is not a contract
         if (_isContract(_owner)) revert DGErrors.ADDRESS_NOT_A_WALLET();
+
+        // Check so that maxRiskPercentage isnt larger than denominator
+        if (_maxRiskPercentage > DENOMINATOR) revert DGErrors.MAXRISK_TO_HIGH();
 
         __AccessControl_init();
 
