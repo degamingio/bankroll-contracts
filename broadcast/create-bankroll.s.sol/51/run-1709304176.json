@@ -1,0 +1,109 @@
+{
+  "transactions": [
+    {
+      "hash": "0x103c7151b54e068960332a585cba10f2dec30130f907bb2eec8a825c2be8cc0a",
+      "transactionType": "CALL",
+      "contractName": null,
+      "contractAddress": "0xD0F2a5FAf981773fF6f912e762E831Fb936D9E71",
+      "function": "deployBankroll(address,uint256,bytes32)",
+      "arguments": [
+        "0xfBA6CED88170e86DA9F49902055cF80A62F1AC4a",
+        "10000",
+        "0x3078300000000000000000000000000000000000000000000000000000000000"
+      ],
+      "transaction": {
+        "type": "0x00",
+        "from": "0x4015b6569369af4f17cd2da9e2f5e14a5dd162b4",
+        "to": "0xd0f2a5faf981773ff6f912e762e831fb936d9e71",
+        "gas": "0x6c9fd",
+        "value": "0x0",
+        "data": "0xeb971c61000000000000000000000000fba6ced88170e86da9f49902055cf80a62f1ac4a00000000000000000000000000000000000000000000000000000000000027103078300000000000000000000000000000000000000000000000000000000000",
+        "nonce": "0x51"
+      },
+      "additionalContracts": [
+        {
+          "transactionType": "CREATE2",
+          "address": "0xa3CDB5dF2e1e8B799c2b71DA2bc35FB8E7364E7b",
+          "initCode": "0x3d602d80600a3d3981f3363d3d373d3d3d363d73b3f9ba9877206f7c47f5a37b9e23c373d0dc67465af43d82803e903d91602b57fd5bf3"
+        }
+      ],
+      "isFixedGasLimit": false
+    },
+    {
+      "hash": "0x4578dc67bcdd5c1b5bef8a60d55e5163d58ba06f239f382646a7b02c52ad3ff4",
+      "transactionType": "CALL",
+      "contractName": null,
+      "contractAddress": "0xA5417198E91d97cE3CeB9Df06dCAa0fb5654cfe6",
+      "function": "setOperatorToBankroll(address,address)",
+      "arguments": [
+        "0xa3CDB5dF2e1e8B799c2b71DA2bc35FB8E7364E7b",
+        "0xBff8142DAFDa5E796541f4f22fabc3Ee35bAFD0B"
+      ],
+      "transaction": {
+        "type": "0x00",
+        "from": "0x4015b6569369af4f17cd2da9e2f5e14a5dd162b4",
+        "to": "0xa5417198e91d97ce3ceb9df06dcaa0fb5654cfe6",
+        "gas": "0x1fcf7",
+        "value": "0x0",
+        "data": "0xcb233b0a000000000000000000000000a3cdb5df2e1e8b799c2b71da2bc35fb8e7364e7b000000000000000000000000bff8142dafda5e796541f4f22fabc3ee35bafd0b",
+        "nonce": "0x52"
+      },
+      "additionalContracts": [],
+      "isFixedGasLimit": false
+    },
+    {
+      "hash": "0xb6e24057427f62c4a899d5344648bfae7d42c0ab97a30d1213583e5951a37c72",
+      "transactionType": "CALL",
+      "contractName": null,
+      "contractAddress": "0xA5417198E91d97cE3CeB9Df06dCAa0fb5654cfe6",
+      "function": "approveBankroll(address,uint256)",
+      "arguments": [
+        "0xa3CDB5dF2e1e8B799c2b71DA2bc35FB8E7364E7b",
+        "650"
+      ],
+      "transaction": {
+        "type": "0x00",
+        "from": "0x4015b6569369af4f17cd2da9e2f5e14a5dd162b4",
+        "to": "0xa5417198e91d97ce3ceb9df06dcaa0fb5654cfe6",
+        "gas": "0x1f91b",
+        "value": "0x0",
+        "data": "0x9756e8df000000000000000000000000a3cdb5df2e1e8b799c2b71da2bc35fb8e7364e7b000000000000000000000000000000000000000000000000000000000000028a",
+        "nonce": "0x53"
+      },
+      "additionalContracts": [],
+      "isFixedGasLimit": false
+    },
+    {
+      "hash": "0x74b5189cb24ea2190b3b3ce438069e974177382831222502504ce0ddd4d751b9",
+      "transactionType": "CALL",
+      "contractName": null,
+      "contractAddress": "0xa3CDB5dF2e1e8B799c2b71DA2bc35FB8E7364E7b",
+      "function": "maxBankrollManagerApprove()",
+      "arguments": [],
+      "transaction": {
+        "type": "0x00",
+        "from": "0x4015b6569369af4f17cd2da9e2f5e14a5dd162b4",
+        "to": "0xa3cdb5df2e1e8b799c2b71da2bc35fb8e7364e7b",
+        "gas": "0x13211",
+        "value": "0x0",
+        "data": "0xa4eb75b3",
+        "nonce": "0x54"
+      },
+      "additionalContracts": [],
+      "isFixedGasLimit": false
+    }
+  ],
+  "receipts": [],
+  "libraries": [],
+  "pending": [
+    "0x103c7151b54e068960332a585cba10f2dec30130f907bb2eec8a825c2be8cc0a",
+    "0x4578dc67bcdd5c1b5bef8a60d55e5163d58ba06f239f382646a7b02c52ad3ff4",
+    "0xb6e24057427f62c4a899d5344648bfae7d42c0ab97a30d1213583e5951a37c72",
+    "0x74b5189cb24ea2190b3b3ce438069e974177382831222502504ce0ddd4d751b9"
+  ],
+  "returns": {},
+  "timestamp": 1709304176,
+  "chain": 51,
+  "multi": false,
+  "commit": "b136271"
+}
