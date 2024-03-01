@@ -18,12 +18,12 @@ contract CreateBankroll is Script {
 
     DGBankrollManager dgBankrollManager = DGBankrollManager(
         // ADDRESS HERE
-        0x0f8E34bcB8eD3C9390348209cF6050A2b58BED5F
+        0x0Eec616A9102562d97695441d1c4aaa51546C341
     );
 
     DGBankrollFactory dgBankrollFactory = DGBankrollFactory(
         // ADDRESS HERE
-        0xAAeBAd220730cc76A9506CB049735d7764075B0f
+        0x5A44Ad2BEdb5f4CE6041706aCAcfF8755D7a96d8
     );
     
     address deGaming = 0x1d424382e8e09CC6F8425c9F32D2c695E7698db7;

@@ -34,12 +34,13 @@
 
 ## Bankroll V2 XDC-Apothem
 
-| Contract Name     | Adress                                     | Explorer                                                                            |
-|-------------------|--------------------------------------------|-------------------------------------------------------------------------------------|
-| Bankroll          | 0xBFFd169fd0F95b1C1C42Ec4a62CFFA91C04A7F17 | https://explorer.apothem.network/address/0xBFFd169fd0F95b1C1C42Ec4a62CFFA91C04A7F17 |
-| DGBankrollManager | 0xD5f51F43862914CE58f8E547961E4096265eD606 | https://explorer.apothem.network/address/0xD5f51F43862914CE58f8E547961E4096265eD606 |
-
-## Bankroll V2 Arbitrum-Sepolia
+| Contract Name                      | Adress                                     | Explorer                                                                            |
+|------------------------------------|--------------------------------------------|-------------------------------------------------------------------------------------|
+| DGBankrollManager                  | 0x0Eec616A9102562d97695441d1c4aaa51546C341 | https://explorer.apothem.network/address/0x0Eec616A9102562d97695441d1c4aaa51546C341 |
+| Bankroll (Implementation)          | 0x76e5195c7d09C2fCeAB4CB8EA6a54b362De655da | https://explorer.apothem.network/address/0x76e5195c7d09C2fCeAB4CB8EA6a54b362De655da |
+| DGBankrollFactory (Implementation) | 0x343f864EAf4A27706ffD29c6CCf990b2934F1E00 | https://explorer.apothem.network/address/0x343f864EAf4A27706ffD29c6CCf990b2934F1E00 |
+| DGBankrollFactory (Proxy)          | 0x5A44Ad2BEdb5f4CE6041706aCAcfF8755D7a96d8 | https://explorer.apothem.network/address/0x5A44Ad2BEdb5f4CE6041706aCAcfF8755D7a96d8 |
+| Bankroll (Proxy)                   | 0x9E2Fb8d43C4F700A9362Ce48dF3DFF53e4877716 | https://explorer.apothem.network/address/0x9E2Fb8d43C4F700A9362Ce48dF3DFF53e4877716 |
 
 ## Compile Project
 
