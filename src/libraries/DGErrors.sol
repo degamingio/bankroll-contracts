@@ -48,4 +48,7 @@ library DGErrors {
 
     /// @dev Error thrown when desired operator is not a wallet
     error ADDRESS_NOT_A_WALLET();
+
+    /// @dev Error thrown when max risk is to high
+    error MAXRISK_TO_HIGH();
 }

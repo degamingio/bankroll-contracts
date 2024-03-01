@@ -82,6 +82,7 @@ contract DeployPlatform is Script {
                 DGBankrollFactory.initialize.selector,
                 address(bankroll),
                 address(dgBankrollManager),
+                deGaming,
                 admin
             )
         );

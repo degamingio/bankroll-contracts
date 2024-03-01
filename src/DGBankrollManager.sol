@@ -5,7 +5,6 @@ pragma solidity ^0.8.18;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /* Openzeppelin Contracts */
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
@@ -27,7 +26,7 @@ import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
  * @notice Fee management of GGR 
  *
  */
-contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
+contract DGBankrollManager is IDGBankrollManager, AccessControl {
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
 
@@ -37,12 +36,10 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
     /// @dev DeGaming Wallet
     address deGaming;
 
-    /// @dev Set up bankroll instance
-    IBankroll bankroll;
-
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
 
+    /// @dev Event period of specific bankroll
     mapping(address bankroll => uint256 eventPeriod) public eventPeriodOf;
 
     /// @dev store bankroll status
@@ -71,9 +68,12 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      *   Just sets the deployer of this contract as the owner
      *
      */
-    constructor(address _deGaming) Ownable(msg.sender) {
+    constructor(address _deGaming) {
         // Set DeGaming global variable
         deGaming = _deGaming;
+
+        // Grant default admin role to deployer
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         // Grant Admin role to deployer
         _grantRole(ADMIN, msg.sender);
@@ -94,7 +94,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      * @param _newAdmin address of the new admin
      *
      */
-    function updateAdmin(address _oldAdmin, address _newAdmin) external onlyOwner {
+    function updateAdmin(address _oldAdmin, address _newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
         // Check that _oldAdmin address is valid
         if (!hasRole(ADMIN, _oldAdmin)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
         
@@ -112,7 +112,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      * @param _factory bankroll factory contract address to be approved
      *
      */
-    function setFactory(address _factory) external onlyOwner {
+    function setFactory(address _factory) external onlyRole(DEFAULT_ADMIN_ROLE) {
         // Make sure that factory is a contract
         if (!_isContract(_factory)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
 
@@ -270,7 +270,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
         address[] memory operators = operatorsOf[_bankroll];
 
         // Setup bankroll instance
-        bankroll = IBankroll(_bankroll);
+        IBankroll bankroll = IBankroll(_bankroll);
         
         // Set up a token instance
         IERC20 token = IERC20(bankroll.viewTokenAddress());
@@ -294,14 +294,7 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
         for (uint256 i = 0; i < operators.length; i++) {
             if (bankroll.ggrOf(operators[i]) > 0) {
                 // Amount to send
-                amount = uint256(bankroll.ggrOf(operators[i])) - ((lpFeeOf[_bankroll] * uint256(bankroll.ggrOf(operators[i]))) / DENOMINATOR);
-
-                // transfer the GGR to DeGaming
-                token.safeTransferFrom(
-                    _bankroll, 
-                    deGaming, 
-                    amount
-                );
+                amount += uint256(bankroll.ggrOf(operators[i])) - ((lpFeeOf[_bankroll] * uint256(bankroll.ggrOf(operators[i]))) / DENOMINATOR);
 
                 // Increment total amount
                 totalAmount += uint256(bankroll.ggrOf(operators[i]));
@@ -311,43 +304,11 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
             }
         }
 
-        emit DGEvents.ProfitsClaimed(_bankroll, totalAmount);
-    }
+        // transfer the GGR to DeGaming
+        token.safeTransferFrom(_bankroll, deGaming, amount);
 
-    /**
-     * @notice Event handler for bankrolls
-     *  General event emitter function that is used from bankroll contract
-     *  In order for all events to be fetched from the same place for the frontend 
-     *
-     * @param _eventSpecifier choose what event to emit 
-     * @param _address1 first address sent to event
-     * @param _address2 second address sent to event (optional that it is used) 
-     * @param _number uint256 type sent to the event
-     *
-     */
-    function emitEvent(
-        DGDataTypes.EventSpecifier _eventSpecifier,
-        address _address1,
-        address _address2,
-        uint256 _number
-    ) external {
-        // Check that the bankroll is an approved DeGaming Bankroll
-        if (!bankrollStatus[msg.sender]) revert DGErrors.BANKROLL_NOT_APPROVED();
-        
-        // Chose what event to emit
-        if (_eventSpecifier == DGDataTypes.EventSpecifier.FUNDS_DEPOSITED) {
-            emit DGEvents.FundsDeposited(msg.sender, _address1, _number);
-        } else if (_eventSpecifier == DGDataTypes.EventSpecifier.FUNDS_WITHDRAWN) {
-            emit DGEvents.FundsWithdrawn(msg.sender, _address1, _number);
-        } else if (_eventSpecifier == DGDataTypes.EventSpecifier.DEBIT) {
-            emit DGEvents.Debit(msg.sender, _address1, _address2, _number);
-        } else if (_eventSpecifier == DGDataTypes.EventSpecifier.CREDIT) {
-            emit DGEvents.Credit(msg.sender, _address1, _number);
-        } else if (_eventSpecifier == DGDataTypes.EventSpecifier.BANKROLL_SWEPT) {
-            emit DGEvents.BankrollSwept(msg.sender, _address1, _number);
-        }
+        emit DGEvents.ProfitsClaimed(_bankroll, totalAmount, amount);
     }
-
 
     /**
      * @notice Check if a operator is associated to a bankroll
@@ -359,9 +320,6 @@ contract DGBankrollManager is IDGBankrollManager, Ownable, AccessControl {
      *
      */
     function operatorOfBankroll(address _operator, address _bankroll) public view returns (bool _isRelated) {
-        // Initialize variable as false 
-        _isRelated = false;
-        
         // load an array of operators of bankroll
         address[] memory operatorList = operatorsOf[_bankroll];
         

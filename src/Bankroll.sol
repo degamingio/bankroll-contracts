@@ -7,7 +7,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /* Openzeppelin Contracts */
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /* DeGaming Interfaces */
 import {IBankroll} from "src/interfaces/IBankroll.sol";
@@ -16,6 +15,7 @@ import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
 import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
+import {DGEvents} from "src/libraries/DGEvents.sol";
 
 /**
  * @title Bankroll V1
@@ -23,7 +23,7 @@ import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
  * @notice Operator and Game Bankroll Contract
  *
  */
-contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
+contract Bankroll is IBankroll, AccessControlUpgradeable{
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
 
@@ -70,16 +70,14 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     mapping(address lp => bool authorized) public lpWhitelist; 
     
     /// @dev bankroll liquidity token
-    IERC20 public ERC20;
+    // IERC20 public ERC20;
+    IERC20 public token;
 
     /// @dev Bankroll manager instance
     IDGBankrollManager dgBankrollManager; 
     
     /// @dev set status regarding if LP is open or whitelisted
     DGDataTypes.LpIs public lpIs = DGDataTypes.LpIs.OPEN;
-
-    /// @dev zero address, used for calling the universal event emitter when no second address is needed
-    address constant NULL =  0x0000000000000000000000000000000000000000;
 
     //     ______                 __                  __
     //    / ____/___  ____  _____/ /________  _______/ /_____  _____
@@ -99,27 +97,41 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      * @notice Bankroll constructor
      *
      * @param _admin Admin address
-     * @param _ERC20 Bankroll liquidity token address
+     * @param _token Bankroll liquidity token address
+     * @param _bankrollManager address of bankroll manager
+     * @param _owner address of contract owner
+     * @param _maxRiskPercentage the max risk that the bankroll balance is risking for each game
      *
      */
     function initialize(
         address _admin,
-        address _ERC20,
+        address _token,
         address _bankrollManager,
         address _owner,
         uint256 _maxRiskPercentage
     ) external initializer {
+        // Check so that both bankroll manager and token are contracts
+        if (!_isContract(_bankrollManager) || !_isContract(_token)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+        
+        // Check so that owner is not a contract
+        if (_isContract(_owner)) revert DGErrors.ADDRESS_NOT_A_WALLET();
+
+        // Check so that maxRiskPercentage isnt larger than denominator
+        if (_maxRiskPercentage > DENOMINATOR) revert DGErrors.MAXRISK_TO_HIGH();
+
         __AccessControl_init();
 
-        __Ownable_init(_owner);
-
         // Initializing erc20 token associated with bankroll
-        ERC20 = IERC20(_ERC20);
+        token = IERC20(_token);
 
         // Set the max risk percentage
         maxRiskPercentage = _maxRiskPercentage;
 
+        // Setup bankroll manager
         dgBankrollManager = IDGBankrollManager(_bankrollManager);
+
+        // grant owner default admin role
+        _grantRole(DEFAULT_ADMIN_ROLE, _owner);
 
         // Grant Admin role
         _grantRole(ADMIN, _admin);
@@ -172,16 +184,10 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
         totalDeposit += _amount;
 
         // transfer ERC20 from the user to the vault
-        ERC20.safeTransferFrom(msg.sender, address(this), _amount);
+        token.safeTransferFrom(msg.sender, address(this), _amount);
 
         // Emit a funds deposited event 
-        // (emit DGEvents.FundsDeposited(msg.sender, _amount))
-        dgBankrollManager.emitEvent(
-            DGDataTypes.EventSpecifier.FUNDS_DEPOSITED,
-            msg.sender,
-            NULL,
-            _amount
-        );
+        emit DGEvents.FundsDeposited(msg.sender, _amount);
     }
 
     /**
@@ -190,12 +196,6 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      *
      */
     function withdrawAll() external {
-        // check if the user is allowed to deposit if the bankroll is not public
-        if (
-            lpIs == DGDataTypes.LpIs.WHITELISTED && 
-            !lpWhitelist[msg.sender]
-        ) revert DGErrors.LP_IS_NOT_WHITELISTED();
-        
         // decrement total deposit
         totalDeposit -= depositOf[msg.sender];
 
@@ -215,12 +215,6 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      *
      */
     function withdraw(uint256 _amount) external {
-        // check if the user is allowed to deposit if the bankroll is not public
-        if (
-            lpIs == DGDataTypes.LpIs.WHITELISTED && 
-            !lpWhitelist[msg.sender]
-        ) revert DGErrors.LP_IS_NOT_WHITELISTED();
-
         // Check that the requested withdraw amount does not exceed the shares of
         if (_amount > sharesOf[msg.sender]) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
 
@@ -261,13 +255,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
         if (_amount > maxRisk) {
             _amount = maxRisk;
             // Emit event that the bankroll is sweppt
-            //(emit DGEvents.BankrollSwept(_player, _amount))
-            dgBankrollManager.emitEvent(
-                DGDataTypes.EventSpecifier.BANKROLL_SWEPT,
-                _player,
-                NULL, 
-                _amount
-            );
+            emit DGEvents.BankrollSwept(_player, _amount);
         }
 
         // substract from total GGR
@@ -280,16 +268,10 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
         profitOf[msg.sender] -= int256(_amount);
 
         // transfer ERC20 from the vault to the winner
-        ERC20.safeTransfer(_player, _amount);
+        token.safeTransfer(_player, _amount);
 
         // Emit debit event
-        // (emit DGEvents.Debit(msg.sender, _player, _amount)
-        dgBankrollManager.emitEvent(
-            DGDataTypes.EventSpecifier.DEBIT,
-            msg.sender,
-            _player,
-            _amount
-        );
+        emit DGEvents.Debit(msg.sender, _player, _amount);
     }
 
     /**
@@ -317,16 +299,10 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
         profitOf[msg.sender] += int256(_amount);
 
         // transfer ERC20 from the manager to the vault
-        ERC20.safeTransferFrom(msg.sender, address(this), _amount);
+        token.safeTransferFrom(msg.sender, address(this), _amount);
 
         // Emit credit event
-        // (emit DGEvents.Credit(msg.sender, _amount))
-        dgBankrollManager.emitEvent(
-            DGDataTypes.EventSpecifier.CREDIT,
-            msg.sender,
-            NULL,
-            _amount
-        );
+        emit DGEvents.Credit(msg.sender, _amount);
     }
 
     /**
@@ -388,6 +364,17 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
     }
 
     /**
+     *
+     * @notice allows admins to change the max risk amount
+     *
+     * @param _newAmount new amount in percentage that should be potentially risked per session 
+     *
+     */
+    function changeMaxRisk(uint256 _newAmount) external onlyRole(ADMIN) {
+        maxRiskPercentage = _newAmount;
+    }
+
+    /**
      * @notice Remove the GGR of a specified operator from the total GGR, 
      *  then null out the operator GGR. Only callable by the bankroll manager
      *
@@ -410,7 +397,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      * @param _newAdmin address of the new admin
      *
      */
-    function updateAdmin(address _oldAdmin, address _newAdmin) external onlyOwner {
+    function updateAdmin(address _oldAdmin, address _newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
         // Check that _oldAdmin address is valid
         if (!hasRole(ADMIN, _oldAdmin)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
         
@@ -432,7 +419,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      * @param _newBankrollManager address of the new bankroll manager
      *
      */
-    function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external onlyOwner {
+    function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
         // Check that _oldBankrollManager is valid
         if (!hasRole(BANKROLL_MANAGER, _oldBankrollManager)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
         
@@ -455,7 +442,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      *
      */
     function maxBankrollManagerApprove() external {
-        ERC20.forceApprove(
+        token.forceApprove(
             address(dgBankrollManager),
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         );
@@ -474,7 +461,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      *
      */
     function viewTokenAddress() external view returns (address _token) {
-        _token = address(ERC20);
+        _token = address(token);
     }
 
     /**
@@ -486,9 +473,9 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      */
     function liquidity() public view returns (uint256 _balance) {
         if (GGR <= 0) {
-            _balance = ERC20.balanceOf(address(this));
+            _balance = token.balanceOf(address(this));
         } else if (GGR > 0) {
-            _balance = ERC20.balanceOf(address(this)) - uint(GGR);
+            _balance = token.balanceOf(address(this)) - uint(GGR);
         }
     }
 
@@ -549,7 +536,7 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
      *
      */
     function getMaxRisk() public view returns (uint256 _maxRisk) {
-        uint256 currentLiquidity = ERC20.balanceOf(address(this));
+        uint256 currentLiquidity = token.balanceOf(address(this));
         _maxRisk = (currentLiquidity * maxRiskPercentage) / DENOMINATOR;
     }
 
@@ -603,16 +590,10 @@ contract Bankroll is IBankroll, OwnableUpgradeable, AccessControlUpgradeable{
         _burn(msg.sender, _shares);
 
         // Transfer ERC20 to the caller
-        ERC20.transfer(msg.sender, amount);
+        token.transfer(msg.sender, amount);
     
         // Emit an event that funds are withdrawn
-        // (emit DGEvents.FundsWithdrawn(msg.sender, amount))
-        dgBankrollManager.emitEvent(
-            DGDataTypes.EventSpecifier.FUNDS_WITHDRAWN,
-            msg.sender,
-            NULL,
-            amount
-        );
+        emit DGEvents.FundsWithdrawn(msg.sender, amount);
     }
 
     /**
