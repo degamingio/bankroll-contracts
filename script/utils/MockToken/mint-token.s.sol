@@ -20,5 +20,6 @@ contract Credit is Script {
 
         USDT.mint(vm.addr(adminPrivateKey), 1_000_000_000_000_000_000_000_000);
 
+        USDT.approve(0x9E2Fb8d43C4F700A9362Ce48dF3DFF53e4877716, 1_000_000_000_000_000_000_000_000);
     }
 }

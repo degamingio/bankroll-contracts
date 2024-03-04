@@ -1,0 +1,65 @@
+{
+  "transactions": [
+    {
+      "hash": "0x660019d305fcf219078da9b2b8d26f547361b7434d3b1bc9b784b905d1728c09",
+      "transactionType": "CALL",
+      "contractName": null,
+      "contractAddress": "0xfBA6CED88170e86DA9F49902055cF80A62F1AC4a",
+      "function": "mint(address,uint256)",
+      "arguments": [
+        "0x8d76dB34CcCA356fA805f5A277EFFf53aaC5af88",
+        "1000000000000000000000000"
+      ],
+      "transaction": {
+        "type": "0x00",
+        "from": "0x8d76db34ccca356fa805f5a277efff53aac5af88",
+        "to": "0xfba6ced88170e86da9f49902055cf80a62f1ac4a",
+        "gas": "0x114f7",
+        "value": "0x0",
+        "data": "0x40c10f190000000000000000000000008d76db34ccca356fa805f5a277efff53aac5af8800000000000000000000000000000000000000000000d3c21bcecceda1000000",
+        "nonce": "0x33"
+      },
+      "additionalContracts": [],
+      "isFixedGasLimit": false
+    }
+  ],
+  "receipts": [
+    {
+      "transactionHash": "0x660019d305fcf219078da9b2b8d26f547361b7434d3b1bc9b784b905d1728c09",
+      "transactionIndex": "0x1",
+      "blockHash": "0xb1e94d83b8a6354614180e33035a57278b3a5ae2c796f18b7df6b45058b9b6b6",
+      "blockNumber": "0x39a5d81",
+      "from": "0x8d76dB34CcCA356fA805f5A277EFFf53aaC5af88",
+      "to": "0xfBA6CED88170e86DA9F49902055cF80A62F1AC4a",
+      "cumulativeGasUsed": "0xccdd",
+      "gasUsed": "0xccdd",
+      "contractAddress": null,
+      "logs": [
+        {
+          "address": "0xfBA6CED88170e86DA9F49902055cF80A62F1AC4a",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "0x0000000000000000000000008d76db34ccca356fa805f5a277efff53aac5af88"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000d3c21bcecceda1000000",
+          "blockHash": "0xb1e94d83b8a6354614180e33035a57278b3a5ae2c796f18b7df6b45058b9b6b6",
+          "blockNumber": "0x39a5d81",
+          "transactionHash": "0x660019d305fcf219078da9b2b8d26f547361b7434d3b1bc9b784b905d1728c09",
+          "transactionIndex": "0x1",
+          "logIndex": "0x1",
+          "removed": false
+        }
+      ],
+      "status": "0x1",
+      "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000008000000000000000000800000000000000000000000000000020000000000000000020800000000004000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000002000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000400000"
+    }
+  ],
+  "libraries": [],
+  "pending": [],
+  "returns": {},
+  "timestamp": 1709548905,
+  "chain": 51,
+  "multi": false,
+  "commit": "8b9e0be"
+}
