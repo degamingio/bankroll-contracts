@@ -36,11 +36,11 @@
 
 | Contract Name                      | Adress                                     | Explorer                                                                            |
 |------------------------------------|--------------------------------------------|-------------------------------------------------------------------------------------|
-| DGBankrollManager                  | 0x0Eec616A9102562d97695441d1c4aaa51546C341 | https://explorer.apothem.network/address/0x0Eec616A9102562d97695441d1c4aaa51546C341 |
-| Bankroll (Implementation)          | 0x76e5195c7d09C2fCeAB4CB8EA6a54b362De655da | https://explorer.apothem.network/address/0x76e5195c7d09C2fCeAB4CB8EA6a54b362De655da |
-| DGBankrollFactory (Implementation) | 0x343f864EAf4A27706ffD29c6CCf990b2934F1E00 | https://explorer.apothem.network/address/0x343f864EAf4A27706ffD29c6CCf990b2934F1E00 |
-| DGBankrollFactory (Proxy)          | 0x5A44Ad2BEdb5f4CE6041706aCAcfF8755D7a96d8 | https://explorer.apothem.network/address/0x5A44Ad2BEdb5f4CE6041706aCAcfF8755D7a96d8 |
-| Bankroll (Proxy)                   | 0x9E2Fb8d43C4F700A9362Ce48dF3DFF53e4877716 | https://explorer.apothem.network/address/0x9E2Fb8d43C4F700A9362Ce48dF3DFF53e4877716 |
+| DGBankrollManager                  | 0xbda10160e83FC353bc198A2F2a25850FF9648722 | https://explorer.apothem.network/address/0xbda10160e83FC353bc198A2F2a25850FF9648722 |
+| Bankroll (Implementation)          | 0x0bcA86079E2865fC0ef87F92E084426Ae51c46C0 | https://explorer.apothem.network/address/0x0bcA86079E2865fC0ef87F92E084426Ae51c46C0 |
+| DGBankrollFactory (Implementation) | 0x5735d979b9Bd802dAf1F82978D36f1c385b5eC3d | https://explorer.apothem.network/address/0x5735d979b9Bd802dAf1F82978D36f1c385b5eC3d |
+| DGBankrollFactory (Proxy)          | 0xf31DbBeb861B6Bf008Be3E542cDea390bE3B1240 | https://explorer.apothem.network/address/0xf31DbBeb861B6Bf008Be3E542cDea390bE3B1240 |
+| Bankroll (Proxy)                   | 0xf48e37FC7a7767d04e39dE8effDD5b47A790e20D | https://explorer.apothem.network/address/0xf48e37FC7a7767d04e39dE8effDD5b47A790e20D |
 
 ## Compile Project
 
