@@ -133,7 +133,7 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
         if (_fee > DENOMINATOR) revert DGErrors.TO_HIGH_FEE();
         
         // Make sure that bankroll is a contract
-        if (!_isContract(_bankroll)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();        
+        if (!_isContract(_bankroll)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
 
         // Toggle bankroll status
         bankrollStatus[_bankroll] = true;

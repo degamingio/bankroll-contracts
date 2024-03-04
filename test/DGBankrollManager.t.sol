@@ -83,8 +83,14 @@ contract DGBankrollManagerTest is Test {
 
         bankroll = Bankroll(address(bankrollProxy));
 
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        dgBankrollManager.setFactory(admin);
+
         dgBankrollManager.setFactory(address(dgBankrollFactory));
 
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        dgBankrollManager.approveBankroll(admin, 650);
+        
         dgBankrollManager.approveBankroll(address(bankroll), 650);
 
         dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
@@ -122,8 +128,20 @@ contract DGBankrollManagerTest is Test {
         vm.expectRevert(DGErrors.NOT_AN_OPERATOR.selector);
         bankroll.credit(1_000_000e6, _operator);
 
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_WALLET.selector);
+        dgBankrollManager.addOperator(address(bankroll));
+
         dgBankrollManager.addOperator(_operator);
+
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_WALLET.selector);
+        dgBankrollManager.setOperatorToBankroll(address(bankroll), address(bankroll));
+
         dgBankrollManager.setOperatorToBankroll(address(bankroll), _operator);
+
+        vm.expectRevert(DGErrors.OPERATOR_ALREADY_ADDED_TO_BANKROLL.selector);
+        dgBankrollManager.setOperatorToBankroll(address(bankroll), _operator);
+
+
         vm.prank(admin);
         bankroll.credit(1_000_000e6, _operator);
 
@@ -192,9 +210,12 @@ contract DGBankrollManagerTest is Test {
         dgBankrollManager.approveBankroll(_newBankroll, _fee);
     }
 
-    function test_updateAdmin(address _newAdmin, address _newOperator) public {
+    function test_updateAdmin(address _faultyOldAdmin, address _newAdmin, address _newOperator) public {
         vm.assume(_newAdmin != msg.sender);
         vm.assume(_newAdmin != address(dgBankrollFactory));
+        vm.assume(_faultyOldAdmin != msg.sender);
+        vm.assume(_faultyOldAdmin != admin);
+        vm.assume(_faultyOldAdmin != _newAdmin);
         vm.assume(_newOperator != operator);
         vm.assume(!_isContract(_newOperator));
 
@@ -206,7 +227,11 @@ contract DGBankrollManagerTest is Test {
         vm.expectRevert(DGErrors.NOT_AN_OPERATOR.selector);
         bankroll.debit(address(0x4), 10e6, _newOperator);
 
+        vm.expectRevert(DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE.selector);
+        dgBankrollManager.updateAdmin(_faultyOldAdmin, _newAdmin);
+
         dgBankrollManager.updateAdmin(address(dgBankrollFactory), _newAdmin);
+
         vm.prank(_newAdmin);
         dgBankrollManager.addOperator(_newOperator);
         dgBankrollManager.setOperatorToBankroll(address(bankroll), _newOperator);
