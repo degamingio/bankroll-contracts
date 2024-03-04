@@ -371,6 +371,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
      *
      */
     function changeMaxRisk(uint256 _newAmount) external onlyRole(ADMIN) {
+        // Check so that maxrisk doestn't exceed 100%
+        if (_newAmount > DENOMINATOR) revert DGErrors.MAXRISK_TO_HIGH();
+
+        // Set new maxrisk
         maxRiskPercentage = _newAmount;
     }
 
