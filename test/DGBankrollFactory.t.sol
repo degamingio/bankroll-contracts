@@ -6,6 +6,7 @@ import "forge-std/Test.sol";
 /* OpenZeppelin contract */
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 /* DeGaming Contracts */
 import {Bankroll} from "src/Bankroll.sol";
@@ -196,6 +197,17 @@ contract DGBankrollFactoryTest is Test {
         vm.expectRevert();
 
         dgBankrollFactory.setDgAdmin(_admin);
+    }
+
+    function test_predictBankrollAddress(bytes32 _salt) public {
+        assertEq(
+            dgBankrollFactory.predictBankrollAddress(_salt),
+            Clones.predictDeterministicAddress(
+                dgBankrollFactory.bankrollImpl(), 
+                _salt, 
+                address(dgBankrollFactory)
+            )
+        );
     }
 
     /**
