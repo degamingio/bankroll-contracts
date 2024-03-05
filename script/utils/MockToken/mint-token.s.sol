@@ -14,7 +14,7 @@ contract MintTokens is Script {
 
     MockToken USDT = MockToken(token);
 
-    function run() external {
+    function run() public {
 
         vm.startBroadcast(adminPrivateKey);
 
