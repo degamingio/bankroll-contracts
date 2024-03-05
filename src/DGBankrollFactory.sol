@@ -76,8 +76,6 @@ contract DGBankrollFactory is AccessControlUpgradeable {
         address _dgAdmin,
         address _deGaming
     ) external initializer {
-        // if (/* !_isContract(bankrollImpl)  || */ !_isContract(dgBankrollManager)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
-
         // Initialize global variables
         bankrollImpl = _bankrollImpl;
         dgBankrollManager = _dgBankrollManager;
@@ -105,8 +103,10 @@ contract DGBankrollFactory is AccessControlUpgradeable {
         uint256 _maxRiskPercentage,
         bytes32 _salt 
     ) external  onlyRole(DEFAULT_ADMIN_ROLE) {
+        // Make sure that token address is a contract
         if (!_isContract(_token)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
-        
+
+        // Make sure that maxrisk does not exceed 100%
         if (_maxRiskPercentage > 10_000) revert DGErrors.MAXRISK_TO_HIGH();
 
         // Deploy new Bankroll contract
@@ -137,8 +137,10 @@ contract DGBankrollFactory is AccessControlUpgradeable {
      *
      */
     function setBankrollImplementation(address _newImpl) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        // Make sure that new bankroll implementation is a contract
         if (!_isContract(_newImpl)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
-        
+
+        // set new bankroll implementation
         bankrollImpl = _newImpl;
     }
 
@@ -151,7 +153,10 @@ contract DGBankrollFactory is AccessControlUpgradeable {
      *
      */
     function setDgBankrollManager(address _dgBankrollManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        // Make sure that new bankroll manager is a contract
         if (!_isContract(_dgBankrollManager)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+
+        // Set new bankroll manager
         dgBankrollManager = _dgBankrollManager;
     }
 
