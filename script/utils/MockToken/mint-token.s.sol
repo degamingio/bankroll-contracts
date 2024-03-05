@@ -5,7 +5,7 @@ import {Script} from "forge-std/Script.sol";
 
 import {MockToken} from "test/mock/MockToken.sol";
 
-contract Credit is Script {
+contract MintTokens is Script {
     uint256 adminPrivateKey = vm.envUint("ADMIN_PRIVATE_KEY");
 
     address token = vm.envAddress("TOKEN_ADDRESS");

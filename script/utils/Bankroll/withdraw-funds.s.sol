@@ -6,7 +6,7 @@ import {Bankroll} from "src/Bankroll.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract Credit is Script {
+contract WithdrawFunds is Script {
     uint256 adminPrivateKey = vm.envUint("ADMIN_PRIVATE_KEY");
 
     address token = vm.envAddress("TOKEN_ADDRESS");
