@@ -8,6 +8,9 @@ import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 /* DeGaming Contract */
 import {Bankroll} from "src/Bankroll.sol";
 
+/* DeGaming Libraries */
+import {DGErrors} from "src/libraries/DGErrors.sol";
+
 /**
  * @title
  * @author DeGaming Technical Team
@@ -73,6 +76,7 @@ contract DGBankrollFactory is AccessControlUpgradeable {
         address _dgAdmin,
         address _deGaming
     ) external initializer {
+        // if (/* !_isContract(bankrollImpl)  || */ !_isContract(dgBankrollManager)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
 
         // Initialize global variables
         bankrollImpl = _bankrollImpl;
@@ -101,6 +105,10 @@ contract DGBankrollFactory is AccessControlUpgradeable {
         uint256 _maxRiskPercentage,
         bytes32 _salt 
     ) external  onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (!_isContract(_token)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+        
+        if (_maxRiskPercentage > 10_000) revert DGErrors.MAXRISK_TO_HIGH();
+
         // Deploy new Bankroll contract
         Bankroll newBankroll = Bankroll(Clones.cloneDeterministic(bankrollImpl, _salt));
 
@@ -129,6 +137,8 @@ contract DGBankrollFactory is AccessControlUpgradeable {
      *
      */
     function setBankrollImplementation(address _newImpl) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (!_isContract(_newImpl)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+        
         bankrollImpl = _newImpl;
     }
 
@@ -141,6 +151,7 @@ contract DGBankrollFactory is AccessControlUpgradeable {
      *
      */
     function setDgBankrollManager(address _dgBankrollManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (!_isContract(_dgBankrollManager)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
         dgBankrollManager = _dgBankrollManager;
     }
 
@@ -185,5 +196,30 @@ contract DGBankrollFactory is AccessControlUpgradeable {
      */
     function predictBankrollAddress(bytes32 _salt) external view returns (address _predicted) {
         _predicted = Clones.predictDeterministicAddress(bankrollImpl, _salt, address(this));
+    }
+
+    //     ____      __                        __   ______                 __  _
+    //    /  _/___  / /____  _________  ____ _/ /  / ____/_  ______  _____/ /_(_)___  ____  _____
+    //    / // __ \/ __/ _ \/ ___/ __ \/ __ `/ /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
+    //  _/ // / / / /_/  __/ /  / / / / /_/ / /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
+    // /___/_/ /_/\__/\___/_/  /_/ /_/\__,_/_/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
+
+        /**
+     * @notice
+     *  Allows contract to check if the Token address actually is a contract
+     *
+     * @param _address address we want to  check
+     *
+     * @return _isAddressContract returns true if token is a contract, otherwise returns false
+     *
+     */
+    function _isContract(address _address) internal view returns (bool _isAddressContract) {
+        uint256 size;
+
+        assembly {
+            size := extcodesize(_address)
+        }
+
+        _isAddressContract = size > 0;
     }
 }

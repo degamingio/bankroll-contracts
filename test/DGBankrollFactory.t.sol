@@ -70,7 +70,7 @@ contract DGBankrollFactoryTest is Test {
             )
         );
 
-        dgBankrollFactory = DGBankrollFactory(address(bankrollFactoryProxy));         
+        dgBankrollFactory = DGBankrollFactory(address(bankrollFactoryProxy));
 
         dgBankrollManager.addOperator(operator);
     }
@@ -95,16 +95,25 @@ contract DGBankrollFactoryTest is Test {
         );
     }
 
-    function test_setBankrollImplementation(address _sender, address _bankroll) public {
+    function test_setBankrollImplementation(address _sender, address _faultyBankroll) public {
         vm.assume(_sender != address(proxyAdmin));
-        vm.assume(dgBankrollFactory.bankrollImpl() != _bankroll);
+        vm.assume(dgBankrollFactory.bankrollImpl() != _faultyBankroll);
+        vm.assume(!_isContract(_faultyBankroll));
 
         dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
     
-        vm.prank(_sender);
-        dgBankrollFactory.setBankrollImplementation(_bankroll);
+        vm.startPrank(_sender);
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        dgBankrollFactory.setBankrollImplementation(_faultyBankroll);
 
-        assertEq(dgBankrollFactory.bankrollImpl(), _bankroll);
+        vm.stopPrank();
+
+        //assertEq(dgBankrollFactory.bankrollImpl(), _faultyBankroll);
+    }
+
+    function test_setDeGaming(address _deGaming) public {
+        dgBankrollFactory.setDeGaming(_deGaming);
+        assertEq(dgBankrollFactory.deGaming(), _deGaming);
     }
 
     function test_setBankrollImplementation_incorrectRole(address _sender, address _bankroll) public {
