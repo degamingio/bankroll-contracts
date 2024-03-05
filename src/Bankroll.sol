@@ -371,6 +371,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
      *
      */
     function changeMaxRisk(uint256 _newAmount) external onlyRole(ADMIN) {
+        // Check so that maxrisk doestn't exceed 100%
+        if (_newAmount > DENOMINATOR) revert DGErrors.MAXRISK_TO_HIGH();
+
+        // Set new maxrisk
         maxRiskPercentage = _newAmount;
     }
 
@@ -540,11 +544,11 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
         _maxRisk = (currentLiquidity * maxRiskPercentage) / DENOMINATOR;
     }
 
-    //      ____      __                        __   ______                 __  _
-    //     /  _/___  / /____  _________  ____ _/ /  / ____/_  ______  _____/ /_(_)___  ____  _____
-    //     / // __ \/ __/ _ \/ ___/ __ \/ __ `/ /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
-    //   / / /_/  __/ /  / / / / /_/ / /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
-    //  /___/_/ /_/\__/\___/_/  /_/ /_/\__,_/_/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
+    //     ____      __                        __   ______                 __  _
+    //    /  _/___  / /____  _________  ____ _/ /  / ____/_  ______  _____/ /_(_)___  ____  _____
+    //    / // __ \/ __/ _ \/ ___/ __ \/ __ `/ /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
+    //  _/ // / / / /_/  __/ /  / / / / /_/ / /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
+    // /___/_/ /_/\__/\___/_/  /_/ /_/\__,_/_/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
     /**
      * @notice Mint shares to the caller

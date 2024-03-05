@@ -17,7 +17,7 @@ contract Credit is Script {
 
     //                           |
     // PASTE IN ADDRESS HERE     V
-    Bankroll bankroll = Bankroll(0xe0e943e7D5070840d6d0C026a69F07787c5132Cf);
+    Bankroll bankroll = Bankroll(0xf48e37FC7a7767d04e39dE8effDD5b47A790e20D);
 
     uint256 constant amount = 100;
 

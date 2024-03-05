@@ -6,6 +6,7 @@ import "forge-std/Test.sol";
 /* OpenZeppelin contract */
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 /* DeGaming Contracts */
 import {Bankroll} from "src/Bankroll.sol";
@@ -70,13 +71,29 @@ contract DGBankrollFactoryTest is Test {
             )
         );
 
-        dgBankrollFactory = DGBankrollFactory(address(bankrollFactoryProxy));         
+        dgBankrollFactory = DGBankrollFactory(address(bankrollFactoryProxy));
 
         dgBankrollManager.addOperator(operator);
     }
 
-    function test_deployBankroll(address _operator, bytes32 _salt) public {
+    function test_deployBankroll(address _operator, address _faultyToken, uint256 _faultyMaxRisk, bytes32 _salt) public {
         vm.assume(!_isContract(_operator));
+        vm.assume(!_isContract(_faultyToken));
+        vm.assume(_faultyMaxRisk > 10_000);
+
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        dgBankrollFactory.deployBankroll(
+            _faultyToken, 
+            maxRisk, 
+            _salt
+        );
+
+        vm.expectRevert(DGErrors.MAXRISK_TO_HIGH.selector);
+        dgBankrollFactory.deployBankroll(
+            address(token), 
+            _faultyMaxRisk, 
+            _salt
+        );
         
         dgBankrollFactory.deployBankroll(
             address(token), 
@@ -95,16 +112,30 @@ contract DGBankrollFactoryTest is Test {
         );
     }
 
-    function test_setBankrollImplementation(address _sender, address _bankroll) public {
+    function test_setBankrollImplementation(address _sender, address _faultyBankroll) public {
         vm.assume(_sender != address(proxyAdmin));
-        vm.assume(dgBankrollFactory.bankrollImpl() != _bankroll);
+        vm.assume(dgBankrollFactory.bankrollImpl() != _faultyBankroll);
+        vm.assume(!_isContract(_faultyBankroll));
 
         dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
     
-        vm.prank(_sender);
-        dgBankrollFactory.setBankrollImplementation(_bankroll);
+        vm.startPrank(_sender);
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        dgBankrollFactory.setBankrollImplementation(_faultyBankroll);
 
-        assertEq(dgBankrollFactory.bankrollImpl(), _bankroll);
+        vm.stopPrank();
+
+        Bankroll newBankroll = new Bankroll();
+
+        vm.prank(_sender);
+        dgBankrollFactory.setBankrollImplementation(address(newBankroll));
+
+        assertEq(dgBankrollFactory.bankrollImpl(), address(newBankroll));
+    }
+
+    function test_setDeGaming(address _deGaming) public {
+        dgBankrollFactory.setDeGaming(_deGaming);
+        assertEq(dgBankrollFactory.deGaming(), _deGaming);
     }
 
     function test_setBankrollImplementation_incorrectRole(address _sender, address _bankroll) public {
@@ -116,16 +147,23 @@ contract DGBankrollFactoryTest is Test {
         dgBankrollFactory.setBankrollImplementation(_bankroll);
     }
 
-    function test_setDgBankrollManager(address _sender, address _bankrollManager) public {
+    function test_setDgBankrollManager(address _sender, address _faultyBankrollManager) public {
         vm.assume(_sender != address(proxyAdmin));
-        vm.assume(dgBankrollFactory.dgBankrollManager() != _bankrollManager);
+        vm.assume(dgBankrollFactory.dgBankrollManager() != _faultyBankrollManager);
        
         dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
     
-        vm.prank(_sender);
-        dgBankrollFactory.setDgBankrollManager(_bankrollManager);
+        vm.startPrank(_sender);
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        dgBankrollFactory.setDgBankrollManager(_faultyBankrollManager);
+        vm.stopPrank();
 
-        assertEq(dgBankrollFactory.dgBankrollManager(), _bankrollManager);
+        DGBankrollManager newBankrollManager = new DGBankrollManager(admin);
+
+        vm.prank(_sender);
+        dgBankrollFactory.setDgBankrollManager(address(newBankrollManager));
+
+        assertEq(dgBankrollFactory.dgBankrollManager(), address(newBankrollManager));
     }
 
     
@@ -159,6 +197,17 @@ contract DGBankrollFactoryTest is Test {
         vm.expectRevert();
 
         dgBankrollFactory.setDgAdmin(_admin);
+    }
+
+    function test_predictBankrollAddress(bytes32 _salt) public {
+        assertEq(
+            dgBankrollFactory.predictBankrollAddress(_salt),
+            Clones.predictDeterministicAddress(
+                dgBankrollFactory.bankrollImpl(), 
+                _salt, 
+                address(dgBankrollFactory)
+            )
+        );
     }
 
     /**

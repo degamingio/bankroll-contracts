@@ -6,10 +6,10 @@ import {Bankroll} from "src/Bankroll.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract Credit is Script {
+contract DepositFunds is Script {
     uint256 adminPrivateKey = vm.envUint("ADMIN_PRIVATE_KEY");
 
-    address token = vm.envAddress("TOKEN_ADDRESS");
+    address tokenAddr = vm.envAddress("TOKEN_ADDRESS");
 
     uint256 operatorPrivateKey = vm.envUint("MANAGER_PRIVATE_KEY");
 
@@ -17,13 +17,15 @@ contract Credit is Script {
 
     //                           |
     // PASTE IN ADDRESS HERE     V
-    Bankroll bankroll = Bankroll(0xe0e943e7D5070840d6d0C026a69F07787c5132Cf);
+    Bankroll bankroll = Bankroll(0xf48e37FC7a7767d04e39dE8effDD5b47A790e20D);
 
     uint256 constant amount = 100;
 
     function run() external {
 
         vm.startBroadcast(adminPrivateKey);
+
+        IERC20(tokenAddr).approve(address(bankroll), 1_000_000_000_000_000);
 
         bankroll.depositFunds(amount);
     }
