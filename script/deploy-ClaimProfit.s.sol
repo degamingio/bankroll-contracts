@@ -9,7 +9,7 @@ contract ClaimProfit is Script {
         uint256 managerPrivateKey = vm.envUint("MANAGER_PRIVATE_KEY");
 
         Bankroll bankroll = Bankroll(
-            0x8C26aACD57d3B4C19B9AC8aD224083dcCfb6A057
+            0x1a3808184847DCCc2e8DE3Ae3024808F8a4f2896
         );
         // // Set manager
         vm.startBroadcast(managerPrivateKey);
