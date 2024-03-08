@@ -51,4 +51,10 @@ library DGErrors {
 
     /// @dev Error thrown when max risk is to high
     error MAXRISK_TO_HIGH();
+
+    /// @dev Error thrown when withdrawal queue is full
+    error WITHDRAWAL_QUEUE_FULL();
+
+    /// @dev Error thrown when withdrawal queue is empty
+    error WITHDRAWAL_QUEUE_EMPTY();
 }

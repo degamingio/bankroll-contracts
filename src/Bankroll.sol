@@ -28,20 +28,23 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
     using SafeERC20 for IERC20;
 
     /// @dev total amount of shares
-    uint256 public totalSupply; 
-    
+    uint256 public totalSupply;
+
     /// @dev the current aggregated profit of the bankroll balance
-    int256 public GGR; 
-    
+    int256 public GGR;
+
     /// @dev total amount of ERC20 deposited by LPs
-    uint256 public totalDeposit; 
-    
+    uint256 public totalDeposit;
+
     /// @dev used to calculate percentages
     uint256 public constant DENOMINATOR = 10_000; 
-    
+
+    /// @dev used to limit amount of LP withdrawals
+    uint256 withdrawalTimeLimit = 1 weeks;
+
     /// @dev Max percentage of liquidity risked
     uint256 public maxRiskPercentage; 
-    
+
     /// @dev amount for minimum pool in case it exists
     uint256 public minimumLp;
 
@@ -53,6 +56,12 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
 
     /// @dev BANKROLL_MANAGER role
     bytes32 public constant BANKROLL_MANAGER = keccak256("BANKROLL_MANAGER");
+
+    /// @dev Queue of addresses wanting to withdraw
+    DGDataTypes.WithdrawalEntry[] public withdrawalQueue;
+
+    /// @dev Amount of shares on hold
+    mapping(address lp => uint256 shares) sharesOnHold;
 
     /// @dev The GGR of a certain operator
     mapping(address operator => int256 operatorGGR) public ggrOf;
@@ -187,48 +196,35 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
         emit DGEvents.FundsDeposited(msg.sender, _amount);
     }
 
-    /**
-     * @notice Withdraw all ERC20 tokens held by LP from the bankroll
-     *  Called by Liquidity Providers
-     *
-     */
-    function withdrawAll() external {
-        // decrement total deposit
-        totalDeposit -= depositOf[msg.sender];
+    function enterWithdrawalQueue(uint256 _amount) external {
+        // Check that the requested withdraw amount does not exceed the shares of
+        if (_amount > (sharesOf[msg.sender] - sharesOnHold[msg.sender])) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
 
-        // zero lp deposit
-        depositOf[msg.sender] = 0;
+        // Check so that withdrawal queue isnt full
+        if (withdrawalQueue.length > 100) revert DGErrors.WITHDRAWAL_QUEUE_FULL();
 
-        // call internal withdrawal function
-        _withdraw(sharesOf[msg.sender]);
+        // put shares on hold
+        sharesOnHold[msg.sender] += _amount;
+
+        // Addd withdrawalentry to withdrawal queue
+        withdrawalQueue.push(DGDataTypes.WithdrawalEntry(msg.sender, _amount));
     }
 
+    function clearWithdrawalQueue() external onlyRole(ADMIN) {
+        // CHeck so that withdreawal queue isnt empty
+        if (withdrawalQueue.length = 0) revert DGErrors.WITHDRAWAL_QUEUE_EMPTY();
 
-    /**
-     * @notice Withdraw some ERC20 tokens held by LP from the bankroll
-     *  Called by Liquidity Providers
-     *
-     * @param _amount how many shares that should be withdrawn
-     *
-     */
-    function withdraw(uint256 _amount) external {
-        // Check that the requested withdraw amount does not exceed the shares of
-        if (_amount > sharesOf[msg.sender]) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
+        // Withdraw for each
+        for (uint256 i; i < withdrawalQueue.length; i++) {
+            // Withdraw shares
+            _withdraw(withdrawalQueue[i].amount, withdrawalQueue[i].sender);
 
-        // Calculate how many percentages of senders total shares they want to withdraw
-        uint256 percentage = (_amount * DENOMINATOR) / sharesOf[msg.sender];
+            // remove shares from onhold
+            sharesOnHold[withdrawalQueue[i].sender] -= withdrawalQueue[i].amount;
+        }
 
-        // calculate what that same percentage is from that deposit of
-        uint256 decrementFromDeposit = (depositOf[msg.sender] * percentage) / DENOMINATOR;
-
-        // decrement total deposit
-        totalDeposit -= decrementFromDeposit;
-
-        // remove amount from deposit of 
-        depositOf[msg.sender] -= decrementFromDeposit;
-
-        // call internal withdrawal function
-        _withdraw(_amount);
+        // delete withdrawal que array
+        delete withdrawalQueue;
     }
 
     /**
@@ -577,18 +573,18 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
      * @param _shares Amount of shares to burn
      *
      */
-    function _withdraw(uint256 _shares) internal {
+    function _withdraw(uint256 _shares, address _reciever) internal {
         // Calculate the amount of ERC20 worth of shares
         uint256 amount = (_shares * liquidity()) / totalSupply;
 
         // Burn the shares from the caller
-        _burn(msg.sender, _shares);
+        _burn(_reciever, _shares);
 
         // Transfer ERC20 to the caller
-        token.transfer(msg.sender, amount);
+        token.transfer(_reciever, amount);
     
         // Emit an event that funds are withdrawn
-        emit DGEvents.FundsWithdrawn(msg.sender, amount);
+        emit DGEvents.FundsWithdrawn(_reciever, amount);
     }
 
     /**

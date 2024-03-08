@@ -12,4 +12,10 @@ library DGDataTypes {
         OPEN,
         WHITELISTED
     }
+
+    /// @dev Entry datatype for withdrawal queue
+    struct WithdrawalEntry {
+        address sender;
+        uint256 amount;
+    }
 }
