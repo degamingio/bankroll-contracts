@@ -56,26 +56,23 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
 
     /// @dev The GGR of a certain operator
     mapping(address operator => int256 operatorGGR) public ggrOf;
-    
-    /// @dev profit per manager
-    mapping(address manager => int256 profit) public profitOf; 
-    
+
     /// @dev amount of shares per lp
     mapping(address lp => uint256 shares) public sharesOf; 
-    
+
     /// @dev amount of ERC20 deposited per lp
     mapping(address lp => uint256 deposit) public depositOf; 
-    
+
     /// @dev allowed LP addresses
     mapping(address lp => bool authorized) public lpWhitelist; 
-    
+
     /// @dev bankroll liquidity token
     // IERC20 public ERC20;
     IERC20 public token;
 
     /// @dev Bankroll manager instance
     IDGBankrollManager dgBankrollManager; 
-    
+
     /// @dev set status regarding if LP is open or whitelisted
     DGDataTypes.LpIs public lpIs = DGDataTypes.LpIs.OPEN;
 
@@ -112,7 +109,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
     ) external initializer {
         // Check so that both bankroll manager and token are contracts
         if (!_isContract(_bankrollManager) || !_isContract(_token)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
-        
+
         // Check so that owner is not a contract
         if (_isContract(_owner)) revert DGErrors.ADDRESS_NOT_A_WALLET();
 
@@ -246,10 +243,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
     function debit(address _player, uint256 _amount, address _operator) external onlyRole(ADMIN) {
         // Check that operator is approved
         if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
-        
+
         // Check so that operator is associated with this bankroll
         if (!dgBankrollManager.operatorOfBankroll(_operator, address(this))) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
-        
+
         // pay what is left if amount is bigger than bankroll balance
         uint256 maxRisk = getMaxRisk();
         if (_amount > maxRisk) {
@@ -263,9 +260,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
         
         // subtracting the amount from the specified operator GGR
         ggrOf[_operator] -= int256(_amount);
-
-        // substract from operators profit
-        profitOf[msg.sender] -= int256(_amount);
 
         // transfer ERC20 from the vault to the winner
         token.safeTransfer(_player, _amount);
@@ -282,21 +276,18 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
      * @param _operator The operator from which the call comes from
      *
      */
-    function credit(uint256 _amount, address _operator) external onlyRole(ADMIN) {    
+    function credit(uint256 _amount, address _operator) external onlyRole(ADMIN) {
         // Check that operator is approved
         if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
-        
+
         // Check so that operator is associated with this bankroll
         if (!dgBankrollManager.operatorOfBankroll(_operator, address(this))) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
-        
+
         // Add to total GGR
         GGR += int256(_amount);
-        
+
         // add the amount to the specified operator GGR
         ggrOf[_operator] += int256(_amount);
-
-        // add to operators profit
-        profitOf[msg.sender] += int256(_amount);
 
         // transfer ERC20 from the manager to the vault
         token.safeTransferFrom(msg.sender, address(this), _amount);
@@ -319,7 +310,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
             !dgBankrollManager.isApproved(msg.sender) &&
             !hasRole(ADMIN, msg.sender)
         ) revert DGErrors.NO_LP_ACCESS_PERMISSION();
-        
+
         // Add toggle LPs _isAuthorized status
         lpWhitelist[_lp] = _isAuthorized;
     }
@@ -404,7 +395,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
     function updateAdmin(address _oldAdmin, address _newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
         // Check that _oldAdmin address is valid
         if (!hasRole(ADMIN, _oldAdmin)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
-        
+
         // Make sure so that admin address is a wallet
         if (_isContract(_newAdmin)) revert DGErrors.ADDRESS_NOT_A_WALLET();
 
@@ -426,13 +417,13 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
     function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
         // Check that _oldBankrollManager is valid
         if (!hasRole(BANKROLL_MANAGER, _oldBankrollManager)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
-        
+
         // Check so that bankroll manager actually is a contract
         if (!_isContract(_newBankrollManager)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
 
         // Revoke the old bankroll managers role
         _revokeRole(BANKROLL_MANAGER, _oldBankrollManager);
-        
+
         // Grant the new bankroll manager the BANKROLL_MANAGER role
         _grantRole(BANKROLL_MANAGER, _newBankrollManager);
 
