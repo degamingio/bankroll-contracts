@@ -29,7 +29,10 @@ contract DeployBankroll is Script {
 
         // Instanciate contract
         Bankroll bankroll = Bankroll(
-            0xBf4deaf7920E8BCb79Be176259e6A68cabe976B1
+            // ARB
+            //0xBf4deaf7920E8BCb79Be176259e6A68cabe976B1
+            // Blast
+            0x1a3808184847DCCc2e8DE3Ae3024808F8a4f2896
         );
 
         // Set manager
@@ -39,14 +42,14 @@ contract DeployBankroll is Script {
 
         // Set bankroll max allowance
         vm.startBroadcast(managerPrivateKey);
-        // IERC20(token).approve(
-            // address(bankroll),
-            // 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-        // ); //max int value
-        IERC20(token).forceApprove(
+        IERC20(token).approve(
             address(bankroll),
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-        );
+        ); //max int value
+        // IERC20(token).forceApprove(
+            // address(bankroll),
+            // 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+        // );
         vm.stopBroadcast();
     }
 }
