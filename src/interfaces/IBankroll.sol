@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity 0.8.19;
 
 import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
 
 /**
- * @title IBankroll V1
+ * @title IBankroll V2
  * @author DeGaming Technical Team
  * @notice Interface for Bankroll contract
  *
@@ -26,11 +26,20 @@ interface IBankroll {
     function depositFunds(uint256 _amount) external;
 
     /**
-     * @notice Withdraw all ERC20 tokens held by LP from the bankroll
+     * @notice Lets lp enter withdrawal queue
      *  Called by Liquidity Providers
      *
+     * @param _amount Amount of ERC20 tokens to withdraw
+     *
      */
-    function withdrawAll() external;
+    function enterWithdrawalQueue(uint256 _amount) external;
+
+    /**
+     * @notice Performs withdrawal for all LPs that are in line 
+     *  Only Calleable by admin
+     *
+     */
+    function clearWithdrawalQueue() external;
 
     /**
      * @notice Pay player amount in ERC20 tokens from the bankroll

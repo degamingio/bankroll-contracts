@@ -23,7 +23,7 @@ import {DGEvents} from "src/libraries/DGEvents.sol";
  * @notice Operator and Game Bankroll Contract
  *
  */
-contract Bankroll is IBankroll, AccessControlUpgradeable{
+contract Bankroll is IBankroll, AccessControlUpgradeable {
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
