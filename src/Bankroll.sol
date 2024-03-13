@@ -194,11 +194,20 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         // track total deposit amount
         totalDeposit += _amount;
 
+        // fetch balance before
+        uint256 balanceBefore = token.balanceOf(address(this));
+
         // transfer ERC20 from the user to the vault
         token.safeTransferFrom(msg.sender, address(this), _amount);
 
+        // fetch balance aftrer
+        uint256 balanceAfter = token.balanceOf(address(this));
+
+        // amount variable calculated from recieved balances
+        uint256 amount = balanceAfter - balanceBefore;
+
         // Emit a funds deposited event 
-        emit DGEvents.FundsDeposited(msg.sender, _amount);
+        emit DGEvents.FundsDeposited(msg.sender, amount);
     }
 
     /**
@@ -274,17 +283,26 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
             emit DGEvents.BankrollSwept(_player, _amount);
         }
 
-        // substract from total GGR
-        GGR -= int256(_amount);
-        
-        // subtracting the amount from the specified operator GGR
-        ggrOf[_operator] -= int256(_amount);
+        // fetch balance before
+        uint256 balanceBefore = token.balanceOf(address(this));
 
         // transfer ERC20 from the vault to the winner
         token.safeTransfer(_player, _amount);
 
+        // fetch balance aftrer
+        uint256 balanceAfter = token.balanceOf(address(this));
+
+        // amount variable calculated from recieved balances
+        uint256 amount = balanceBefore - balanceAfter;
+        
+        // substract from total GGR
+        GGR -= int256(amount);
+        
+        // subtracting the amount from the specified operator GGR
+        ggrOf[_operator] -= int256(amount);
+
         // Emit debit event
-        emit DGEvents.Debit(msg.sender, _player, _amount);
+        emit DGEvents.Debit(msg.sender, _player, amount);
     }
 
     /**
@@ -302,17 +320,26 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         // Check so that operator is associated with this bankroll
         if (!dgBankrollManager.operatorOfBankroll(_operator, address(this))) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
 
-        // Add to total GGR
-        GGR += int256(_amount);
-
-        // add the amount to the specified operator GGR
-        ggrOf[_operator] += int256(_amount);
+        // fetch balance before
+        uint256 balanceBefore = token.balanceOf(address(this));
 
         // transfer ERC20 from the manager to the vault
         token.safeTransferFrom(msg.sender, address(this), _amount);
+        
+        // fetch balance aftrer
+        uint256 balanceAfter = token.balanceOf(address(this));
+
+        // amount variable calculated from recieved balances
+        uint256 amount = balanceAfter - balanceBefore;
+
+        // Add to total GGR
+        GGR += int256(amount);
+
+        // add the amount to the specified operator GGR
+        ggrOf[_operator] += int256(amount);
 
         // Emit credit event
-        emit DGEvents.Credit(msg.sender, _amount);
+        emit DGEvents.Credit(msg.sender, amount);
     }
 
     /**
@@ -603,11 +630,26 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         // Burn the shares from the caller
         _burn(_reciever, _shares);
 
+        // fetch balance before
+        uint256 balanceBefore = token.balanceOf(address(this));
+
         // Transfer ERC20 to the caller
-        token.transfer(_reciever, amount);
-    
+        token.safeTransfer(_reciever, amount);
+
+        // fetch balance aftrer
+        uint256 balanceAfter = token.balanceOf(address(this));
+
+        // amount variable calculated from recieved balances
+        uint256 realizedAmount = balanceAfter - balanceBefore;
+
+        // Decrement total deposit
+        totalDeposit -= realizedAmount;
+
+        // decrement lp deposit
+        depositOf[_reciever] -= realizedAmount;
+
         // Emit an event that funds are withdrawn
-        emit DGEvents.FundsWithdrawn(_reciever, amount);
+        emit DGEvents.FundsWithdrawn(_reciever, realizedAmount);
     }
 
     /**

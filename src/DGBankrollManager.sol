@@ -304,10 +304,19 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
             }
         }
 
+        // fetch balance before
+        uint256 balanceBefore = token.balanceOf(address(this));
+
         // transfer the GGR to DeGaming
         token.safeTransferFrom(_bankroll, deGaming, amount);
 
-        emit DGEvents.ProfitsClaimed(_bankroll, totalAmount, amount);
+        // fetch balance aftrer
+        uint256 balanceAfter = token.balanceOf(address(this));
+
+        // amount variable calculated from recieved balances
+        uint256 realizedAmount = balanceAfter - balanceBefore;
+
+        emit DGEvents.ProfitsClaimed(_bankroll, totalAmount, realizedAmount);
     }
 
     /**
