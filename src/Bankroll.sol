@@ -196,9 +196,16 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
         emit DGEvents.FundsDeposited(msg.sender, _amount);
     }
 
+    /**
+     * @notice Lets lp enter withdrawal queue
+     *  Called by Liquidity Providers
+     *
+     * @param _amount Amount of ERC20 tokens to withdraw
+     *
+     */
     function enterWithdrawalQueue(uint256 _amount) external {
         // Check that the requested withdraw amount does not exceed the shares of
-        if (_amount > (sharesOf[msg.sender] - sharesOnHold[msg.sender])) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
+        if (_amount > sharesOf[msg.sender] - sharesOnHold[msg.sender]) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
 
         // Check so that withdrawal queue isnt full
         if (withdrawalQueue.length > 100) revert DGErrors.WITHDRAWAL_QUEUE_FULL();
@@ -210,6 +217,11 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
         withdrawalQueue.push(DGDataTypes.WithdrawalEntry(msg.sender, _amount));
     }
 
+    /**
+     * @notice Performs withdrawal for all LPs that are in line 
+     *  Only Calleable by admin
+     *
+     */
     function clearWithdrawalQueue() external onlyRole(ADMIN) {
         // CHeck so that withdreawal queue isnt empty
         if (withdrawalQueue.length = 0) revert DGErrors.WITHDRAWAL_QUEUE_EMPTY();
@@ -223,7 +235,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
             sharesOnHold[withdrawalQueue[i].sender] -= withdrawalQueue[i].amount;
         }
 
-        // delete withdrawal que array
+        // delete withdrawal queue array
         delete withdrawalQueue;
     }
 
