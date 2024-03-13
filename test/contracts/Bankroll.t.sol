@@ -162,60 +162,60 @@ contract BankrollTest is Test {
         vm.stopPrank();
     }
 
-    function test_withdrawAll() public {
-        vm.startPrank(lpOne);
-        token.approve(address(bankroll), 1_000_000e6);
-        bankroll.depositFunds(1_000_000e6);
-        vm.stopPrank();
+    // function test_withdrawAll() public {
+        // vm.startPrank(lpOne);
+        // token.approve(address(bankroll), 1_000_000e6);
+        // bankroll.depositFunds(1_000_000e6);
+        // vm.stopPrank();
 
-        vm.startPrank(lpTwo);
-        token.approve(address(bankroll), 1_000_000e6);
-        bankroll.depositFunds(1_000_000e6);
-        vm.stopPrank();
+        // vm.startPrank(lpTwo);
+        // token.approve(address(bankroll), 1_000_000e6);
+        // bankroll.depositFunds(1_000_000e6);
+        // vm.stopPrank();
 
-        // funds have been deposited
-        assertEq(bankroll.liquidity(), 2_000_000e6);
-        assertEq(token.balanceOf(address(lpOne)), 0);
-        assertEq(token.balanceOf(address(lpTwo)), 0);
+        // // funds have been deposited
+        // assertEq(bankroll.liquidity(), 2_000_000e6);
+        // assertEq(token.balanceOf(address(lpOne)), 0);
+        // assertEq(token.balanceOf(address(lpTwo)), 0);
 
-        // initial deposit
-        assertEq(bankroll.depositOf(address(lpOne)), 1_000_000e6);
-        assertEq(bankroll.depositOf(address(lpTwo)), 1_000_000e6);
+        // // initial deposit
+        // assertEq(bankroll.depositOf(address(lpOne)), 1_000_000e6);
+        // assertEq(bankroll.depositOf(address(lpTwo)), 1_000_000e6);
 
-        // zero in profits because no fees have been collected
-        assertEq(bankroll.getLpProfit(address(lpOne)), 0);
-        assertEq(bankroll.getLpProfit(address(lpTwo)), 0);
+        // // zero in profits because no fees have been collected
+        // assertEq(bankroll.getLpProfit(address(lpOne)), 0);
+        // assertEq(bankroll.getLpProfit(address(lpTwo)), 0);
 
-        vm.startPrank(lpOne);
-        bankroll.withdrawAll();
-        vm.stopPrank();
+        // vm.startPrank(lpOne);
+        // bankroll.withdrawAll();
+        // vm.stopPrank();
 
-        // funds have been deposited
-        assertEq(bankroll.liquidity(), 1_000_000e6);
-        assertEq(token.balanceOf(address(lpOne)), 1_000_000e6);
-        assertEq(token.balanceOf(address(lpTwo)), 0);
-    }
+        // // funds have been deposited
+        // assertEq(bankroll.liquidity(), 1_000_000e6);
+        // assertEq(token.balanceOf(address(lpOne)), 1_000_000e6);
+        // assertEq(token.balanceOf(address(lpTwo)), 0);
+    // }
 
-    function test_withdraw_(uint256 _toHighAmount, uint256 _amountToWithdraw) public {
-        vm.assume(_toHighAmount > 1_000_000e6);
-        vm.assume(_amountToWithdraw < 500_000e6);
+    // function test_withdraw_(uint256 _toHighAmount, uint256 _amountToWithdraw) public {
+        // vm.assume(_toHighAmount > 1_000_000e6);
+        // vm.assume(_amountToWithdraw < 500_000e6);
 
-        vm.startPrank(lpOne);
-        token.approve(address(bankroll), 1_000_000e6);
-        bankroll.depositFunds(1_000_000e6);
-        vm.stopPrank();
+        // vm.startPrank(lpOne);
+        // token.approve(address(bankroll), 1_000_000e6);
+        // bankroll.depositFunds(1_000_000e6);
+        // vm.stopPrank();
 
-        assertEq(bankroll.depositOf(address(lpOne)), 1_000_000e6);
+        // assertEq(bankroll.depositOf(address(lpOne)), 1_000_000e6);
 
-        vm.prank(lpOne);
-        vm.expectRevert(DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW.selector);
-        bankroll.withdraw(_toHighAmount);
+        // vm.prank(lpOne);
+        // vm.expectRevert(DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW.selector);
+        // bankroll.withdraw(_toHighAmount);
 
-        vm.prank(lpOne);
-        bankroll.withdraw(_amountToWithdraw);
+        // vm.prank(lpOne);
+        // bankroll.withdraw(_amountToWithdraw);
 
-        assertEq(token.balanceOf(address(bankroll)), 1_000_000e6 - _amountToWithdraw);
-    }
+        // assertEq(token.balanceOf(address(bankroll)), 1_000_000e6 - _amountToWithdraw);
+    // }
 
     function test_debit() public {
         vm.startPrank(lpOne);

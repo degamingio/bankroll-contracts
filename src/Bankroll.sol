@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity ^0.8.18;
 
 /* Openzeppelin Interfaces */
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /* Openzeppelin Contracts */
-import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 /* DeGaming Interfaces */
@@ -25,7 +25,7 @@ import {DGEvents} from "src/libraries/DGEvents.sol";
  */
 contract Bankroll is IBankroll, AccessControlUpgradeable {
     /// @dev Using SafeERC20 for safer token interaction
-    using SafeERC20Upgradeable for IERC20Upgradeable;
+    using SafeERC20 for IERC20;
 
     /// @dev the current aggregated profit of the bankroll balance
     int256 public GGR;
@@ -82,7 +82,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     mapping(address lp => uint256 timeStamp) public withdrawalTimestampFor;
 
     /// @dev bankroll liquidity token
-    IERC20Upgradeable public token;
+    IERC20 public token;
 
     /// @dev Bankroll manager instance
     IDGBankrollManager dgBankrollManager; 
@@ -133,7 +133,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         __AccessControl_init();
 
         // Initializing erc20 token associated with bankroll
-        token = IERC20Upgradeable(_token);
+        token = IERC20(_token);
 
         // Set the max risk percentage
         maxRiskPercentage = _maxRiskPercentage;
@@ -235,7 +235,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
      */
     function clearWithdrawalQueue() external onlyRole(ADMIN) {
         // CHeck so that withdreawal queue isnt empty
-        if (withdrawalQueue.length = 0) revert DGErrors.WITHDRAWAL_QUEUE_EMPTY();
+        if (withdrawalQueue.length == 0) revert DGErrors.WITHDRAWAL_QUEUE_EMPTY();
 
         // Withdraw for each
         for (uint256 i; i < withdrawalQueue.length; i++) {
