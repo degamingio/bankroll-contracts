@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity 0.8.19;
 
 /**
  * @title DGErrors
@@ -57,4 +57,7 @@ library DGErrors {
 
     /// @dev Error thrown when withdrawal queue is empty
     error WITHDRAWAL_QUEUE_EMPTY();
+
+    /// @dev Error thrown when withdrawal timestamp hasnt passed
+    error WITHDRAWAL_TIMESTAMP_HASNT_PASSED();
 }

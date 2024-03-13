@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity 0.8.19;
 
 /* Openzeppelin Interfaces */
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 /* Openzeppelin Contracts */
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 /* DeGaming Interfaces */
@@ -18,20 +18,20 @@ import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
 import {DGEvents} from "src/libraries/DGEvents.sol";
 
 /**
- * @title Bankroll V1
+ * @title Bankroll V2
  * @author DeGaming Technical Team
  * @notice Operator and Game Bankroll Contract
  *
  */
 contract Bankroll is IBankroll, AccessControlUpgradeable{
     /// @dev Using SafeERC20 for safer token interaction
-    using SafeERC20 for IERC20;
-
-    /// @dev total amount of shares
-    uint256 public totalSupply;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     /// @dev the current aggregated profit of the bankroll balance
     int256 public GGR;
+
+    /// @dev total amount of shares
+    uint256 public totalSupply;
 
     /// @dev total amount of ERC20 deposited by LPs
     uint256 public totalDeposit;
@@ -47,6 +47,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
 
     /// @dev amount for minimum pool in case it exists
     uint256 public minimumLp;
+
+    /// @dev Storage gap used for future upgrades (30 * 32 bytes)
+    uint256[30] __gap;
 
     /// @dev Status regarding if bankroll has minimum for LPs to pool
     bool public hasMinimumLP = false;
@@ -73,11 +76,13 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
     mapping(address lp => uint256 deposit) public depositOf; 
 
     /// @dev allowed LP addresses
-    mapping(address lp => bool authorized) public lpWhitelist; 
+    mapping(address lp => bool authorized) public lpWhitelist;
+
+    /// @dev timestamp for how long withdrawals are locked for LP
+    mapping(address lp => uint256 timeStamp) public withdrawalTimestampFor;
 
     /// @dev bankroll liquidity token
-    // IERC20 public ERC20;
-    IERC20 public token;
+    IERC20Upgradeable public token;
 
     /// @dev Bankroll manager instance
     IDGBankrollManager dgBankrollManager; 
@@ -128,7 +133,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
         __AccessControl_init();
 
         // Initializing erc20 token associated with bankroll
-        token = IERC20(_token);
+        token = IERC20Upgradeable(_token);
 
         // Set the max risk percentage
         maxRiskPercentage = _maxRiskPercentage;
@@ -210,8 +215,14 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
         // Check so that withdrawal queue isnt full
         if (withdrawalQueue.length > 100) revert DGErrors.WITHDRAWAL_QUEUE_FULL();
 
+        // Check that timelimit is has passed
+        if (block.timestamp < withdrawalTimestampFor[msg.sender]) revert DGErrors.WITHDRAWAL_TIMESTAMP_HASNT_PASSED();
+
         // put shares on hold
         sharesOnHold[msg.sender] += _amount;
+
+        // Start withdrawal lock
+        withdrawalTimestampFor[msg.sender] = block.timestamp + withdrawalTimeLimit;
 
         // Addd withdrawalentry to withdrawal queue
         withdrawalQueue.push(DGDataTypes.WithdrawalEntry(msg.sender, _amount));
