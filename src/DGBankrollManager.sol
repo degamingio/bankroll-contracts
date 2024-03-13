@@ -259,7 +259,7 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
      * @param _bankroll address of bankroll 
      *
      */
-    function claimProfit(address _bankroll) external {        
+    function claimProfit(address _bankroll) external {
         // Check if eventperiod has passed
         if (block.timestamp < eventPeriodEnds[_bankroll]) revert DGErrors.EVENT_PERIOD_NOT_PASSED();
 
