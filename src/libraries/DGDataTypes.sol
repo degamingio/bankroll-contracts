@@ -13,9 +13,17 @@ library DGDataTypes {
         WHITELISTED
     }
 
-    /// @dev Entry datatype for withdrawal queue
-    struct WithdrawalEntry {
-        address sender;
-        uint256 amount;
+    /// @dev Withdrawal window timestamps
+    struct WithdrawalInfo {
+        uint256 timestampMin;
+        uint256 timestampMax;
+        uint256 amountToClaim;
+        WithdrawalIs stage;
+    }
+
+    /// @dev Withdrawal stage
+    enum WithdrawalIs {
+        FULLFILLED,
+        STAGED
     }
 }

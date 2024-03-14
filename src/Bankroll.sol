@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.21;
+pragma solidity ^0.8.19;
 
 /* Openzeppelin Interfaces */
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -42,6 +42,18 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     /// @dev amount for minimum pool in case it exists
     uint256 public minimumLp;
 
+    // @dev Withdrawal delay
+    uint256 public withdrawalDelay;
+
+    /// @dev WithdrawalWindow length
+    uint256 public withdrawalWindowLength;
+
+    /// @dev Minimum time between successfull withdrawals
+    uint256 public withdrawalEventPeriod;
+
+    /// @dev Minimum time between staging
+    uint256 public stagingEventPeriod;
+
     /// @dev Status regarding if bankroll has minimum for LPs to pool
     bool public hasMinimumLP = false;
 
@@ -53,6 +65,12 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
 
     /// @dev The GGR of a certain operator
     mapping(address operator => int256 operatorGGR) public ggrOf;
+
+    /// @dev Withdrawal window per lp
+    mapping(address lp => DGDataTypes.WithdrawalInfo info) withdrawalInfoOf;
+
+    /// @dev Withdrawal stage one limit
+    mapping(address lp => uint256 timestamp) public withdrawalLimitOf;
 
     /// @dev amount of shares per lp
     mapping(address lp => uint256 shares) public sharesOf; 
@@ -181,6 +199,74 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
 
         // Emit a funds deposited event 
         emit DGEvents.FundsDeposited(msg.sender, amount);
+    }
+
+    function withdrawalStageOne(uint256 _amount) external {
+        // Check so that event period timestamp has passed
+        if (block.timestamp < withdrawalLimitOf[msg.sender]) revert DGErrors.WITHDRAWAL_TIMESTAMP_HASNT_PASSED();
+
+        // Make sure that LPs don't try to withdraw more than they have
+        if (_amount > sharesOf[msg.sender]) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
+
+        // Fetch withdrawal info
+        DGDataTypes.WithdrawalInfo memory withdrawalInfo = withdrawalInfoOf[msg.sender];
+
+        if (
+            withdrawalInfo.stage == DGDataTypes.WithdrawalIs.STAGED &&
+            block.timestamp < withdrawalInfo.timestampMax
+        ) revert DGErrors.WITHDRAWAL_PROCESS_IN_STAGING();
+
+        // Set minimum withdrawal claiming timestamp
+        uint256 timestampMin = block.timestamp + withdrawalDelay;
+
+        // Set maximum withdrawl claiming timestamp
+        uint256 timestampMax = timestampMin + withdrawalWindowLength;
+
+        // Update withdrawalInfo of LP
+        withdrawalInfoOf[msg.sender] = DGDataTypes.WithdrawalInfo(
+            timestampMin,
+            timestampMax,
+            _amount,
+            DGDataTypes.WithdrawalIs.STAGED
+        );
+
+        // Set new withdrawal Limit of LP
+        withdrawalLimitOf[msg.sender] = block.timestamp + stagingEventPeriod;
+
+        // Emit withdrawal staged event
+        emit DGEvents.WithdrawalStaged(msg.sender, timestampMin, timestampMax);
+    }
+
+    function withdrawalStageTwo() external {
+        // Fetch withdrawal info of sender
+        DGDataTypes.WithdrawalInfo memory withdrawalInfo = withdrawalInfoOf[msg.sender];
+
+        // make sure that withdrawal is in staging
+        if (withdrawalInfo.stage == DGDataTypes.WithdrawalIs.FULLFILLED) revert DGErrors.WITHDRAWAL_ALREADY_FULLFILLED();
+
+        // Make sure it is within withdrawal window
+        if (
+            block.timestamp < withdrawalInfo.timestampMin ||
+            block.timestamp > withdrawalInfo.timestampMax
+        ) revert DGErrors.OUTSIDE_WITHDRAWAL_WINDOW();
+
+
+    }
+
+    function setWithdrawalDelay(uint256 _withdrawalDelay) external onlyRole(ADMIN) {
+        withdrawalDelay = _withdrawalDelay;
+    }
+
+    function setWithdrawalWindow(uint256 _withdrawalWindow) external onlyRole(ADMIN) {
+        withdrawalWindowLength = _withdrawalWindow;
+    }
+
+    function setWithdrawalEventPeriod(uint256 _withdrawalEventPeriod) external onlyRole(ADMIN) {
+        withdrawalEventPeriod = _withdrawalEventPeriod;
+    }
+
+    function setStagingEventPeriod(uint256 _stagingEventPeriod) external onlyRole(ADMIN) {
+        stagingEventPeriod = _stagingEventPeriod;
     }
 
     /**

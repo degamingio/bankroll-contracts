@@ -60,4 +60,13 @@ library DGErrors {
 
     /// @dev Error thrown when withdrawal timestamp hasnt passed
     error WITHDRAWAL_TIMESTAMP_HASNT_PASSED();
+
+    /// @dev Error thrown when withdrawal is in staging mode
+    error WITHDRAWAL_PROCESS_IN_STAGING();
+
+    /// @dev Error thrown when trying to fullfill an already fullfilled withdrawal
+    error WITHDRAWAL_ALREADY_FULLFILLED();
+
+    /// @dev Error thrown when LPs are trying to withdraw outside of their withdrawal window
+    error OUTSIDE_WITHDRAWAL_WINDOW();
 }

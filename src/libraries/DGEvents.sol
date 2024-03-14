@@ -12,6 +12,9 @@ library DGEvents {
 
     /// @dev Event emitted when LPs have withdrawn funds
     event FundsWithdrawn(address lp, uint256 amount);
+
+    /// @dev Event emitted when LP withdrawal is staged;
+    event WithdrawalStaged(address lp, uint256 timestampMin, uint256 timestampMax);
     
     /// @dev Event emitted when debit function is called
     event Debit(address manager, address player, uint256 amount);
