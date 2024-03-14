@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity 0.8.21;
 
 /* Openzeppelin Interfaces */
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -33,23 +33,14 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     /// @dev total amount of shares
     uint256 public totalSupply;
 
-    /// @dev total amount of ERC20 deposited by LPs
-    uint256 public totalDeposit;
-
     /// @dev used to calculate percentages
     uint256 public constant DENOMINATOR = 10_000; 
-
-    /// @dev used to limit amount of LP withdrawals
-    uint256 withdrawalTimeLimit = 1 weeks;
 
     /// @dev Max percentage of liquidity risked
     uint256 public maxRiskPercentage; 
 
     /// @dev amount for minimum pool in case it exists
     uint256 public minimumLp;
-
-    /// @dev Storage gap used for future upgrades (30 * 32 bytes)
-    uint256[30] __gap;
 
     /// @dev Status regarding if bankroll has minimum for LPs to pool
     bool public hasMinimumLP = false;
@@ -60,26 +51,14 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     /// @dev BANKROLL_MANAGER role
     bytes32 public constant BANKROLL_MANAGER = keccak256("BANKROLL_MANAGER");
 
-    /// @dev Queue of addresses wanting to withdraw
-    DGDataTypes.WithdrawalEntry[] public withdrawalQueue;
-
-    /// @dev Amount of shares on hold
-    mapping(address lp => uint256 shares) sharesOnHold;
-
     /// @dev The GGR of a certain operator
     mapping(address operator => int256 operatorGGR) public ggrOf;
 
     /// @dev amount of shares per lp
     mapping(address lp => uint256 shares) public sharesOf; 
 
-    /// @dev amount of ERC20 deposited per lp
-    mapping(address lp => uint256 deposit) public depositOf; 
-
     /// @dev allowed LP addresses
     mapping(address lp => bool authorized) public lpWhitelist;
-
-    /// @dev timestamp for how long withdrawals are locked for LP
-    mapping(address lp => uint256 timeStamp) public withdrawalTimestampFor;
 
     /// @dev bankroll liquidity token
     IERC20 public token;
@@ -188,12 +167,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         // mint shares to the user
         _mint(msg.sender, shares);
 
-        // track deposited amount
-        depositOf[msg.sender] += _amount;
-
-        // track total deposit amount
-        totalDeposit += _amount;
-
         // fetch balance before
         uint256 balanceBefore = token.balanceOf(address(this));
 
@@ -208,55 +181,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
 
         // Emit a funds deposited event 
         emit DGEvents.FundsDeposited(msg.sender, amount);
-    }
-
-    /**
-     * @notice Lets lp enter withdrawal queue
-     *  Called by Liquidity Providers
-     *
-     * @param _amount Amount of ERC20 tokens to withdraw
-     *
-     */
-    function enterWithdrawalQueue(uint256 _amount) external {
-        // Check that the requested withdraw amount does not exceed the shares of
-        if (_amount > sharesOf[msg.sender] - sharesOnHold[msg.sender]) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
-
-        // Check so that withdrawal queue isnt full
-        if (withdrawalQueue.length > 100) revert DGErrors.WITHDRAWAL_QUEUE_FULL();
-
-        // Check that timelimit is has passed
-        if (block.timestamp < withdrawalTimestampFor[msg.sender]) revert DGErrors.WITHDRAWAL_TIMESTAMP_HASNT_PASSED();
-
-        // put shares on hold
-        sharesOnHold[msg.sender] += _amount;
-
-        // Start withdrawal lock
-        withdrawalTimestampFor[msg.sender] = block.timestamp + withdrawalTimeLimit;
-
-        // Addd withdrawalentry to withdrawal queue
-        withdrawalQueue.push(DGDataTypes.WithdrawalEntry(msg.sender, _amount));
-    }
-
-    /**
-     * @notice Performs withdrawal for all LPs that are in line 
-     *  Only Calleable by admin
-     *
-     */
-    function clearWithdrawalQueue() external onlyRole(ADMIN) {
-        // CHeck so that withdreawal queue isnt empty
-        if (withdrawalQueue.length == 0) revert DGErrors.WITHDRAWAL_QUEUE_EMPTY();
-
-        // Withdraw for each
-        for (uint256 i; i < withdrawalQueue.length; i++) {
-            // Withdraw shares
-            _withdraw(withdrawalQueue[i].amount, withdrawalQueue[i].sender);
-
-            // remove shares from onhold
-            sharesOnHold[withdrawalQueue[i].sender] -= withdrawalQueue[i].amount;
-        }
-
-        // delete withdrawal queue array
-        delete withdrawalQueue;
     }
 
     /**
@@ -537,24 +461,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     }
 
     /**
-     * @notice Returns the current profit of the LPs investment.
-     *
-     * @param _lp Liquidity Provider address
-     *
-     * @return _profit collected LP profit
-     *
-     */
-    function getLpProfit(address _lp) public view returns (int256 _profit) {
-        if (sharesOf[_lp] > 0) {
-            _profit =
-                ((int(liquidity()) * int(sharesOf[_lp])) / int(totalSupply)) -
-                int(depositOf[_lp]);
-        } else {
-            _profit = 0;
-        }
-    }
-
-    /**
      * @notice Returns the current stake of the LPs investment in percentage
      *
      * @param _lp Liquidity Provider address
@@ -641,12 +547,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
 
         // amount variable calculated from recieved balances
         uint256 realizedAmount = balanceAfter - balanceBefore;
-
-        // Decrement total deposit
-        totalDeposit -= realizedAmount;
-
-        // decrement lp deposit
-        depositOf[_reciever] -= realizedAmount;
 
         // Emit an event that funds are withdrawn
         emit DGEvents.FundsWithdrawn(_reciever, realizedAmount);
