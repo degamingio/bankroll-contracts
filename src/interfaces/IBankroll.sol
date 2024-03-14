@@ -25,21 +25,55 @@ interface IBankroll {
      */
     function depositFunds(uint256 _amount) external;
 
-    // /**
-     // * @notice Lets lp enter withdrawal queue
-     // *  Called by Liquidity Providers
-     // *
-     // * @param _amount Amount of ERC20 tokens to withdraw
-     // *
-     // */
-    // function enterWithdrawalQueue(uint256 _amount) external;
+    /**
+     * @notice Stage one of withdrawal process
+     *
+     * @param _amount Amount of shares to withdraw
+     *
+     */
+    function withdrawalStageOne(uint256 _amount) external;
 
-    // /**
-     // * @notice Performs withdrawal for all LPs that are in line 
-     // *  Only Calleable by admin
-     // *
-     // */
-    // function clearWithdrawalQueue() external;
+    /**
+     * @notice Stage two of withdrawal process
+     *
+     */
+    function withdrawalStageTwo() external;
+
+    /**
+     * @notice Change withdrawal delay for LPs
+     *  Only callable by ADMIN
+     *
+     * @param _withdrawalDelay New withdrawal Delay in seconds
+     *
+     */
+    function setWithdrawalDelay(uint256 _withdrawalDelay) external;
+
+    /**
+     * @notice Change withdrawal window for LPs
+     *  Only callable by ADMIN
+     *
+     * @param _withdrawalWindow New withdrawal window in seconds
+     *
+     */
+    function setWithdrawalWindow(uint256 _withdrawalWindow) external;
+
+    /**
+     * @notice Change withdrawal event period for LPs
+     *  Only callable by ADMIN
+     *
+     * @param _withdrawalEventPeriod New withdrawal event period in seconds
+     *
+     */
+    function setWithdrawalEventPeriod(uint256 _withdrawalEventPeriod) external;
+
+    /**
+     * @notice Change staging event period for LPs
+     *  Only callable by ADMIN
+     *
+     * @param _stagingEventPeriod New staging event period in seconds
+     *
+     */
+    function setStagingEventPeriod(uint256 _stagingEventPeriod) external;
 
     /**
      * @notice Pay player amount in ERC20 tokens from the bankroll
@@ -142,16 +176,6 @@ interface IBankroll {
      *
      */
     function getLpValue(address _lp) external view returns (uint256 _amount);
-
-    // /**
-     // * @notice Returns the current profit of the LPs investment.
-     // *
-     // * @param _lp Liquidity Provider address
-     // *
-     // * @return _profit collected LP profit
-     // *
-     // */
-    // function getLpProfit(address _lp) external view returns (int256 _profit);
 
     /**
      * @notice Returns the current stake of the LPs investment in percentage
