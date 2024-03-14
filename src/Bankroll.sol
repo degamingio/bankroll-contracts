@@ -201,6 +201,12 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         emit DGEvents.FundsDeposited(msg.sender, amount);
     }
 
+    /**
+     * @notice Stage one of withdrawal process
+     *
+     * @param _amount Amount of shares to withdraw
+     *
+     */
     function withdrawalStageOne(uint256 _amount) external {
         // Check so that event period timestamp has passed
         if (block.timestamp < withdrawalLimitOf[msg.sender]) revert DGErrors.WITHDRAWAL_TIMESTAMP_HASNT_PASSED();
@@ -211,6 +217,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         // Fetch withdrawal info
         DGDataTypes.WithdrawalInfo memory withdrawalInfo = withdrawalInfoOf[msg.sender];
 
+        // Make sure that previous withdrawal is either fullfilled or window has passed
         if (
             withdrawalInfo.stage == DGDataTypes.WithdrawalIs.STAGED &&
             block.timestamp < withdrawalInfo.timestampMax
@@ -237,6 +244,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         emit DGEvents.WithdrawalStaged(msg.sender, timestampMin, timestampMax);
     }
 
+    /**
+     * @notice Stage two of withdrawal process
+     *
+     */
     function withdrawalStageTwo() external {
         // Fetch withdrawal info of sender
         DGDataTypes.WithdrawalInfo memory withdrawalInfo = withdrawalInfoOf[msg.sender];
@@ -250,21 +261,56 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
             block.timestamp > withdrawalInfo.timestampMax
         ) revert DGErrors.OUTSIDE_WITHDRAWAL_WINDOW();
 
+        // Call internal withdrawal function
+        _withdraw(withdrawalInfo.amountToClaim, msg.sender);
 
+        // Set new withdrawal Limit
+        withdrawalLimitOf[msg.sender] = block.timestamp + withdrawalEventPeriod;
+
+        // Set stage status ti FULLFILLED
+        withdrawalInfoOf[msg.sender].stage = DGDataTypes.WithdrawalIs.FULLFILLED;
     }
 
+    /**
+     * @notice Change withdrawal delay for LPs
+     *  Only callable by ADMIN
+     *
+     * @param _withdrawalDelay New withdrawal Delay in seconds
+     *
+     */
     function setWithdrawalDelay(uint256 _withdrawalDelay) external onlyRole(ADMIN) {
         withdrawalDelay = _withdrawalDelay;
     }
 
+    /**
+     * @notice Change withdrawal window for LPs
+     *  Only callable by ADMIN
+     *
+     * @param _withdrawalWindow New withdrawal window in seconds
+     *
+     */
     function setWithdrawalWindow(uint256 _withdrawalWindow) external onlyRole(ADMIN) {
         withdrawalWindowLength = _withdrawalWindow;
     }
 
+    /**
+     * @notice Change withdrawal event period for LPs
+     *  Only callable by ADMIN
+     *
+     * @param _withdrawalEventPeriod New withdrawal event period in seconds
+     *
+     */
     function setWithdrawalEventPeriod(uint256 _withdrawalEventPeriod) external onlyRole(ADMIN) {
         withdrawalEventPeriod = _withdrawalEventPeriod;
     }
 
+    /**
+     * @notice Change staging event period for LPs
+     *  Only callable by ADMIN
+     *
+     * @param _stagingEventPeriod New staging event period in seconds
+     *
+     */
     function setStagingEventPeriod(uint256 _stagingEventPeriod) external onlyRole(ADMIN) {
         stagingEventPeriod = _stagingEventPeriod;
     }
