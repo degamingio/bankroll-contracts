@@ -27,4 +27,7 @@ library DGEvents {
 
     /// @dev Event emitted when profits are claimed
     event ProfitsClaimed(address bankroll, uint256 ggrTotal, uint256 sentToDeGaming);
+
+    /// @dev Event emitted when funds are escrowed
+    event WinningsEscrowed(address bankroll, address operator, address player, address token, bytes id);
 }

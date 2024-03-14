@@ -13,6 +13,12 @@ library DGDataTypes {
         WHITELISTED
     }
 
+    /// @dev Enum for holding withdrawal stage
+    enum WithdrawalIs {
+        FULLFILLED,
+        STAGED
+    }
+
     /// @dev Withdrawal window timestamps
     struct WithdrawalInfo {
         uint256 timestampMin;
@@ -21,9 +27,12 @@ library DGDataTypes {
         WithdrawalIs stage;
     }
 
-    /// @dev Withdrawal stage
-    enum WithdrawalIs {
-        FULLFILLED,
-        STAGED
+    /// @dev Escrow entry 
+    struct EscrowEntry {
+        address bankroll;
+        address operator;
+        address player;
+        address token;
+        uint256 timestamp;
     }
 }

@@ -69,4 +69,7 @@ library DGErrors {
 
     /// @dev Error thrown when LPs are trying to withdraw outside of their withdrawal window
     error OUTSIDE_WITHDRAWAL_WINDOW();
+
+    /// @dev Error thrown when someone unauthorized is trying to claim
+    error UNAUTHORIZED_CLAIM();
 }
