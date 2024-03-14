@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity 0.8.21;
 
 /* Openzeppelin Interfaces */
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -259,7 +259,7 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
      * @param _bankroll address of bankroll 
      *
      */
-    function claimProfit(address _bankroll) external {        
+    function claimProfit(address _bankroll) external {
         // Check if eventperiod has passed
         if (block.timestamp < eventPeriodEnds[_bankroll]) revert DGErrors.EVENT_PERIOD_NOT_PASSED();
 
@@ -304,10 +304,19 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
             }
         }
 
+        // fetch balance before
+        uint256 balanceBefore = token.balanceOf(address(this));
+
         // transfer the GGR to DeGaming
         token.safeTransferFrom(_bankroll, deGaming, amount);
 
-        emit DGEvents.ProfitsClaimed(_bankroll, totalAmount, amount);
+        // fetch balance aftrer
+        uint256 balanceAfter = token.balanceOf(address(this));
+
+        // amount variable calculated from recieved balances
+        uint256 realizedAmount = balanceAfter - balanceBefore;
+
+        emit DGEvents.ProfitsClaimed(_bankroll, totalAmount, realizedAmount);
     }
 
     /**

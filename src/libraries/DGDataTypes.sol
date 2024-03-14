@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity 0.8.21;
 
 /**
  * @title DGDataTypes
@@ -11,5 +11,19 @@ library DGDataTypes {
     enum LpIs {
         OPEN,
         WHITELISTED
+    }
+
+    /// @dev Withdrawal window timestamps
+    struct WithdrawalInfo {
+        uint256 timestampMin;
+        uint256 timestampMax;
+        uint256 amountToClaim;
+        WithdrawalIs stage;
+    }
+
+    /// @dev Withdrawal stage
+    enum WithdrawalIs {
+        FULLFILLED,
+        STAGED
     }
 }

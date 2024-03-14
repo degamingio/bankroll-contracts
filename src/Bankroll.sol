@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity 0.8.21;
 
 /* Openzeppelin Interfaces */
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -18,32 +18,41 @@ import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
 import {DGEvents} from "src/libraries/DGEvents.sol";
 
 /**
- * @title Bankroll V1
+ * @title Bankroll V2
  * @author DeGaming Technical Team
  * @notice Operator and Game Bankroll Contract
  *
  */
-contract Bankroll is IBankroll, AccessControlUpgradeable{
+contract Bankroll is IBankroll, AccessControlUpgradeable {
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
 
-    /// @dev total amount of shares
-    uint256 public totalSupply; 
-    
     /// @dev the current aggregated profit of the bankroll balance
-    int256 public GGR; 
-    
-    /// @dev total amount of ERC20 deposited by LPs
-    uint256 public totalDeposit; 
-    
+    int256 public GGR;
+
+    /// @dev total amount of shares
+    uint256 public totalSupply;
+
     /// @dev used to calculate percentages
     uint256 public constant DENOMINATOR = 10_000; 
-    
+
     /// @dev Max percentage of liquidity risked
     uint256 public maxRiskPercentage; 
-    
+
     /// @dev amount for minimum pool in case it exists
     uint256 public minimumLp;
+
+    // @dev Withdrawal delay
+    uint256 public withdrawalDelay;
+
+    /// @dev WithdrawalWindow length
+    uint256 public withdrawalWindowLength;
+
+    /// @dev Minimum time between successfull withdrawals
+    uint256 public withdrawalEventPeriod;
+
+    /// @dev Minimum time between staging
+    uint256 public stagingEventPeriod;
 
     /// @dev Status regarding if bankroll has minimum for LPs to pool
     bool public hasMinimumLP = false;
@@ -56,26 +65,25 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
 
     /// @dev The GGR of a certain operator
     mapping(address operator => int256 operatorGGR) public ggrOf;
-    
-    /// @dev profit per manager
-    mapping(address manager => int256 profit) public profitOf; 
-    
+
+    /// @dev Withdrawal window per lp
+    mapping(address lp => DGDataTypes.WithdrawalInfo info) withdrawalInfoOf;
+
+    /// @dev Withdrawal stage one limit
+    mapping(address lp => uint256 timestamp) public withdrawalLimitOf;
+
     /// @dev amount of shares per lp
     mapping(address lp => uint256 shares) public sharesOf; 
-    
-    /// @dev amount of ERC20 deposited per lp
-    mapping(address lp => uint256 deposit) public depositOf; 
-    
+
     /// @dev allowed LP addresses
-    mapping(address lp => bool authorized) public lpWhitelist; 
-    
+    mapping(address lp => bool authorized) public lpWhitelist;
+
     /// @dev bankroll liquidity token
-    // IERC20 public ERC20;
     IERC20 public token;
 
     /// @dev Bankroll manager instance
     IDGBankrollManager dgBankrollManager; 
-    
+
     /// @dev set status regarding if LP is open or whitelisted
     DGDataTypes.LpIs public lpIs = DGDataTypes.LpIs.OPEN;
 
@@ -112,7 +120,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
     ) external initializer {
         // Check so that both bankroll manager and token are contracts
         if (!_isContract(_bankrollManager) || !_isContract(_token)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
-        
+
         // Check so that owner is not a contract
         if (_isContract(_owner)) revert DGErrors.ADDRESS_NOT_A_WALLET();
 
@@ -177,61 +185,134 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
         // mint shares to the user
         _mint(msg.sender, shares);
 
-        // track deposited amount
-        depositOf[msg.sender] += _amount;
-
-        // track total deposit amount
-        totalDeposit += _amount;
+        // fetch balance before
+        uint256 balanceBefore = token.balanceOf(address(this));
 
         // transfer ERC20 from the user to the vault
         token.safeTransferFrom(msg.sender, address(this), _amount);
 
+        // fetch balance aftrer
+        uint256 balanceAfter = token.balanceOf(address(this));
+
+        // amount variable calculated from recieved balances
+        uint256 amount = balanceAfter - balanceBefore;
+
         // Emit a funds deposited event 
-        emit DGEvents.FundsDeposited(msg.sender, _amount);
+        emit DGEvents.FundsDeposited(msg.sender, amount);
     }
 
     /**
-     * @notice Withdraw all ERC20 tokens held by LP from the bankroll
-     *  Called by Liquidity Providers
+     * @notice Stage one of withdrawal process
+     *
+     * @param _amount Amount of shares to withdraw
      *
      */
-    function withdrawAll() external {
-        // decrement total deposit
-        totalDeposit -= depositOf[msg.sender];
+    function withdrawalStageOne(uint256 _amount) external {
+        // Check so that event period timestamp has passed
+        if (block.timestamp < withdrawalLimitOf[msg.sender]) revert DGErrors.WITHDRAWAL_TIMESTAMP_HASNT_PASSED();
 
-        // zero lp deposit
-        depositOf[msg.sender] = 0;
-
-        // call internal withdrawal function
-        _withdraw(sharesOf[msg.sender]);
-    }
-
-
-    /**
-     * @notice Withdraw some ERC20 tokens held by LP from the bankroll
-     *  Called by Liquidity Providers
-     *
-     * @param _amount how many shares that should be withdrawn
-     *
-     */
-    function withdraw(uint256 _amount) external {
-        // Check that the requested withdraw amount does not exceed the shares of
+        // Make sure that LPs don't try to withdraw more than they have
         if (_amount > sharesOf[msg.sender]) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
 
-        // Calculate how many percentages of senders total shares they want to withdraw
-        uint256 percentage = (_amount * DENOMINATOR) / sharesOf[msg.sender];
+        // Fetch withdrawal info
+        DGDataTypes.WithdrawalInfo memory withdrawalInfo = withdrawalInfoOf[msg.sender];
 
-        // calculate what that same percentage is from that deposit of
-        uint256 decrementFromDeposit = (depositOf[msg.sender] * percentage) / DENOMINATOR;
+        // Make sure that previous withdrawal is either fullfilled or window has passed
+        if (
+            withdrawalInfo.stage == DGDataTypes.WithdrawalIs.STAGED &&
+            block.timestamp < withdrawalInfo.timestampMax
+        ) revert DGErrors.WITHDRAWAL_PROCESS_IN_STAGING();
 
-        // decrement total deposit
-        totalDeposit -= decrementFromDeposit;
+        // Set minimum withdrawal claiming timestamp
+        uint256 timestampMin = block.timestamp + withdrawalDelay;
 
-        // remove amount from deposit of 
-        depositOf[msg.sender] -= decrementFromDeposit;
+        // Set maximum withdrawl claiming timestamp
+        uint256 timestampMax = timestampMin + withdrawalWindowLength;
 
-        // call internal withdrawal function
-        _withdraw(_amount);
+        // Update withdrawalInfo of LP
+        withdrawalInfoOf[msg.sender] = DGDataTypes.WithdrawalInfo(
+            timestampMin,
+            timestampMax,
+            _amount,
+            DGDataTypes.WithdrawalIs.STAGED
+        );
+
+        // Set new withdrawal Limit of LP
+        withdrawalLimitOf[msg.sender] = block.timestamp + stagingEventPeriod;
+
+        // Emit withdrawal staged event
+        emit DGEvents.WithdrawalStaged(msg.sender, timestampMin, timestampMax);
+    }
+
+    /**
+     * @notice Stage two of withdrawal process
+     *
+     */
+    function withdrawalStageTwo() external {
+        // Fetch withdrawal info of sender
+        DGDataTypes.WithdrawalInfo memory withdrawalInfo = withdrawalInfoOf[msg.sender];
+
+        // make sure that withdrawal is in staging
+        if (withdrawalInfo.stage == DGDataTypes.WithdrawalIs.FULLFILLED) revert DGErrors.WITHDRAWAL_ALREADY_FULLFILLED();
+
+        // Make sure it is within withdrawal window
+        if (
+            block.timestamp < withdrawalInfo.timestampMin ||
+            block.timestamp > withdrawalInfo.timestampMax
+        ) revert DGErrors.OUTSIDE_WITHDRAWAL_WINDOW();
+
+        // Call internal withdrawal function
+        _withdraw(withdrawalInfo.amountToClaim, msg.sender);
+
+        // Set new withdrawal Limit
+        withdrawalLimitOf[msg.sender] = block.timestamp + withdrawalEventPeriod;
+
+        // Set stage status ti FULLFILLED
+        withdrawalInfoOf[msg.sender].stage = DGDataTypes.WithdrawalIs.FULLFILLED;
+    }
+
+    /**
+     * @notice Change withdrawal delay for LPs
+     *  Only callable by ADMIN
+     *
+     * @param _withdrawalDelay New withdrawal Delay in seconds
+     *
+     */
+    function setWithdrawalDelay(uint256 _withdrawalDelay) external onlyRole(ADMIN) {
+        withdrawalDelay = _withdrawalDelay;
+    }
+
+    /**
+     * @notice Change withdrawal window for LPs
+     *  Only callable by ADMIN
+     *
+     * @param _withdrawalWindow New withdrawal window in seconds
+     *
+     */
+    function setWithdrawalWindow(uint256 _withdrawalWindow) external onlyRole(ADMIN) {
+        withdrawalWindowLength = _withdrawalWindow;
+    }
+
+    /**
+     * @notice Change withdrawal event period for LPs
+     *  Only callable by ADMIN
+     *
+     * @param _withdrawalEventPeriod New withdrawal event period in seconds
+     *
+     */
+    function setWithdrawalEventPeriod(uint256 _withdrawalEventPeriod) external onlyRole(ADMIN) {
+        withdrawalEventPeriod = _withdrawalEventPeriod;
+    }
+
+    /**
+     * @notice Change staging event period for LPs
+     *  Only callable by ADMIN
+     *
+     * @param _stagingEventPeriod New staging event period in seconds
+     *
+     */
+    function setStagingEventPeriod(uint256 _stagingEventPeriod) external onlyRole(ADMIN) {
+        stagingEventPeriod = _stagingEventPeriod;
     }
 
     /**
@@ -246,10 +327,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
     function debit(address _player, uint256 _amount, address _operator) external onlyRole(ADMIN) {
         // Check that operator is approved
         if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
-        
+
         // Check so that operator is associated with this bankroll
         if (!dgBankrollManager.operatorOfBankroll(_operator, address(this))) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
-        
+
         // pay what is left if amount is bigger than bankroll balance
         uint256 maxRisk = getMaxRisk();
         if (_amount > maxRisk) {
@@ -258,20 +339,26 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
             emit DGEvents.BankrollSwept(_player, _amount);
         }
 
-        // substract from total GGR
-        GGR -= int256(_amount);
-        
-        // subtracting the amount from the specified operator GGR
-        ggrOf[_operator] -= int256(_amount);
-
-        // substract from operators profit
-        profitOf[msg.sender] -= int256(_amount);
+        // fetch balance before
+        uint256 balanceBefore = token.balanceOf(address(this));
 
         // transfer ERC20 from the vault to the winner
         token.safeTransfer(_player, _amount);
 
+        // fetch balance aftrer
+        uint256 balanceAfter = token.balanceOf(address(this));
+
+        // amount variable calculated from recieved balances
+        uint256 amount = balanceBefore - balanceAfter;
+        
+        // substract from total GGR
+        GGR -= int256(amount);
+        
+        // subtracting the amount from the specified operator GGR
+        ggrOf[_operator] -= int256(amount);
+
         // Emit debit event
-        emit DGEvents.Debit(msg.sender, _player, _amount);
+        emit DGEvents.Debit(msg.sender, _player, amount);
     }
 
     /**
@@ -282,27 +369,33 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
      * @param _operator The operator from which the call comes from
      *
      */
-    function credit(uint256 _amount, address _operator) external onlyRole(ADMIN) {    
+    function credit(uint256 _amount, address _operator) external onlyRole(ADMIN) {
         // Check that operator is approved
         if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
-        
+
         // Check so that operator is associated with this bankroll
         if (!dgBankrollManager.operatorOfBankroll(_operator, address(this))) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
-        
-        // Add to total GGR
-        GGR += int256(_amount);
-        
-        // add the amount to the specified operator GGR
-        ggrOf[_operator] += int256(_amount);
 
-        // add to operators profit
-        profitOf[msg.sender] += int256(_amount);
+        // fetch balance before
+        uint256 balanceBefore = token.balanceOf(address(this));
 
         // transfer ERC20 from the manager to the vault
         token.safeTransferFrom(msg.sender, address(this), _amount);
+        
+        // fetch balance aftrer
+        uint256 balanceAfter = token.balanceOf(address(this));
+
+        // amount variable calculated from recieved balances
+        uint256 amount = balanceAfter - balanceBefore;
+
+        // Add to total GGR
+        GGR += int256(amount);
+
+        // add the amount to the specified operator GGR
+        ggrOf[_operator] += int256(amount);
 
         // Emit credit event
-        emit DGEvents.Credit(msg.sender, _amount);
+        emit DGEvents.Credit(msg.sender, amount);
     }
 
     /**
@@ -319,7 +412,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
             !dgBankrollManager.isApproved(msg.sender) &&
             !hasRole(ADMIN, msg.sender)
         ) revert DGErrors.NO_LP_ACCESS_PERMISSION();
-        
+
         // Add toggle LPs _isAuthorized status
         lpWhitelist[_lp] = _isAuthorized;
     }
@@ -404,7 +497,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
     function updateAdmin(address _oldAdmin, address _newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
         // Check that _oldAdmin address is valid
         if (!hasRole(ADMIN, _oldAdmin)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
-        
+
         // Make sure so that admin address is a wallet
         if (_isContract(_newAdmin)) revert DGErrors.ADDRESS_NOT_A_WALLET();
 
@@ -426,13 +519,13 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
     function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
         // Check that _oldBankrollManager is valid
         if (!hasRole(BANKROLL_MANAGER, _oldBankrollManager)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
-        
+
         // Check so that bankroll manager actually is a contract
         if (!_isContract(_newBankrollManager)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
 
         // Revoke the old bankroll managers role
         _revokeRole(BANKROLL_MANAGER, _oldBankrollManager);
-        
+
         // Grant the new bankroll manager the BANKROLL_MANAGER role
         _grantRole(BANKROLL_MANAGER, _newBankrollManager);
 
@@ -496,24 +589,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
             _amount = (liquidity() * sharesOf[_lp]) / totalSupply;
         } else {
             _amount = 0;
-        }
-    }
-
-    /**
-     * @notice Returns the current profit of the LPs investment.
-     *
-     * @param _lp Liquidity Provider address
-     *
-     * @return _profit collected LP profit
-     *
-     */
-    function getLpProfit(address _lp) public view returns (int256 _profit) {
-        if (sharesOf[_lp] > 0) {
-            _profit =
-                ((int(liquidity()) * int(sharesOf[_lp])) / int(totalSupply)) -
-                int(depositOf[_lp]);
-        } else {
-            _profit = 0;
         }
     }
 
@@ -586,18 +661,27 @@ contract Bankroll is IBankroll, AccessControlUpgradeable{
      * @param _shares Amount of shares to burn
      *
      */
-    function _withdraw(uint256 _shares) internal {
+    function _withdraw(uint256 _shares, address _reciever) internal {
         // Calculate the amount of ERC20 worth of shares
         uint256 amount = (_shares * liquidity()) / totalSupply;
 
         // Burn the shares from the caller
-        _burn(msg.sender, _shares);
+        _burn(_reciever, _shares);
+
+        // fetch balance before
+        uint256 balanceBefore = token.balanceOf(address(this));
 
         // Transfer ERC20 to the caller
-        token.transfer(msg.sender, amount);
-    
+        token.safeTransfer(_reciever, amount);
+
+        // fetch balance aftrer
+        uint256 balanceAfter = token.balanceOf(address(this));
+
+        // amount variable calculated from recieved balances
+        uint256 realizedAmount = balanceAfter - balanceBefore;
+
         // Emit an event that funds are withdrawn
-        emit DGEvents.FundsWithdrawn(msg.sender, amount);
+        emit DGEvents.FundsWithdrawn(_reciever, realizedAmount);
     }
 
     /**

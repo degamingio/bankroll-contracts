@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity 0.8.21;
 
 /* Openzeppelin Contract */
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
@@ -12,7 +12,7 @@ import {Bankroll} from "src/Bankroll.sol";
 import {DGErrors} from "src/libraries/DGErrors.sol";
 
 /**
- * @title
+ * @title  DGBankrollFactory
  * @author DeGaming Technical Team
  * @notice Contract responsible for deploying DeGaming Bankrolls
  *

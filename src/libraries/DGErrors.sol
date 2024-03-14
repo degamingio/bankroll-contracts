@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity 0.8.21;
 
 /**
  * @title DGErrors
@@ -51,4 +51,22 @@ library DGErrors {
 
     /// @dev Error thrown when max risk is to high
     error MAXRISK_TO_HIGH();
+
+    /// @dev Error thrown when withdrawal queue is full
+    error WITHDRAWAL_QUEUE_FULL();
+
+    /// @dev Error thrown when withdrawal queue is empty
+    error WITHDRAWAL_QUEUE_EMPTY();
+
+    /// @dev Error thrown when withdrawal timestamp hasnt passed
+    error WITHDRAWAL_TIMESTAMP_HASNT_PASSED();
+
+    /// @dev Error thrown when withdrawal is in staging mode
+    error WITHDRAWAL_PROCESS_IN_STAGING();
+
+    /// @dev Error thrown when trying to fullfill an already fullfilled withdrawal
+    error WITHDRAWAL_ALREADY_FULLFILLED();
+
+    /// @dev Error thrown when LPs are trying to withdraw outside of their withdrawal window
+    error OUTSIDE_WITHDRAWAL_WINDOW();
 }
