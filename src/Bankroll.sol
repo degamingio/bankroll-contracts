@@ -48,9 +48,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     /// @dev WithdrawalWindow length
     uint256 public withdrawalWindowLength;
 
-    /// @dev Minimum time between successfull withdrawals
-    uint256 public withdrawalEventPeriod;
-
     /// @dev Minimum time between staging
     uint256 public stagingEventPeriod;
 
@@ -264,9 +261,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         // Call internal withdrawal function
         _withdraw(withdrawalInfo.amountToClaim, msg.sender);
 
-        // Set new withdrawal Limit
-        withdrawalLimitOf[msg.sender] = block.timestamp + withdrawalEventPeriod;
-
         // Set stage status ti FULLFILLED
         withdrawalInfoOf[msg.sender].stage = DGDataTypes.WithdrawalIs.FULLFILLED;
     }
@@ -291,17 +285,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
      */
     function setWithdrawalWindow(uint256 _withdrawalWindow) external onlyRole(ADMIN) {
         withdrawalWindowLength = _withdrawalWindow;
-    }
-
-    /**
-     * @notice Change withdrawal event period for LPs
-     *  Only callable by ADMIN
-     *
-     * @param _withdrawalEventPeriod New withdrawal event period in seconds
-     *
-     */
-    function setWithdrawalEventPeriod(uint256 _withdrawalEventPeriod) external onlyRole(ADMIN) {
-        withdrawalEventPeriod = _withdrawalEventPeriod;
     }
 
     /**

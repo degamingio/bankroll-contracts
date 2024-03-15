@@ -40,8 +40,18 @@ contract DGEscrow {
 
         bytes memory id = abi.encode(entry);
 
-        escrowed[id] = winnings;
+        IERC20 token = IERC20(_token);
 
+        uint256 balanceBefore = token.balanceOf(address(this));
+
+        token.safeTransferFrom(msg.sender, address(this), _winnings);
+
+        uint256 balanceAfter = token.balanceOf(address(this));
+
+        uint256 winnigns = balanceAfter - balanceBefore;
+
+        escrowed[id] = winnings;
+        
         emit DGEvents.WinningsEscrowed(_bankroll, _operator, _player, _token, id);
     }
 
@@ -52,9 +62,17 @@ contract DGEscrow {
 
         if (msg.sender != entry.player) revert DGErrors.UNAUTHORIZED_CLAIM();
 
-
-
         IERC20 token = IERC20(entry.token);
+        
+        uint256 balanceBefore = token.balanceOf(address(this));
+
+        token.safeTransfer(msg.sender, escrowed[id]);
+
+        uint256 balanceAfter = token.balanceOf(address(this));
+
+        uint256 amount = balanceBefore - balanceAfter;
+
+        emit DGEvents.EscrowPayed(msg.sender, _id, amount);
     }
 
     function revertFunds(bytes memory _id) external {

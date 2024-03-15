@@ -30,4 +30,7 @@ library DGEvents {
 
     /// @dev Event emitted when funds are escrowed
     event WinningsEscrowed(address bankroll, address operator, address player, address token, bytes id);
+
+    /// @dev Event emitted when escrow is payed out
+    event EscrowPayed(address recipient, bytes id, uint256 amount);
 }
