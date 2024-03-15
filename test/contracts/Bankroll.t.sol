@@ -107,7 +107,7 @@ contract BankrollTest is Test {
         vm.expectRevert(DGErrors.ADDRESS_NOT_A_WALLET.selector);
         _bankroll.initialize(_admin, address(token), address(dgBankrollManager), address(dgBankrollManager), maxRisk);
 
-        vm.expectRevert(DGErrors.MAXRISK_TO_HIGH.selector);
+        vm.expectRevert(DGErrors.MAXRISK_TOO_HIGH.selector);
         _bankroll.initialize(_admin, address(token), address(dgBankrollManager), owner, _faultyMaxRisk);
 
         _bankroll.initialize(_admin, address(token), address(dgBankrollManager), owner, maxRisk);
@@ -246,7 +246,7 @@ contract BankrollTest is Test {
 
         vm.startPrank(admin);
 
-        vm.expectRevert(DGErrors.MAXRISK_TO_HIGH.selector);
+        vm.expectRevert(DGErrors.MAXRISK_TOO_HIGH.selector);
         bankroll.changeMaxRisk(_faultyMaxRisk);
 
         bankroll.changeMaxRisk(_correctMaxRisk);
@@ -441,7 +441,7 @@ contract BankrollTest is Test {
         console.logBytes4(DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW.selector);
         
         // 0xb717644a
-        console.logBytes4(DGErrors.MAXRISK_TO_HIGH.selector);
+        console.logBytes4(DGErrors.MAXRISK_TOO_HIGH.selector);
         
         // 0x59184bad
         console.logBytes4(DGErrors.NO_LP_ACCESS_PERMISSION.selector);

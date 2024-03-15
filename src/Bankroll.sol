@@ -11,7 +11,7 @@ import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 /* DeGaming Interfaces */
 import {IBankroll} from "src/interfaces/IBankroll.sol";
 import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";
-import {IDGEscrow} from "src/interfaces/IDGEscrow";
+import {IDGEscrow} from "src/interfaces/IDGEscrow.sol";
 
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
@@ -132,7 +132,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         if (_isContract(_owner)) revert DGErrors.ADDRESS_NOT_A_WALLET();
 
         // Check so that maxRiskPercentage isnt larger than denominator
-        if (_maxRiskPercentage > DENOMINATOR) revert DGErrors.MAXRISK_TO_HIGH();
+        if (_maxRiskPercentage > DENOMINATOR) revert DGErrors.MAXRISK_TOO_HIGH();
+
+        // Check so that maxrisk doestn't exceed 100%
+        if (_escrowThreshold > DENOMINATOR) revert DGErrors.ESCROW_THRESHOLD_TOO_HIGH();
 
         __AccessControl_init();
 
@@ -347,15 +350,18 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         // fetch balance before
         uint256 balanceBefore = token.balanceOf(address(this));
 
+        // Create amount variable
+        uint256 amount;
+
         // If amount is more then threshold, deposit into escrow...
         if (_amount > threshold) {
-            escrow.depositFunds(_player, _operator, address(token), _amount)
+            escrow.depositFunds(_player, _operator, address(token), _amount);
 
             // fetch balance aftrer
             uint256 balanceAfter = token.balanceOf(address(this));
 
             // amount variable calculated from recieved balances
-            uint256 amount = balanceBefore - balanceAfter;
+            amount = balanceBefore - balanceAfter;
 
         // ... Else go on with payout
         } else {
@@ -367,7 +373,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
             uint256 balanceAfter = token.balanceOf(address(this));
 
             // amount variable calculated from recieved balances
-            uint256 amount = balanceBefore - balanceAfter;
+            amount = balanceBefore - balanceAfter;
 
             // Emit debit event
             emit DGEvents.Debit(msg.sender, _player, amount);

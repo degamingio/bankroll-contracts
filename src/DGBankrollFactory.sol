@@ -107,7 +107,7 @@ contract DGBankrollFactory is AccessControlUpgradeable {
         if (!_isContract(_token)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
 
         // Make sure that maxrisk does not exceed 100%
-        if (_maxRiskPercentage > 10_000) revert DGErrors.MAXRISK_TO_HIGH();
+        if (_maxRiskPercentage > 10_000) revert DGErrors.MAXRISK_TOO_HIGH();
 
         // Deploy new Bankroll contract
         Bankroll newBankroll = Bankroll(Clones.cloneDeterministic(bankrollImpl, _salt));

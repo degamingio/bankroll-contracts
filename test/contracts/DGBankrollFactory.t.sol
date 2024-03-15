@@ -88,7 +88,7 @@ contract DGBankrollFactoryTest is Test {
             _salt
         );
 
-        vm.expectRevert(DGErrors.MAXRISK_TO_HIGH.selector);
+        vm.expectRevert(DGErrors.MAXRISK_TOO_HIGH.selector);
         dgBankrollFactory.deployBankroll(
             address(token), 
             _faultyMaxRisk, 
