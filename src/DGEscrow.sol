@@ -35,6 +35,18 @@ contract DGEscrow is AccessControl {
     /// @dev Bankroll manager instance
     IDGBankrollManager public dgBankrollManager;
 
+    constructor(uint256 _eventPeriod, address _bankrollManager) {
+        eventPeriod = _eventPeriod;
+
+        dgBankrollManager = IDGBankrollManager(_bankrollManager);
+
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+
+        _grantRole(ADMIN, msg.sender);
+
+        _grantRole(BANKROLL_MANAGER, _bankrollManager);
+    }
+
     function escrowFunds(address _player, address _operator, address _token, uint256 _winnings) external onlyRole(BANKROLL_MANAGER) {
         // Create escrow entry
         DGDataTypes.EscrowEntry memory entry = DGDataTypes.EscrowEntry(
@@ -100,47 +112,66 @@ contract DGEscrow is AccessControl {
     }
 
     function revertFunds(bytes memory _id) external onlyRole(ADMIN) {
+        // Check so that there are funds to claim for id
         if (escrowed[id] == 0) revert DGErrors.NOTHING_TO_CLAIM();
 
+        // Decode id into an entry
         DGDataTypes.EscrowEntry memory entry = _decode(_id);
 
+        // Setup token instance
         IERC20 token = IERC20(entry.token);
 
+        // Fetch balance before reverting the funds back to the bankroll
         uint256 balanceBefore = token.balanceOf(address(this));
 
+        // Send the escrowed funds back to the bankroll
         token.safeTransfer(entry.bankroll, escrowed[id]);
 
+        // Fetch balance after the funds have been reverted
         uint256 balanceAfter = token.balanceOf(address(this));
 
+        // Setting the amount from the diff between the two
         uint256 amount = balanceBefore - balanceAfter;
 
+        // Subtract the amount fetched from the escrowed mapping, probably nulling it out
         escrowed[id] -= amount;
 
+        // Emit event that escrow is reverted back into the bankroll
         emit DGEvents.EscrowReverted(entry.bankroll, _id, amount);
     }
 
     function claimUnaddressed(bytes memory _id) external {
+        // Check so that there are funds to claim for id
         if (escrowed[id] == 0) revert DGErrors.NOTHING_TO_CLAIM();
 
+        // Decode id into an entry
         DGDataTypes.EscrowEntry memory entry = _decode(id);
 
+        // Make sure that the event period is actually passed
         if (block.timestamp > entry.timestamp + eventPeriod) revert DGErrors.EVENT_PERIOD_NOT_PASSED();
 
         // Check so that msg.sender is the player of the entry
         if (msg.sender != entry.player) revert DGErrors.UNAUTHORIZED_CLAIM();
 
+        // Send the escrowed funds back to the bankroll
         IERC20 token = IERC20(entry.token);
 
+        // Fetch balance before releasing the funds
         uint256 balanceBefore = token.balanceOf(address(this));
 
-        token.safeTransfer(msg.sender, escrowed[id]);
+        // Send the escrowed funds to the player
+        token.safeTransfer(entry.player, escrowed[id]);
 
+        // Fetch balance after the funds are released
         uint256 balanceAfter = token.balanceOf(address(this));
 
+        // Setting the amount from the diff between the two
         uint256 amount = balanceBefore - balanceAfter;
 
+        // Subtract the amount fetched from the escrowed mapping, probably nulling it out
         escrowed[id] -= amount;
 
+        // Emit event stating that the escrow is payed out
         emit DGEvents.EscrowPayed(msg.sender, _id, amount);
     }
 
@@ -166,13 +197,51 @@ contract DGEscrow is AccessControl {
         _grantRole(ADMIN, _newAdmin);
     }
 
-    function setBankrollManager(address _dgBankrollManager) external {
-        dgBankrollManager = IDGBankrollManager(_dgBankrollManager);
+    /**
+     * @notice Update the BANKROLL_MANAGER role
+     *  Only calleable by contract owner
+     *
+     * @param _oldBankrollManager address of the old bankroll manager
+     * @param _newBankrollManager address of the new bankroll manager
+     *
+     */
+    function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        // Check that _oldBankrollManager is valid
+        if (!hasRole(BANKROLL_MANAGER, _oldBankrollManager)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
 
-        _grantRole(BANKROLL_MANAGER, _dgBankrollManager);
+        // Check so that bankroll manager actually is a contract
+        if (!_isContract(_newBankrollManager)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+
+        // Revoke the old bankroll managers role
+        _revokeRole(BANKROLL_MANAGER, _oldBankrollManager);
+
+        // Grant the new bankroll manager the BANKROLL_MANAGER role
+        _grantRole(BANKROLL_MANAGER, _newBankrollManager);
+
+        // Update BankrollManager Contract
+        dgBankrollManager = IDGBankrollManager(_newBankrollManager);
     }
 
     function _decode(bytes memory _id) internal pure returns (DGDataTypes.EscrowEntry memory _entry) {
         _entry = abi.decode(_id, (DGDataTypes.EscrowEntry));
+    }
+
+    /**
+     * @notice
+     *  Allows contract to check if the Token address actually is a contract
+     *
+     * @param _address address we want to  check
+     *
+     * @return _isAddressContract returns true if token is a contract, otherwise returns false
+     *
+     */
+    function _isContract(address _address) internal view returns (bool _isAddressContract) {
+        uint256 size;
+
+        assembly {
+            size := extcodesize(_address)
+        }
+
+        _isAddressContract = size > 0;
     }
 }
