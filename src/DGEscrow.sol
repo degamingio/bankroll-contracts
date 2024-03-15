@@ -58,7 +58,7 @@ contract DGEscrow {
     function releaseFunds(bytes memory _id) external {
         if (escrowed[id] == 0) revert DGErrors.NOTHING_TO_CLAIM();
 
-        DGDataTypes.EscrowEntry memory entry = _idDecode(_id);
+        DGDataTypes.EscrowEntry memory entry = _decode(_id);
 
         if (msg.sender != entry.player) revert DGErrors.UNAUTHORIZED_CLAIM();
 
@@ -72,18 +72,36 @@ contract DGEscrow {
 
         uint256 amount = balanceBefore - balanceAfter;
 
+        escrowed[id] -= amount;
+
         emit DGEvents.EscrowPayed(msg.sender, _id, amount);
     }
 
     function revertFunds(bytes memory _id) external {
         if (escrowed[id] == 0) revert DGErrors.NOTHING_TO_CLAIM();
+
+        DGDataTypes.EscrowEntry memory entry = _decode(_id);
+
+        IERC20 token = IERC20(entry.token);
+
+        uint256 balanceBefore = token.balanceOf(address(this));
+
+        token.safeTransfer(entry.bankroll, escrowed[id]);
+
+        uint256 balanceAfter = token.balanceOf(address(this));
+
+        uint256 amount = balanceBefore - balanceAfter;
+
+        escrowed[id] -= amount;
+
+        emit DGEvents.EscrowReverted(entry.bankroll, _id, amount);
     }
 
     function claimUnaddressed(bytes memory _id) external {
         if (escrowed[id] == 0) revert DGErrors.NOTHING_TO_CLAIM();
     }
 
-    function _idDecode(bytes memory _id) internal pure returns (DGDataTypes.EscrowEntry memory _entry) {
+    function _decode(bytes memory _id) internal pure returns (DGDataTypes.EscrowEntry memory _entry) {
         _entry = abi.decode(_id, (DGDataTypes.EscrowEntry));
     }
 }
