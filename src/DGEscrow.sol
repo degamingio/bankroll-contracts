@@ -10,6 +10,7 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /* DeGaming Interfaces */
 import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";
+import {IBankroll} from "src/interfaces/IBankroll.sol";
 
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
@@ -81,7 +82,7 @@ contract DGEscrow is AccessControl {
      * @param _winnings amount of tokens sent to escrow
      *
      */
-    function escrowFunds(address _player, address _operator, address _token, uint256 _winnings) external {
+    function depositFunds(address _player, address _operator, address _token, uint256 _winnings) external {
         // Make sure that bankroll is an approved bankroll of DeGaming
         if (!dgBankrollManager.bankrollStatus(msg.sender)) revert DGErrors.BANKROLL_NOT_APPROVED();
 
@@ -176,7 +177,7 @@ contract DGEscrow is AccessControl {
         uint256 balanceBefore = token.balanceOf(address(this));
 
         // Send the escrowed funds back to the bankroll
-        token.safeTransfer(entry.bankroll, escrowed[_id]);
+        IBankroll(entry.bankroll).credit(escrowed[_id], entry.operator);
 
         // Fetch balance after the funds have been reverted
         uint256 balanceAfter = token.balanceOf(address(this));

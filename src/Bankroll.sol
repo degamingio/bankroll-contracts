@@ -338,26 +338,43 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
             emit DGEvents.BankrollSwept(_player, _amount);
         }
 
+        // Fetch escrow threshold
+        uint256 threshold = getEscrowThreshold();
+
         // fetch balance before
         uint256 balanceBefore = token.balanceOf(address(this));
 
-        // transfer ERC20 from the vault to the winner
-        token.safeTransfer(_player, _amount);
+        // If amount is more then threshold, deposit into escrow...
+        if (_amount > threshold) {
+            escrow.depositFunds(_player, _operator, address(token), _amount)
 
-        // fetch balance aftrer
-        uint256 balanceAfter = token.balanceOf(address(this));
+            // fetch balance aftrer
+            uint256 balanceAfter = token.balanceOf(address(this));
 
-        // amount variable calculated from recieved balances
-        uint256 amount = balanceBefore - balanceAfter;
-        
+            // amount variable calculated from recieved balances
+            uint256 amount = balanceBefore - balanceAfter;
+
+        // ... Else go on with payout
+        } else {
+
+            // transfer ERC20 from the vault to the winner
+            token.safeTransfer(_player, _amount);
+
+            // fetch balance aftrer
+            uint256 balanceAfter = token.balanceOf(address(this));
+
+            // amount variable calculated from recieved balances
+            uint256 amount = balanceBefore - balanceAfter;
+
+            // Emit debit event
+            emit DGEvents.Debit(msg.sender, _player, amount);
+        }
+
         // substract from total GGR
         GGR -= int256(amount);
         
         // subtracting the amount from the specified operator GGR
         ggrOf[_operator] -= int256(amount);
-
-        // Emit debit event
-        emit DGEvents.Debit(msg.sender, _player, amount);
     }
 
     /**

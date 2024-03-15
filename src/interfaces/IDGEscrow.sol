@@ -25,7 +25,7 @@ interface IDGEscrow {
      * @param _winnings amount of tokens sent to escrow
      *
      */
-    function escrowFunds(address _player, address _operator, address _token, uint256 _winnings) external; 
+    function depositFunds(address _player, address _operator, address _token, uint256 _winnings) external; 
 
     /**
      * @notice
