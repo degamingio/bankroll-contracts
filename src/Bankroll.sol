@@ -11,6 +11,7 @@ import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 /* DeGaming Interfaces */
 import {IBankroll} from "src/interfaces/IBankroll.sol";
 import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";
+import {IDGEscrow} from "src/interfaces/IDGEscrow";
 
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
@@ -84,6 +85,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     /// @dev Bankroll manager instance
     IDGBankrollManager dgBankrollManager; 
 
+    /// @dev Escrow instance
+    IDGEscrow escrow;
+
     /// @dev set status regarding if LP is open or whitelisted
     DGDataTypes.LpIs public lpIs = DGDataTypes.LpIs.OPEN;
 
@@ -107,6 +111,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
      * @param _admin Admin address
      * @param _token Bankroll liquidity token address
      * @param _bankrollManager address of bankroll manager
+     * @param _escrow address of escrow contract
      * @param _owner address of contract owner
      * @param _maxRiskPercentage the max risk that the bankroll balance is risking for each game
      *
@@ -115,8 +120,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         address _admin,
         address _token,
         address _bankrollManager,
+        address _escrow,
         address _owner,
-        uint256 _maxRiskPercentage
+        uint256 _maxRiskPercentage,
+        uint256 _escrowThreshold
     ) external initializer {
         // Check so that both bankroll manager and token are contracts
         if (!_isContract(_bankrollManager) || !_isContract(_token)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
@@ -135,8 +142,14 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         // Set the max risk percentage
         maxRiskPercentage = _maxRiskPercentage;
 
+        // Set escrow threshold
+        escrowTreshold = _escrowThreshold;
+
         // Setup bankroll manager
         dgBankrollManager = IDGBankrollManager(_bankrollManager);
+
+        // Setup escrow
+        escrow = IDGEscrow(_escrow);
 
         // grant owner default admin role
         _grantRole(DEFAULT_ADMIN_ROLE, _owner);

@@ -16,6 +16,13 @@ import {DGErrors} from "src/libraries/DGErrors.sol";
 import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
 import {DGEvents} from "src/libraries/DGEvents.sol";
 
+
+/**
+ * @title DGEscrow
+ * @author DeGaming Technical Team
+ * @notice Escrow Contract for DeGaming's Bankroll poducts
+ *
+ */
 contract DGEscrow is AccessControl {
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
