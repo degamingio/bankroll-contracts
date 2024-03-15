@@ -58,15 +58,6 @@ interface IBankroll {
     function setWithdrawalWindow(uint256 _withdrawalWindow) external;
 
     /**
-     * @notice Change withdrawal event period for LPs
-     *  Only callable by ADMIN
-     *
-     * @param _withdrawalEventPeriod New withdrawal event period in seconds
-     *
-     */
-    function setWithdrawalEventPeriod(uint256 _withdrawalEventPeriod) external;
-
-    /**
      * @notice Change staging event period for LPs
      *  Only callable by ADMIN
      *

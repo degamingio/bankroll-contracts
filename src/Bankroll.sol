@@ -37,7 +37,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     uint256 public constant DENOMINATOR = 10_000; 
 
     /// @dev Max percentage of liquidity risked
-    uint256 public maxRiskPercentage; 
+    uint256 public maxRiskPercentage;
+
+    /// @dev Escrow threshold percentage
+    uint256 public escrowTreshold;
 
     /// @dev amount for minimum pool in case it exists
     uint256 public minimumLp;
@@ -448,10 +451,25 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
      */
     function changeMaxRisk(uint256 _newAmount) external onlyRole(ADMIN) {
         // Check so that maxrisk doestn't exceed 100%
-        if (_newAmount > DENOMINATOR) revert DGErrors.MAXRISK_TO_HIGH();
+        if (_newAmount > DENOMINATOR) revert DGErrors.MAXRISK_TOO_HIGH();
 
         // Set new maxrisk
         maxRiskPercentage = _newAmount;
+    }
+
+    /**
+     *
+     * @notice allows admins to change the max risk amount
+     *
+     * @param _newAmount new amount in percentage that should be potentially risked per session 
+     *
+     */
+    function changeEscrowThreshold(uint256 _newAmount) external onlyRole(ADMIN) {
+        // Check so that maxrisk doestn't exceed 100%
+        if (_newAmount > DENOMINATOR) revert DGErrors.ESCROW_THRESHOLD_TOO_HIGH();
+
+        // Set new maxrisk
+        escrowTreshold = _newAmount;
     }
 
     /**
@@ -600,6 +618,17 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     function getMaxRisk() public view returns (uint256 _maxRisk) {
         uint256 currentLiquidity = token.balanceOf(address(this));
         _maxRisk = (currentLiquidity * maxRiskPercentage) / DENOMINATOR;
+    }
+
+    /**
+     * @notice returns escrow threshold during the debit() call
+     *
+     * @return _threshold threshold before earnings gets sent to escrow
+     *
+     */
+    function getEscrowThreshold() public view returns (uint256 _threshold) {
+        uint256 currentLiquidity = token.balanceOf(address(this));
+        _threshold = (currentLiquidity * escrowTreshold) / DENOMINATOR;
     }
 
     //     ____      __                        __   ______                 __  _

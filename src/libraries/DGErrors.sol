@@ -49,8 +49,11 @@ library DGErrors {
     /// @dev Error thrown when desired operator is not a wallet
     error ADDRESS_NOT_A_WALLET();
 
-    /// @dev Error thrown when max risk is to high
-    error MAXRISK_TO_HIGH();
+    /// @dev Error thrown when max risk is too high
+    error MAXRISK_TOO_HIGH();
+
+    /// @dev Error thrown when escrow threshold is too high
+    error ESCROW_THRESHOLD_TOO_HIGH();
 
     /// @dev Error thrown when withdrawal queue is full
     error WITHDRAWAL_QUEUE_FULL();

@@ -36,18 +36,36 @@ contract DGEscrow is AccessControl {
     IDGBankrollManager public dgBankrollManager;
 
     constructor(uint256 _eventPeriod, address _bankrollManager) {
+        // Set event period
         eventPeriod = _eventPeriod;
 
+        // Setup bankroll manager instance
         dgBankrollManager = IDGBankrollManager(_bankrollManager);
 
+        // Granting DEFAULT_ADMIN_ROLE to the deoployer
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
+        // Granting ADMIN to the deoployer
         _grantRole(ADMIN, msg.sender);
 
+        // Granting BANKROLL_MANAGER to the bankrollmanager address
         _grantRole(BANKROLL_MANAGER, _bankrollManager);
     }
 
-    function escrowFunds(address _player, address _operator, address _token, uint256 _winnings) external onlyRole(BANKROLL_MANAGER) {
+    /**
+     * @notice
+     *  Function called by the bankroll to send funds to the escrow
+     *
+     * @param _player address of the player 
+     * @param _operator address of the operator
+     * @param _token address of the token
+     * @param _winnings amount of tokens sent to escrow
+     *
+     */
+    function escrowFunds(address _player, address _operator, address _token, uint256 _winnings) external {
+        // Make sure that bankroll is an approved bankroll of DeGaming
+        if (!dgBankrollManager.bankrollStatus(msg.sender)) revert DGErrors.BANKROLL_NOT_APPROVED();
+
         // Create escrow entry
         DGDataTypes.EscrowEntry memory entry = DGDataTypes.EscrowEntry(
             msg.sender,
@@ -73,18 +91,25 @@ contract DGEscrow is AccessControl {
         uint256 balanceAfter = token.balanceOf(address(this));
 
         // Create the realized winnings from the diff between the two
-        uint256 winnigns = balanceAfter - balanceBefore;
+        uint256 winnings = balanceAfter - balanceBefore;
 
         // Set mapping for how much is held for specific id
         escrowed[id] = winnings;
 
         // Emit Winnings Escrowed event
-        emit DGEvents.WinningsEscrowed(_bankroll, _operator, _player, _token, id);
+        emit DGEvents.WinningsEscrowed(msg.sender, _operator, _player, _token, id);
     }
 
+    /**
+     * @notice
+     *  Allows DeGaming to release escrowed funds to the player wallet
+     *
+     * @param _id id in bytes format
+     *
+     */
     function releaseFunds(bytes memory _id) external onlyRole(ADMIN) {
         // Check so that there are funds to claim for id
-        if (escrowed[id] == 0) revert DGErrors.NOTHING_TO_CLAIM();
+        if (escrowed[_id] == 0) revert DGErrors.NOTHING_TO_CLAIM();
 
         // Decode id into an entry
         DGDataTypes.EscrowEntry memory entry = _decode(_id);
@@ -96,7 +121,7 @@ contract DGEscrow is AccessControl {
         uint256 balanceBefore = token.balanceOf(address(this));
 
         // Send the escrowed funds to the player
-        token.safeTransfer(entry.player, escrowed[id]);
+        token.safeTransfer(entry.player, escrowed[_id]);
 
         // Fetch balance after the funds are released
         uint256 balanceAfter = token.balanceOf(address(this));
@@ -105,15 +130,22 @@ contract DGEscrow is AccessControl {
         uint256 amount = balanceBefore - balanceAfter;
 
         // Subtract the amount fetched from the escrowed mapping, probably nulling it out
-        escrowed[id] -= amount;
+        escrowed[_id] -= amount;
 
         // Emit event stating that the escrow is payed out
         emit DGEvents.EscrowPayed(msg.sender, _id, amount);
     }
 
+    /**
+     * @notice
+     *  Allows DeGaming to revert escrowed funds back into the bankroll in case of fraud
+     *
+     * @param _id id in bytes format
+     *
+     */
     function revertFunds(bytes memory _id) external onlyRole(ADMIN) {
         // Check so that there are funds to claim for id
-        if (escrowed[id] == 0) revert DGErrors.NOTHING_TO_CLAIM();
+        if (escrowed[_id] == 0) revert DGErrors.NOTHING_TO_CLAIM();
 
         // Decode id into an entry
         DGDataTypes.EscrowEntry memory entry = _decode(_id);
@@ -125,7 +157,7 @@ contract DGEscrow is AccessControl {
         uint256 balanceBefore = token.balanceOf(address(this));
 
         // Send the escrowed funds back to the bankroll
-        token.safeTransfer(entry.bankroll, escrowed[id]);
+        token.safeTransfer(entry.bankroll, escrowed[_id]);
 
         // Fetch balance after the funds have been reverted
         uint256 balanceAfter = token.balanceOf(address(this));
@@ -134,18 +166,26 @@ contract DGEscrow is AccessControl {
         uint256 amount = balanceBefore - balanceAfter;
 
         // Subtract the amount fetched from the escrowed mapping, probably nulling it out
-        escrowed[id] -= amount;
+        escrowed[_id] -= amount;
 
         // Emit event that escrow is reverted back into the bankroll
         emit DGEvents.EscrowReverted(entry.bankroll, _id, amount);
     }
 
+    /**
+     * @notice
+     *  Allows players to claim their escrowed amount after a certain period has passed
+     *  id escrow is left unaddressed by DeGaming
+     *
+     * @param _id id in bytes format
+     *
+     */
     function claimUnaddressed(bytes memory _id) external {
         // Check so that there are funds to claim for id
-        if (escrowed[id] == 0) revert DGErrors.NOTHING_TO_CLAIM();
+        if (escrowed[_id] == 0) revert DGErrors.NOTHING_TO_CLAIM();
 
         // Decode id into an entry
-        DGDataTypes.EscrowEntry memory entry = _decode(id);
+        DGDataTypes.EscrowEntry memory entry = _decode(_id);
 
         // Make sure that the event period is actually passed
         if (block.timestamp > entry.timestamp + eventPeriod) revert DGErrors.EVENT_PERIOD_NOT_PASSED();
@@ -160,7 +200,7 @@ contract DGEscrow is AccessControl {
         uint256 balanceBefore = token.balanceOf(address(this));
 
         // Send the escrowed funds to the player
-        token.safeTransfer(entry.player, escrowed[id]);
+        token.safeTransfer(entry.player, escrowed[_id]);
 
         // Fetch balance after the funds are released
         uint256 balanceAfter = token.balanceOf(address(this));
@@ -169,7 +209,7 @@ contract DGEscrow is AccessControl {
         uint256 amount = balanceBefore - balanceAfter;
 
         // Subtract the amount fetched from the escrowed mapping, probably nulling it out
-        escrowed[id] -= amount;
+        escrowed[_id] -= amount;
 
         // Emit event stating that the escrow is payed out
         emit DGEvents.EscrowPayed(msg.sender, _id, amount);
@@ -222,6 +262,15 @@ contract DGEscrow is AccessControl {
         dgBankrollManager = IDGBankrollManager(_newBankrollManager);
     }
 
+    /**
+     * @notice
+     *  Decoding IDs into valid entry custom data type
+     *
+     * @param _id id in bytes format
+     *
+     * @return _entry custom dataType return which holds all escrow information
+     *
+     */
     function _decode(bytes memory _id) internal pure returns (DGDataTypes.EscrowEntry memory _entry) {
         _entry = abi.decode(_id, (DGDataTypes.EscrowEntry));
     }
