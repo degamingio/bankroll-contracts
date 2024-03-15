@@ -35,6 +35,12 @@ contract DGEscrow is AccessControl {
     /// @dev Bankroll manager instance
     IDGBankrollManager public dgBankrollManager;
 
+    //     ______                 __                  __
+    //    / ____/___  ____  _____/ /________  _______/ /_____  _____
+    //   / /   / __ \/ __ \/ ___/ __/ ___/ / / / ___/ __/ __ \/ ___/
+    //  / /___/ /_/ / / / (__  ) /_/ /  / /_/ / /__/ /_/ /_/ / /
+    //  \____/\____/_/ /_/____/\__/_/   \__,_/\___/\__/\____/_/
+
     constructor(uint256 _eventPeriod, address _bankrollManager) {
         // Set event period
         eventPeriod = _eventPeriod;
@@ -51,6 +57,12 @@ contract DGEscrow is AccessControl {
         // Granting BANKROLL_MANAGER to the bankrollmanager address
         _grantRole(BANKROLL_MANAGER, _bankrollManager);
     }
+
+    //      ______     __                        __   ______                 __  _
+    //     / ____/  __/ /____  _________  ____ _/ /  / ____/_  ______  _____/ /_(_)___  ____  _____
+    //    / __/ | |/_/ __/ _ \/ ___/ __ \/ __ `/ /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
+    //   / /____>  </ /_/  __/ /  / / / / /_/ / /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
+    //  /_____/_/|_|\__/\___/_/  /_/ /_/\__,_/_/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
     /**
      * @notice
@@ -261,6 +273,12 @@ contract DGEscrow is AccessControl {
         // Update BankrollManager Contract
         dgBankrollManager = IDGBankrollManager(_newBankrollManager);
     }
+
+    //     ____      __                        __   ______                 __  _
+    //    /  _/___  / /____  _________  ____ _/ /  / ____/_  ______  _____/ /_(_)___  ____  _____
+    //    / // __ \/ __/ _ \/ ___/ __ \/ __ `/ /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
+    //  _/ // / / / /_/  __/ /  / / / / /_/ / /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
+    // /___/_/ /_/\__/\___/_/  /_/ /_/\__,_/_/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
     /**
      * @notice
