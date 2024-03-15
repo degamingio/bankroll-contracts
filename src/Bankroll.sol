@@ -154,6 +154,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         // grant owner default admin role
         _grantRole(DEFAULT_ADMIN_ROLE, _owner);
 
+        // grant Admin role to escrow contract
+        _grantRole(ADMIN, _escrow);
+
         // Grant Admin role
         _grantRole(ADMIN, _admin);
 
