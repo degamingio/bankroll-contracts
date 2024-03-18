@@ -21,8 +21,7 @@ library DGDataTypes {
 
     /// @dev Withdrawal window timestamps
     struct WithdrawalInfo {
-        uint256 timestampMin;
-        uint256 timestampMax;
+        uint256 timestamp;
         uint256 amountToClaim;
         WithdrawalIs stage;
     }

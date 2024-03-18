@@ -148,11 +148,14 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         // Set escrow threshold
         escrowTreshold = _escrowThreshold;
 
-        // Set withdrawal delay in seconfs
+        // Set default withdrawal delay in seconfs
         withdrawalDelay = 1;
 
-        // Set withdrawal window
+        // Set default withdrawal window
         withdrawalWindowLength = 5 minutes;
+
+        // Set default staging period
+        stagingEventPeriod = 1 hours;
 
         // Setup bankroll manager
         dgBankrollManager = IDGBankrollManager(_bankrollManager);
@@ -245,19 +248,12 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         // Make sure that previous withdrawal is either fullfilled or window has passed
         if (
             withdrawalInfo.stage == DGDataTypes.WithdrawalIs.STAGED &&
-            block.timestamp < withdrawalInfo.timestampMax
+            block.timestamp < withdrawalInfo.timestamp + withdrawalWindowLength
         ) revert DGErrors.WITHDRAWAL_PROCESS_IN_STAGING();
-
-        // Set minimum withdrawal claiming timestamp
-        uint256 timestampMin = block.timestamp + withdrawalDelay;
-
-        // Set maximum withdrawl claiming timestamp
-        uint256 timestampMax = timestampMin + withdrawalWindowLength;
 
         // Update withdrawalInfo of LP
         withdrawalInfoOf[msg.sender] = DGDataTypes.WithdrawalInfo(
-            timestampMin,
-            timestampMax,
+            block.timestamp,
             _amount,
             DGDataTypes.WithdrawalIs.STAGED
         );
@@ -266,7 +262,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         withdrawalLimitOf[msg.sender] = block.timestamp + stagingEventPeriod;
 
         // Emit withdrawal staged event
-        emit DGEvents.WithdrawalStaged(msg.sender, timestampMin, timestampMax);
+        emit DGEvents.WithdrawalStaged(msg.sender, block.timestamp + withdrawalDelay, block.timestamp + withdrawalWindowLength);
     }
 
     /**
@@ -282,8 +278,8 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
 
         // Make sure it is within withdrawal window
         if (
-            block.timestamp < withdrawalInfo.timestampMin ||
-            block.timestamp > withdrawalInfo.timestampMax
+            block.timestamp < withdrawalInfo.timestamp + withdrawalDelay ||
+            block.timestamp > withdrawalInfo.timestamp + withdrawalWindowLength
         ) revert DGErrors.OUTSIDE_WITHDRAWAL_WINDOW();
 
         // Call internal withdrawal function
@@ -740,7 +736,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         uint256 balanceAfter = token.balanceOf(address(this));
 
         // amount variable calculated from recieved balances
-        uint256 realizedAmount = balanceAfter - balanceBefore;
+        uint256 realizedAmount = balanceBefore - balanceAfter;
 
         // Emit an event that funds are withdrawn
         emit DGEvents.FundsWithdrawn(_reciever, realizedAmount);

@@ -82,12 +82,25 @@ contract DGEscrowTest is Test {
         dgBankrollManager.addOperator(operator);
         dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
         dgBankrollManager.approveBankroll(address(bankroll), 0);
+
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000e6);
+        bankroll.depositFunds(1_000_000e6);
+        vm.stopPrank();
+
+        vm.prank(admin);
+
+        bankroll.changeEscrowThreshold(5_000);
+
+        bankroll.maxContractsApprove();
     }
 
-    // function test_depositFundsEscrow(address _player, address _operator, address _token, uint256 _winnings) external {
-        // token.mint(address(bankroll), _winnings);
-        // bankroll.maxContractsApprove();
-        // vm.startPrank(address(bankroll));
-        // dgEscrow.depositFunds(_player, _operator, _token, _winnings);
-    // }
+    function test_depositFundsEscrow() public {
+        vm.startPrank(admin);
+        token.approve(address(bankroll), 500e6);
+
+        bankroll.debit(player, 500_001e6, operator);
+
+        vm.stopPrank();
+    }
 }

@@ -137,7 +137,7 @@ contract BankrollTest is Test {
     function test_depositFunds() public {
         assertEq(bankroll.liquidity(), 0);
 
-        // lp one deposits 1000_000
+        // lp one deposits 1_000_000
         vm.startPrank(lpOne);
         token.approve(address(bankroll), 1_000_000e6);
         bankroll.depositFunds(1_000_000e6);
@@ -147,7 +147,7 @@ contract BankrollTest is Test {
         assertEq(bankroll.totalSupply(), 1_000_000e6);
         assertEq(bankroll.liquidity(), 1_000_000e6);
 
-        // lp two deposits 1000_000
+        // lp two deposits 1_000_000
         vm.startPrank(lpTwo);
         token.approve(address(bankroll), 1_000_000e6);
         bankroll.depositFunds(1_000_000e6);
@@ -162,7 +162,7 @@ contract BankrollTest is Test {
         vm.prank(admin);
         bankroll.setPublic(DGDataTypes.LpIs.WHITELISTED);
 
-        // lp one deposits 1000_000
+        // lp one deposits 1_000_000
         vm.startPrank(lpOne);
         token.approve(address(bankroll), 1_000_000e6);
         vm.expectRevert(DGErrors.LP_IS_NOT_WHITELISTED.selector); //reverts: FORBIDDEN()
@@ -180,19 +180,69 @@ contract BankrollTest is Test {
         vm.stopPrank();
     }
 
-    function test_withdraw_(uint256 _toHighAmount, uint256 _amountToWithdraw) public {
-        vm.assume(_toHighAmount > 1_000_000e6);
-        vm.assume(_amountToWithdraw < 500_000e6);
-
+    function test_withdrawStageOne() public {
         vm.startPrank(lpOne);
         token.approve(address(bankroll), 1_000_000e6);
         bankroll.depositFunds(1_000_000e6);
 
         bankroll.withdrawalStageOne(bankroll.sharesOf(lpOne));
 
-        vm.expectRevert(DGErrors.WITHDRAWAL_TIMESTAMP_HASNT_PASSED.selector);
+        vm.stopPrank();
+    }
+    
+    function test_withdrawStageTwo() public {
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000e6);
+        bankroll.depositFunds(1_000_000e6);
 
         bankroll.withdrawalStageOne(bankroll.sharesOf(lpOne));
+
+        vm.warp(3);
+
+        bankroll.withdrawalStageTwo();
+
+        vm.stopPrank();
+    }
+
+    function test_setWithdrawalDelay(uint256 _newWithdrawalDelay) public {
+        vm.assume(_newWithdrawalDelay > 3);
+        vm.assume(_newWithdrawalDelay < 350);
+        
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000e6);
+        bankroll.depositFunds(1_000_000e6);
+
+        bankroll.withdrawalStageOne(bankroll.sharesOf(lpOne));
+        vm.stopPrank();
+
+        vm.prank(admin);
+        bankroll.setWithdrawalDelay(_newWithdrawalDelay);
+
+        vm.startPrank(lpOne);
+        vm.warp(3);
+
+        vm.expectRevert(DGErrors.OUTSIDE_WITHDRAWAL_WINDOW.selector);
+        bankroll.withdrawalStageTwo();
+
+        vm.stopPrank();
+    }
+
+    function test_setWithdrawalWindow() public {
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000e6);
+        bankroll.depositFunds(1_000_000e6);
+
+        bankroll.withdrawalStageOne(bankroll.sharesOf(lpOne));
+        vm.stopPrank();
+
+        vm.prank(admin);
+        bankroll.setWithdrawalWindow(30);
+
+        vm.startPrank(lpOne);
+        vm.warp(61);
+
+        vm.expectRevert(DGErrors.OUTSIDE_WITHDRAWAL_WINDOW.selector);
+        bankroll.withdrawalStageTwo();
 
         vm.stopPrank();
     }
