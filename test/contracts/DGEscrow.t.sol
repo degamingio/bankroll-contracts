@@ -103,4 +103,26 @@ contract DGEscrowTest is Test {
 
         vm.stopPrank();
     }
+    
+    function test_revertFunds() public {
+        vm.startPrank(admin);
+        token.approve(address(bankroll), 500e6);
+
+        bankroll.debit(player, 500_001e6, operator);
+
+        vm.stopPrank();
+
+        DGDataTypes.EscrowEntry memory entry = DGDataTypes.EscrowEntry(
+            address(bankroll),
+            operator,
+            player,
+            address(token),
+            block.timestamp
+        );
+
+        bytes memory id = abi.encode(entry);
+
+        dgEscrow.revertFunds(id);
+
+    }
 }

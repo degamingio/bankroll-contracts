@@ -176,6 +176,9 @@ contract DGEscrow is AccessControl {
         // Fetch balance before reverting the funds back to the bankroll
         uint256 balanceBefore = token.balanceOf(address(this));
 
+        // Approve spending for bankroll to spend on behalf of escrow contract
+        token.approve(entry.bankroll, escrowed[_id]);
+
         // Send the escrowed funds back to the bankroll
         IBankroll(entry.bankroll).credit(escrowed[_id], entry.operator);
 
