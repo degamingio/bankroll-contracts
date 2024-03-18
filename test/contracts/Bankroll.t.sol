@@ -90,9 +90,12 @@ contract BankrollTest is Test {
         address _admin,
         address _owner,
         uint256 _maxRisk,
+        uint256 _threshold,
         address _faultyToken,
         address _faultyBankrollManager,
-        uint256 _faultyMaxRisk
+        address _faultyEscrow,
+        uint256 _faultyMaxRisk,
+        uint256 _faultyThreshold
     ) public {
         vm.assume(address(_bankroll) != address(bankroll));
         vm.assume(_admin != admin);
@@ -101,9 +104,13 @@ contract BankrollTest is Test {
         vm.assume(_owner != address(0));
         vm.assume(_maxRisk > 0);
         vm.assume(_maxRisk < 10_000);
+        vm.assume(_threshold > 0);
+        vm.assume(_threshold < 10_000);
         vm.assume(!_isContract(_faultyToken));
         vm.assume(!_isContract(_faultyBankrollManager));
+        vm.assume(!_isContract(_faultyEscrow));
         vm.assume(_faultyMaxRisk > 10_000);
+        vm.assume(_faultyThreshold > 10_000);
 
         //vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
         vm.expectRevert();
@@ -111,11 +118,17 @@ contract BankrollTest is Test {
 
         vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
         _bankroll.initialize(_admin, address(token), _faultyBankrollManager, address(dgEscrow), owner, maxRisk, threshold);
+        
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        _bankroll.initialize(_admin, address(token), address(dgBankrollManager), _faultyEscrow, owner, maxRisk, threshold);
 
         vm.expectRevert(DGErrors.ADDRESS_NOT_A_WALLET.selector);
         _bankroll.initialize(_admin, address(token), address(dgBankrollManager), address(dgEscrow), address(dgBankrollManager), maxRisk, threshold);
 
         vm.expectRevert(DGErrors.MAXRISK_TOO_HIGH.selector);
+        _bankroll.initialize(_admin, address(token), address(dgBankrollManager), address(dgEscrow), owner, _faultyMaxRisk, threshold);
+        
+        vm.expectRevert(DGErrors.ESCROW_THRESHOLD_TOO_HIGH.selector);
         _bankroll.initialize(_admin, address(token), address(dgBankrollManager), address(dgEscrow), owner, _faultyMaxRisk, threshold);
 
         _bankroll.initialize(_admin, address(token), address(dgBankrollManager), address(dgEscrow), owner, maxRisk, threshold);
@@ -163,6 +176,23 @@ contract BankrollTest is Test {
         bankroll.depositFunds(1_000_000e6);
 
         assertEq(bankroll.sharesOf(address(lpOne)), 1_000_000e6);
+
+        vm.stopPrank();
+    }
+
+    function test_withdraw_(uint256 _toHighAmount, uint256 _amountToWithdraw) public {
+        vm.assume(_toHighAmount > 1_000_000e6);
+        vm.assume(_amountToWithdraw < 500_000e6);
+
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000e6);
+        bankroll.depositFunds(1_000_000e6);
+
+        bankroll.withdrawalStageOne(bankroll.sharesOf(lpOne));
+
+        vm.expectRevert(DGErrors.WITHDRAWAL_TIMESTAMP_HASNT_PASSED.selector);
+
+        bankroll.withdrawalStageOne(bankroll.sharesOf(lpOne));
 
         vm.stopPrank();
     }
@@ -318,7 +348,7 @@ contract BankrollTest is Test {
         bankroll.updateBankrollManager(address(dgBankrollManager), address(newBankrollManager));
         vm.stopPrank();
 
-        bankroll.maxBankrollManagerApprove();
+        bankroll.maxContractsApprove();
 
         assertEq(token.allowance(address(bankroll), address(newBankrollManager)), 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
     }

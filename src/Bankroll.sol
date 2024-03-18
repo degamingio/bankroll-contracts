@@ -125,8 +125,8 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         uint256 _maxRiskPercentage,
         uint256 _escrowThreshold
     ) external initializer {
-        // Check so that both bankroll manager and token are contracts
-        if (!_isContract(_bankrollManager) || !_isContract(_token)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+        // Check so that both bankroll manager,token and escrow are contracts
+        if (!_isContract(_bankrollManager) || !_isContract(_token) || !_isContract(_escrow)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
 
         // Check so that owner is not a contract
         if (_isContract(_owner)) revert DGErrors.ADDRESS_NOT_A_WALLET();
@@ -147,6 +147,12 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
 
         // Set escrow threshold
         escrowTreshold = _escrowThreshold;
+
+        // Set withdrawal delay in seconfs
+        withdrawalDelay = 1;
+
+        // Set withdrawal window
+        withdrawalWindowLength = 5 minutes;
 
         // Setup bankroll manager
         dgBankrollManager = IDGBankrollManager(_bankrollManager);
@@ -575,12 +581,17 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
 
     /**
      *
-     * @notice Max out the approval for DGBankrollManager.sol to spend on behalf of the bankroll contract
+     * @notice Max out the approval for the connected DeGaming contracts to spend on behalf of the bankroll contract
      *
      */
-    function maxBankrollManagerApprove() external {
+    function maxContractsApprove() external {
         token.forceApprove(
             address(dgBankrollManager),
+            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+        );
+        
+        token.forceApprove(
+            address(escrow),
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         );
     } 

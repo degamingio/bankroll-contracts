@@ -117,7 +117,7 @@ contract DGBankrollManagerTest is Test {
         vm.prank(admin);
         bankroll.credit(1_000_000e6, operator);
 
-        bankroll.maxBankrollManagerApprove();
+        bankroll.maxContractsApprove();
 
         dgBankrollManager.claimProfit(address(bankroll));
     }
@@ -260,7 +260,7 @@ contract DGBankrollManagerTest is Test {
 
         assertEq(mockToken.balanceOf(address(bankroll)), _wager);
 
-        bankroll.maxBankrollManagerApprove();
+        bankroll.maxContractsApprove();
         
         dgBankrollManager.claimProfit(address(bankroll));
 
@@ -290,7 +290,7 @@ contract DGBankrollManagerTest is Test {
 
         uint256 expectedBalance = (totalWagered * 650) / 10_000;
 
-        bankroll.maxBankrollManagerApprove();
+        bankroll.maxContractsApprove();
 
         dgBankrollManager.claimProfit(address(bankroll));
 
@@ -323,7 +323,7 @@ contract DGBankrollManagerTest is Test {
             vm.stopPrank();
         }
 
-        bankroll.maxBankrollManagerApprove();
+        bankroll.maxContractsApprove();
 
         assertEq(mockToken.balanceOf(address(bankroll)), (_wager + _liquidity) * lps.length);
 
