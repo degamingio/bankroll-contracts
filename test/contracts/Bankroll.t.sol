@@ -11,6 +11,7 @@ import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.s
 import {Bankroll} from "src/Bankroll.sol";
 import {DGBankrollManager} from "src/DGBankrollManager.sol";
 import {DGBankrollFactory} from "src/DGBankrollFactory.sol";
+import {DGEscrow} from "src/DGEscrow.sol";
 
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
@@ -28,12 +29,14 @@ contract BankrollTest is Test {
     address player;
     address owner;
     uint256 maxRisk;
+    uint256 threshold;
     TransparentUpgradeableProxy public bankrollProxy;
 
     ProxyAdmin public proxyAdmin;
 
     DGBankrollFactory public dgBankrollFactory;
     DGBankrollManager public dgBankrollManager;
+    DGEscrow public dgEscrow;
     Bankroll public bankroll;
     MockToken public token;
 
@@ -45,11 +48,14 @@ contract BankrollTest is Test {
         player = address(0x5);
         owner = address(0x6);
         maxRisk = 10_000;
+        threshold = 10_000;
 
         dgBankrollFactory = new DGBankrollFactory();
 
         dgBankrollManager = new DGBankrollManager(admin);
         token = new MockToken("token", "MTK");
+
+        dgEscrow = new DGEscrow(1 weeks, address(dgBankrollManager));
 
         proxyAdmin = new ProxyAdmin(msg.sender);
 
@@ -61,8 +67,10 @@ contract BankrollTest is Test {
                 admin,
                 address(token),
                 address(dgBankrollManager),
+                address(dgEscrow),
                 owner,
-                maxRisk
+                maxRisk,
+                threshold
             )
         );
 
@@ -99,18 +107,18 @@ contract BankrollTest is Test {
 
         //vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
         vm.expectRevert();
-        _bankroll.initialize(_admin, _faultyToken, address(dgBankrollManager), owner, maxRisk);
+        _bankroll.initialize(_admin, _faultyToken, address(dgBankrollManager), address(dgEscrow), owner, maxRisk, threshold);
 
         vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
-        _bankroll.initialize(_admin, address(token), _faultyBankrollManager, owner, maxRisk);
+        _bankroll.initialize(_admin, address(token), _faultyBankrollManager, address(dgEscrow), owner, maxRisk, threshold);
 
         vm.expectRevert(DGErrors.ADDRESS_NOT_A_WALLET.selector);
-        _bankroll.initialize(_admin, address(token), address(dgBankrollManager), address(dgBankrollManager), maxRisk);
+        _bankroll.initialize(_admin, address(token), address(dgBankrollManager), address(dgEscrow), address(dgBankrollManager), maxRisk, threshold);
 
         vm.expectRevert(DGErrors.MAXRISK_TOO_HIGH.selector);
-        _bankroll.initialize(_admin, address(token), address(dgBankrollManager), owner, _faultyMaxRisk);
+        _bankroll.initialize(_admin, address(token), address(dgBankrollManager), address(dgEscrow), owner, _faultyMaxRisk, threshold);
 
-        _bankroll.initialize(_admin, address(token), address(dgBankrollManager), owner, maxRisk);
+        _bankroll.initialize(_admin, address(token), address(dgBankrollManager), address(dgEscrow), owner, maxRisk, threshold);
     } 
 
     // function test_depositFunds() public {
