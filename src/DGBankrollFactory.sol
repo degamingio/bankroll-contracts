@@ -36,6 +36,9 @@ contract DGBankrollFactory is AccessControlUpgradeable {
     /// @dev DeGaming Bankroll Manager Contract address
     address public dgBankrollManager;
 
+    /// @dev DeGaming Escrow contract address
+    address public escrow;
+
     /// @dev DeGaming admin account
     address public dgAdmin;
 
@@ -73,12 +76,14 @@ contract DGBankrollFactory is AccessControlUpgradeable {
     function initialize(
         address _bankrollImpl,
         address _dgBankrollManager,
+        address _escrow,
         address _dgAdmin,
         address _deGaming
     ) external initializer {
         // Initialize global variables
         bankrollImpl = _bankrollImpl;
         dgBankrollManager = _dgBankrollManager;
+        escrow = _escrow;
         dgAdmin = _dgAdmin;
         deGaming = _deGaming;
 
@@ -101,13 +106,14 @@ contract DGBankrollFactory is AccessControlUpgradeable {
     function deployBankroll(
         address _token,
         uint256 _maxRiskPercentage,
+        uint256 _escrowThreshold,
         bytes32 _salt 
     ) external  onlyRole(DEFAULT_ADMIN_ROLE) {
         // Make sure that token address is a contract
         if (!_isContract(_token)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
 
         // Make sure that maxrisk does not exceed 100%
-        if (_maxRiskPercentage > 10_000) revert DGErrors.MAXRISK_TO_HIGH();
+        if (_maxRiskPercentage > 10_000) revert DGErrors.MAXRISK_TOO_HIGH();
 
         // Deploy new Bankroll contract
         Bankroll newBankroll = Bankroll(Clones.cloneDeterministic(bankrollImpl, _salt));
@@ -117,8 +123,10 @@ contract DGBankrollFactory is AccessControlUpgradeable {
             dgAdmin,
             _token,
             dgBankrollManager,
+            escrow,
             deGaming,
-            _maxRiskPercentage
+            _maxRiskPercentage,
+            _escrowThreshold
         );
 
         // Add address to list of bankrolls
@@ -149,7 +157,7 @@ contract DGBankrollFactory is AccessControlUpgradeable {
      *  Set DeGaming Bankroll Manager contract address
      *  Only the caller with role `DEFAULT_ADMIN_ROLE` can perform this operation
      *
-     * @param _dgBankrollManager DeGaming admin account
+     * @param _dgBankrollManager Bankroll Manager Contract address
      *
      */
     function setDgBankrollManager(address _dgBankrollManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -158,6 +166,22 @@ contract DGBankrollFactory is AccessControlUpgradeable {
 
         // Set new bankroll manager
         dgBankrollManager = _dgBankrollManager;
+    }
+
+    /**
+     * @notice
+     *  Set DeGaming Escrow contract address
+     *  Only the caller with role `DEFAULT_ADMIN_ROLE` can perform this operation
+     *
+     * @param _escrow Escrow Contract address
+     *
+     */
+    function setDgEscrow(address _escrow) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        // Make sure that new escrow address is a contract
+        if (!_isContract(_escrow)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+
+        // Set new escrow address
+        escrow = _escrow;
     }
 
     /**

@@ -11,6 +11,7 @@ import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.s
 import {Bankroll} from "src/Bankroll.sol";
 import {DGBankrollManager} from "src/DGBankrollManager.sol";
 import {DGBankrollFactory} from "src/DGBankrollFactory.sol";
+import {DGEscrow} from "src/DGEscrow.sol";
 
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
@@ -21,6 +22,7 @@ import {MockToken} from "test/mock/MockToken.sol";
 contract DGBankrollManagerTest is Test {
     MockToken public mockToken;
     DGBankrollManager public dgBankrollManager;
+    DGEscrow public dgEscrow;
     Bankroll public bankroll;
     DGBankrollFactory public dgBankrollFactory;
     TransparentUpgradeableProxy public bankrollProxy;
@@ -35,6 +37,7 @@ contract DGBankrollManagerTest is Test {
     address[] lps;
 
     uint256 maxRisk = 10_000;
+    uint256 threshold = 10_000;
 
     function setUp() public {
         admin = address(0x1);
@@ -66,6 +69,8 @@ contract DGBankrollManagerTest is Test {
 
         dgBankrollManager = new DGBankrollManager(deGaming);
 
+        dgEscrow = new DGEscrow(1 weeks, address(dgBankrollManager));
+
         proxyAdmin = new ProxyAdmin(msg.sender);
 
         bankrollProxy = new TransparentUpgradeableProxy(
@@ -76,8 +81,10 @@ contract DGBankrollManagerTest is Test {
                 admin,
                 address(mockToken),
                 address(dgBankrollManager),
+                address(dgEscrow),
                 msg.sender,
-                maxRisk
+                maxRisk,
+                threshold
             )
         );
 

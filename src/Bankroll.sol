@@ -11,6 +11,7 @@ import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 /* DeGaming Interfaces */
 import {IBankroll} from "src/interfaces/IBankroll.sol";
 import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";
+import {IDGEscrow} from "src/interfaces/IDGEscrow.sol";
 
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
@@ -37,7 +38,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     uint256 public constant DENOMINATOR = 10_000; 
 
     /// @dev Max percentage of liquidity risked
-    uint256 public maxRiskPercentage; 
+    uint256 public maxRiskPercentage;
+
+    /// @dev Escrow threshold percentage
+    uint256 public escrowTreshold;
 
     /// @dev amount for minimum pool in case it exists
     uint256 public minimumLp;
@@ -47,9 +51,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
 
     /// @dev WithdrawalWindow length
     uint256 public withdrawalWindowLength;
-
-    /// @dev Minimum time between successfull withdrawals
-    uint256 public withdrawalEventPeriod;
 
     /// @dev Minimum time between staging
     uint256 public stagingEventPeriod;
@@ -84,6 +85,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     /// @dev Bankroll manager instance
     IDGBankrollManager dgBankrollManager; 
 
+    /// @dev Escrow instance
+    IDGEscrow escrow;
+
     /// @dev set status regarding if LP is open or whitelisted
     DGDataTypes.LpIs public lpIs = DGDataTypes.LpIs.OPEN;
 
@@ -107,6 +111,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
      * @param _admin Admin address
      * @param _token Bankroll liquidity token address
      * @param _bankrollManager address of bankroll manager
+     * @param _escrow address of escrow contract
      * @param _owner address of contract owner
      * @param _maxRiskPercentage the max risk that the bankroll balance is risking for each game
      *
@@ -115,8 +120,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         address _admin,
         address _token,
         address _bankrollManager,
+        address _escrow,
         address _owner,
-        uint256 _maxRiskPercentage
+        uint256 _maxRiskPercentage,
+        uint256 _escrowThreshold
     ) external initializer {
         // Check so that both bankroll manager and token are contracts
         if (!_isContract(_bankrollManager) || !_isContract(_token)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
@@ -125,7 +132,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         if (_isContract(_owner)) revert DGErrors.ADDRESS_NOT_A_WALLET();
 
         // Check so that maxRiskPercentage isnt larger than denominator
-        if (_maxRiskPercentage > DENOMINATOR) revert DGErrors.MAXRISK_TO_HIGH();
+        if (_maxRiskPercentage > DENOMINATOR) revert DGErrors.MAXRISK_TOO_HIGH();
+
+        // Check so that maxrisk doestn't exceed 100%
+        if (_escrowThreshold > DENOMINATOR) revert DGErrors.ESCROW_THRESHOLD_TOO_HIGH();
 
         __AccessControl_init();
 
@@ -135,11 +145,20 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         // Set the max risk percentage
         maxRiskPercentage = _maxRiskPercentage;
 
+        // Set escrow threshold
+        escrowTreshold = _escrowThreshold;
+
         // Setup bankroll manager
         dgBankrollManager = IDGBankrollManager(_bankrollManager);
 
+        // Setup escrow
+        escrow = IDGEscrow(_escrow);
+
         // grant owner default admin role
         _grantRole(DEFAULT_ADMIN_ROLE, _owner);
+
+        // grant Admin role to escrow contract
+        _grantRole(ADMIN, _escrow);
 
         // Grant Admin role
         _grantRole(ADMIN, _admin);
@@ -264,9 +283,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         // Call internal withdrawal function
         _withdraw(withdrawalInfo.amountToClaim, msg.sender);
 
-        // Set new withdrawal Limit
-        withdrawalLimitOf[msg.sender] = block.timestamp + withdrawalEventPeriod;
-
         // Set stage status ti FULLFILLED
         withdrawalInfoOf[msg.sender].stage = DGDataTypes.WithdrawalIs.FULLFILLED;
     }
@@ -291,17 +307,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
      */
     function setWithdrawalWindow(uint256 _withdrawalWindow) external onlyRole(ADMIN) {
         withdrawalWindowLength = _withdrawalWindow;
-    }
-
-    /**
-     * @notice Change withdrawal event period for LPs
-     *  Only callable by ADMIN
-     *
-     * @param _withdrawalEventPeriod New withdrawal event period in seconds
-     *
-     */
-    function setWithdrawalEventPeriod(uint256 _withdrawalEventPeriod) external onlyRole(ADMIN) {
-        withdrawalEventPeriod = _withdrawalEventPeriod;
     }
 
     /**
@@ -339,26 +344,46 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
             emit DGEvents.BankrollSwept(_player, _amount);
         }
 
+        // Fetch escrow threshold
+        uint256 threshold = getEscrowThreshold();
+
         // fetch balance before
         uint256 balanceBefore = token.balanceOf(address(this));
 
-        // transfer ERC20 from the vault to the winner
-        token.safeTransfer(_player, _amount);
+        // Create amount variable
+        uint256 amount;
 
-        // fetch balance aftrer
-        uint256 balanceAfter = token.balanceOf(address(this));
+        // If amount is more then threshold, deposit into escrow...
+        if (_amount > threshold) {
+            escrow.depositFunds(_player, _operator, address(token), _amount);
 
-        // amount variable calculated from recieved balances
-        uint256 amount = balanceBefore - balanceAfter;
-        
+            // fetch balance aftrer
+            uint256 balanceAfter = token.balanceOf(address(this));
+
+            // amount variable calculated from recieved balances
+            amount = balanceBefore - balanceAfter;
+
+        // ... Else go on with payout
+        } else {
+
+            // transfer ERC20 from the vault to the winner
+            token.safeTransfer(_player, _amount);
+
+            // fetch balance aftrer
+            uint256 balanceAfter = token.balanceOf(address(this));
+
+            // amount variable calculated from recieved balances
+            amount = balanceBefore - balanceAfter;
+
+            // Emit debit event
+            emit DGEvents.Debit(msg.sender, _player, amount);
+        }
+
         // substract from total GGR
         GGR -= int256(amount);
         
         // subtracting the amount from the specified operator GGR
         ggrOf[_operator] -= int256(amount);
-
-        // Emit debit event
-        emit DGEvents.Debit(msg.sender, _player, amount);
     }
 
     /**
@@ -465,10 +490,25 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
      */
     function changeMaxRisk(uint256 _newAmount) external onlyRole(ADMIN) {
         // Check so that maxrisk doestn't exceed 100%
-        if (_newAmount > DENOMINATOR) revert DGErrors.MAXRISK_TO_HIGH();
+        if (_newAmount > DENOMINATOR) revert DGErrors.MAXRISK_TOO_HIGH();
 
         // Set new maxrisk
         maxRiskPercentage = _newAmount;
+    }
+
+    /**
+     *
+     * @notice allows admins to change the max risk amount
+     *
+     * @param _newAmount new amount in percentage that should be potentially risked per session 
+     *
+     */
+    function changeEscrowThreshold(uint256 _newAmount) external onlyRole(ADMIN) {
+        // Check so that maxrisk doestn't exceed 100%
+        if (_newAmount > DENOMINATOR) revert DGErrors.ESCROW_THRESHOLD_TOO_HIGH();
+
+        // Set new maxrisk
+        escrowTreshold = _newAmount;
     }
 
     /**
@@ -617,6 +657,17 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     function getMaxRisk() public view returns (uint256 _maxRisk) {
         uint256 currentLiquidity = token.balanceOf(address(this));
         _maxRisk = (currentLiquidity * maxRiskPercentage) / DENOMINATOR;
+    }
+
+    /**
+     * @notice returns escrow threshold during the debit() call
+     *
+     * @return _threshold threshold before earnings gets sent to escrow
+     *
+     */
+    function getEscrowThreshold() public view returns (uint256 _threshold) {
+        uint256 currentLiquidity = token.balanceOf(address(this));
+        _threshold = (currentLiquidity * escrowTreshold) / DENOMINATOR;
     }
 
     //     ____      __                        __   ______                 __  _
