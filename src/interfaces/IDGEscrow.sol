@@ -54,7 +54,16 @@ interface IDGEscrow {
      *
      */
     function claimUnaddressed(bytes memory _id) external;
-    
+
+    /**
+     * @notice 
+     *  Allows admin to set new event period time
+     *
+     * @param _newEventPeriod New event period time in seconds
+     *
+     */
+    function setEventPeriod(uint256 _newEventPeriod) external;
+
     /**
      * @notice Update the ADMIN role
      *  Only calleable by contract owner
