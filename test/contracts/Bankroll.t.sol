@@ -121,54 +121,51 @@ contract BankrollTest is Test {
         _bankroll.initialize(_admin, address(token), address(dgBankrollManager), address(dgEscrow), owner, maxRisk, threshold);
     } 
 
-    // function test_depositFunds() public {
-        // assertEq(bankroll.liquidity(), 0);
+    function test_depositFunds() public {
+        assertEq(bankroll.liquidity(), 0);
 
-        // // lp one deposits 1000_000
-        // vm.startPrank(lpOne);
-        // token.approve(address(bankroll), 1_000_000e6);
-        // bankroll.depositFunds(1_000_000e6);
-        // assertEq(bankroll.depositOf(address(lpOne)), 1_000_000e6);
-        // assertEq(bankroll.sharesOf(address(lpOne)), 1_000_000e6);
-        // vm.stopPrank();
+        // lp one deposits 1000_000
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000e6);
+        bankroll.depositFunds(1_000_000e6);
+        assertEq(bankroll.sharesOf(address(lpOne)), 1_000_000e6);
+        vm.stopPrank();
 
-        // assertEq(bankroll.totalSupply(), 1_000_000e6);
-        // assertEq(bankroll.liquidity(), 1_000_000e6);
+        assertEq(bankroll.totalSupply(), 1_000_000e6);
+        assertEq(bankroll.liquidity(), 1_000_000e6);
 
-        // // lp two deposits 1000_000
-        // vm.startPrank(lpTwo);
-        // token.approve(address(bankroll), 1_000_000e6);
-        // bankroll.depositFunds(1_000_000e6);
-        // assertEq(bankroll.depositOf(address(lpTwo)), 1_000_000e6);
-        // assertEq(bankroll.sharesOf(address(lpTwo)), 1_000_000e6);
-        // vm.stopPrank();
+        // lp two deposits 1000_000
+        vm.startPrank(lpTwo);
+        token.approve(address(bankroll), 1_000_000e6);
+        bankroll.depositFunds(1_000_000e6);
+        assertEq(bankroll.sharesOf(address(lpTwo)), 1_000_000e6);
+        vm.stopPrank();
 
-        // assertEq(bankroll.totalSupply(), 2_000_000e6);
-        // assertEq(bankroll.liquidity(), 2_000_000e6);
-    // }
+        assertEq(bankroll.totalSupply(), 2_000_000e6);
+        assertEq(bankroll.liquidity(), 2_000_000e6);
+    }
 
-    // function test_depositFundsWithInvestorWhitelist() public {
-        // vm.prank(admin);
-        // bankroll.setPublic(DGDataTypes.LpIs.WHITELISTED);
+    function test_depositFundsWithInvestorWhitelist() public {
+        vm.prank(admin);
+        bankroll.setPublic(DGDataTypes.LpIs.WHITELISTED);
 
-        // // lp one deposits 1000_000
-        // vm.startPrank(lpOne);
-        // token.approve(address(bankroll), 1_000_000e6);
-        // vm.expectRevert(DGErrors.LP_IS_NOT_WHITELISTED.selector); //reverts: FORBIDDEN()
-        // bankroll.depositFunds(1_000_000e6);
-        // vm.stopPrank();
+        // lp one deposits 1000_000
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000e6);
+        vm.expectRevert(DGErrors.LP_IS_NOT_WHITELISTED.selector); //reverts: FORBIDDEN()
+        bankroll.depositFunds(1_000_000e6);
+        vm.stopPrank();
 
-        // vm.prank(admin);
-        // bankroll.setInvestorWhitelist(lpOne, true);
+        vm.prank(admin);
+        bankroll.setInvestorWhitelist(lpOne, true);
 
-        // vm.startPrank(lpOne);
-        // bankroll.depositFunds(1_000_000e6);
+        vm.startPrank(lpOne);
+        bankroll.depositFunds(1_000_000e6);
 
-        // assertEq(bankroll.depositOf(address(lpOne)), 1_000_000e6);
-        // assertEq(bankroll.sharesOf(address(lpOne)), 1_000_000e6);
+        assertEq(bankroll.sharesOf(address(lpOne)), 1_000_000e6);
 
-        // vm.stopPrank();
-    // }
+        vm.stopPrank();
+    }
 
     function test_debit() public {
         vm.startPrank(lpOne);
