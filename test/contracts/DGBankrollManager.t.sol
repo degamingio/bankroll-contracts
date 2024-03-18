@@ -71,7 +71,7 @@ contract DGBankrollManagerTest is Test {
 
         dgEscrow = new DGEscrow(1 weeks, address(dgBankrollManager));
 
-        proxyAdmin = new ProxyAdmin(msg.sender);
+        proxyAdmin = new ProxyAdmin();
 
         bankrollProxy = new TransparentUpgradeableProxy(
             address(new Bankroll()),
