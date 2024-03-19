@@ -187,6 +187,11 @@ contract BankrollTest is Test {
 
         bankroll.withdrawalStageOne(bankroll.sharesOf(lpOne));
 
+        vm.warp(3);
+
+        // vm.expectRevert(DGErrors.WITHDRAWAL_PROCESS_IN_STAGING.selector);
+        // bankroll.withdrawalStageOne(bankroll.sharesOf(lpOne));
+
         vm.stopPrank();
     }
     

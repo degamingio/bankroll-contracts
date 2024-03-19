@@ -34,9 +34,6 @@ contract DGEscrow is AccessControl {
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
 
-    /// @dev BANKROLL_MANAGER role
-    bytes32 public constant BANKROLL_MANAGER = keccak256("BANKROLL_MANAGER");
-
     /// @dev Mapping for holding the escrow info, acts as a source of truth
     mapping(bytes id => uint256 winnings) public escrowed;
 
@@ -64,9 +61,6 @@ contract DGEscrow is AccessControl {
 
         // Granting ADMIN to the deoployer
         _grantRole(ADMIN, msg.sender);
-
-        // Granting BANKROLL_MANAGER to the bankrollmanager address
-        _grantRole(BANKROLL_MANAGER, _bankrollManager);
     }
 
     //      ______     __                        __   ______                 __  _

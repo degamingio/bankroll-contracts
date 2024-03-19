@@ -160,7 +160,8 @@ contract DGBankrollFactoryTest is Test {
     function test_setDgBankrollManager(address _sender, address _faultyBankrollManager) public {
         vm.assume(_sender != address(proxyAdmin));
         vm.assume(dgBankrollFactory.dgBankrollManager() != _faultyBankrollManager);
-       
+        vm.assume(!_isContract(_faultyBankrollManager));
+
         dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
     
         vm.startPrank(_sender);
@@ -175,24 +176,25 @@ contract DGBankrollFactoryTest is Test {
 
         assertEq(dgBankrollFactory.dgBankrollManager(), address(newBankrollManager));
     }
-
+    
     function test_setDgEscrow(address _sender, address _faultyEscrow) public {
         vm.assume(_sender != address(proxyAdmin));
         vm.assume(dgBankrollFactory.escrow() != _faultyEscrow);
+        vm.assume(!_isContract(_faultyEscrow));
 
         dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
-
-        //vm.startPrank(_sender);
-        ////vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
-        //dgBankrollFactory.setDgEscrow(_faultyEscrow);
-        //vm.stopPrank();
+    
+        vm.startPrank(_sender);
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        dgBankrollFactory.setDgEscrow(_faultyEscrow);
+        vm.stopPrank();
 
         DGEscrow newEscrow = new DGEscrow(1 weeks, address(dgBankrollManager));
 
         vm.prank(_sender);
-        dgBankrollFactory.setDgBankrollManager(address(newEscrow));
+        dgBankrollFactory.setDgEscrow(address(newEscrow));
 
-        assertEq(dgBankrollFactory.dgBankrollManager(), address(newEscrow));
+        assertEq(dgBankrollFactory.escrow(), address(newEscrow));
     }
 
     function test_setDgBankrollManager_incorrectRole(address _sender, address _bankrollManager) public {

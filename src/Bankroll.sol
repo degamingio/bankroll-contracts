@@ -234,9 +234,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
      *
      */
     function withdrawalStageOne(uint256 _amount) external {
-        // Check so that event period timestamp has passed
-        if (block.timestamp < withdrawalLimitOf[msg.sender]) revert DGErrors.WITHDRAWAL_TIMESTAMP_HASNT_PASSED();
-
         // Make sure that LPs don't try to withdraw more than they have
         if (_amount > sharesOf[msg.sender]) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
 
@@ -249,6 +246,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
             block.timestamp < withdrawalInfo.timestamp + withdrawalWindowLength
         ) revert DGErrors.WITHDRAWAL_PROCESS_IN_STAGING();
 
+        // Check so that event period timestamp has passed
+        if (block.timestamp < withdrawalLimitOf[msg.sender]) revert DGErrors.WITHDRAWAL_TIMESTAMP_HASNT_PASSED();
+        
         // Update withdrawalInfo of LP
         withdrawalInfoOf[msg.sender] = DGDataTypes.WithdrawalInfo(
             block.timestamp,
@@ -435,6 +435,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         // Grant new bankroll manager role
         _grantRole(BANKROLL_MANAGER, _newBankrollManager);
     }
+
     /**
      * @notice Change staging event period for LPs
      *  Only callable by ADMIN

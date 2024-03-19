@@ -176,4 +176,29 @@ contract DGEscrowTest is Test {
 
         assertEq(token.balanceOf(player), 500_001e6);
     }
+
+    function test_updateManager_escrow(address _faultyManager) external {
+        vm.assume(!_isContract(_faultyManager));
+
+        address oldManager = address(dgEscrow.dgBankrollManager());
+
+        DGBankrollManager newManager = new DGBankrollManager(admin);
+
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        dgEscrow.updateBankrollManager(_faultyManager);
+
+        dgEscrow.updateBankrollManager(address(newManager));
+
+        assertNotEq(oldManager, address(newManager));
+    }
+
+    function _isContract(address _address) internal view returns (bool _isAddressContract) {
+        uint256 size;
+
+        assembly {
+            size := extcodesize(_address)
+        }
+
+        _isAddressContract = size > 0;
+    }
 }
