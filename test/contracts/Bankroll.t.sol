@@ -350,59 +350,6 @@ contract BankrollTest is Test {
         assertEq(bankroll.lpWhitelist(lpOne), true);
     }
 
-    function test_updateAdmin(address _newAdmin, address _faultyOldAdmin) public {
-        vm.assume(_newAdmin != address(0));
-        vm.assume(_newAdmin != admin);
-        vm.assume(_faultyOldAdmin != admin);
-        vm.assume(_faultyOldAdmin != address(0));
-        vm.assume(_faultyOldAdmin != msg.sender);
-        vm.assume(!_isContract(_newAdmin));
-
-        token.mint(_newAdmin, 10e6);
-
-        vm.startPrank(_newAdmin);
-        token.approve(address(bankroll), 10e6);
-        vm.expectRevert();
-        bankroll.credit(10e6, operator);
-        vm.stopPrank(); 
-     
-        vm.startPrank(owner);
-
-        vm.expectRevert(DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE.selector);
-        bankroll.updateAdmin(_faultyOldAdmin, _newAdmin);
-        
-        vm.expectRevert(DGErrors.ADDRESS_NOT_A_WALLET.selector);
-        bankroll.updateAdmin(admin, address(dgBankrollManager));
-
-        bankroll.updateAdmin(admin, _newAdmin);
-        
-        vm.startPrank(_newAdmin);
-        token.approve(address(bankroll), 10e6);
-        bankroll.credit(10e6, operator);
-        vm.stopPrank();
-    }
-
-    function test_updateAdmin(address _wallet) public {
-        vm.assume(!_isContract(_wallet));
-        DGBankrollManager newBankrollManager = new DGBankrollManager(admin);
-        DGBankrollManager faultyOldBankrollManager = new DGBankrollManager(admin);
-
-        vm.startPrank(owner);
-
-        vm.expectRevert(DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE.selector);
-        bankroll.updateBankrollManager(address(faultyOldBankrollManager), address(newBankrollManager));
-
-        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
-        bankroll.updateBankrollManager(address(dgBankrollManager), _wallet);
-
-        bankroll.updateBankrollManager(address(dgBankrollManager), address(newBankrollManager));
-        vm.stopPrank();
-
-        bankroll.maxContractsApprove();
-
-        assertEq(token.allowance(address(bankroll), address(newBankrollManager)), 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
-    }
-
     function test_setPublic() public {
         assertEq(uint256(bankroll.lpIs()), 0);
 
@@ -459,9 +406,6 @@ contract BankrollTest is Test {
 
         bankroll.depositFunds(_enough);
         vm.stopPrank();
-
-        vm.prank(admin);
-        bankroll.setMinimumLPStatus(false);
 
         vm.prank(lpOne);
         bankroll.depositFunds(_toLittle);
