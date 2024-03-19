@@ -196,6 +196,8 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         // Check if the bankroll has a minimum lp and if so that the deposition exceeds it
         if (_amount < minimumLp) revert DGErrors.DEPOSITION_TO_LOW(); 
 
+        uint256 liq = liquidity();
+
         // fetch balance before
         uint256 balanceBefore = token.balanceOf(address(this));
 
@@ -213,7 +215,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         if (totalSupply == 0) {
             shares = amount;
         } else {
-            shares = (amount * totalSupply) / liquidity();
+            shares = (amount * totalSupply) / liq;
         }
 
         // mint shares to the user
