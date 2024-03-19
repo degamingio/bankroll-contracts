@@ -11,25 +11,6 @@ import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
  */
 interface IDGBankrollManager {
     /**
-     * @notice Update the ADMIN role
-     *  Only calleable by contract owner
-     *
-     * @param _oldAdmin address of the old admin
-     * @param _newAdmin address of the new admin
-     *
-     */
-    function updateAdmin(address _oldAdmin, address _newAdmin) external;
-    
-    /**
-     * @notice
-     *  Set the address of the dg factory address
-     *
-     * @param _factory bankroll factory contract address to be approved
-     *
-     */
-    function setFactory(address _factory) external;
-    
-    /**
      * @notice
      *  Approve a bankroll to use the DeGaming Bankroll Manager
      *  Only the contract owner can execute this operation

@@ -211,7 +211,7 @@ contract DGEscrow is AccessControl {
         DGDataTypes.EscrowEntry memory entry = _decode(_id);
 
         // Make sure that the event period is actually passed
-        if (block.timestamp > entry.timestamp + eventPeriod) revert DGErrors.EVENT_PERIOD_NOT_PASSED();
+        if (block.timestamp < entry.timestamp + eventPeriod) revert DGErrors.EVENT_PERIOD_NOT_PASSED();
 
         // Check so that msg.sender is the player of the entry
         if (msg.sender != entry.player) revert DGErrors.UNAUTHORIZED_CLAIM();
@@ -247,53 +247,6 @@ contract DGEscrow is AccessControl {
      */
     function setEventPeriod(uint256 _newEventPeriod) external onlyRole(ADMIN) {
         eventPeriod = _newEventPeriod;
-    }
-
-    /**
-     * @notice Update the ADMIN role
-     *  Only calleable by contract owner
-     *
-     * @param _oldAdmin address of the old admin
-     * @param _newAdmin address of the new admin
-     *
-     */
-    function updateAdmin(address _oldAdmin, address _newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        // Check that _oldAdmin address is valid
-        if (!hasRole(ADMIN, _oldAdmin)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
-
-        // Make sure so that admin address is a wallet
-        if (_isContract(_newAdmin)) revert DGErrors.ADDRESS_NOT_A_WALLET();
-
-        // Revoke the old admins role
-        _revokeRole(ADMIN, _oldAdmin);
-
-        // Grant the new admin the ADMIN role
-        _grantRole(ADMIN, _newAdmin);
-    }
-
-    /**
-     * @notice Update the BANKROLL_MANAGER role
-     *  Only calleable by contract owner
-     *
-     * @param _oldBankrollManager address of the old bankroll manager
-     * @param _newBankrollManager address of the new bankroll manager
-     *
-     */
-    function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        // Check that _oldBankrollManager is valid
-        if (!hasRole(BANKROLL_MANAGER, _oldBankrollManager)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
-
-        // Check so that bankroll manager actually is a contract
-        if (!_isContract(_newBankrollManager)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
-
-        // Revoke the old bankroll managers role
-        _revokeRole(BANKROLL_MANAGER, _oldBankrollManager);
-
-        // Grant the new bankroll manager the BANKROLL_MANAGER role
-        _grantRole(BANKROLL_MANAGER, _newBankrollManager);
-
-        // Update BankrollManager Contract
-        dgBankrollManager = IDGBankrollManager(_newBankrollManager);
     }
 
     //     ____      __                        __   ______                 __  _

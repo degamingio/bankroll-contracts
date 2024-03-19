@@ -75,4 +75,7 @@ library DGErrors {
 
     /// @dev Error thrown when someone unauthorized is trying to claim
     error UNAUTHORIZED_CLAIM();
+
+    /// @dev Error thrown if wallet is not EOA
+    error NOT_AN_EOA_WALLET();
 }

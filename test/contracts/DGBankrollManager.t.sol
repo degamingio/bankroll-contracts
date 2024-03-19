@@ -109,10 +109,6 @@ contract DGBankrollManagerTest is Test {
         mockToken.approve(address(bankroll), 1_000_000e6);
     }
 
-    function test_tokenAddress() public{
-        assertEq(bankroll.viewTokenAddress(), address(mockToken));
-    }
-
     function test_claimProfit() public {    
         vm.prank(admin);
         bankroll.credit(1_000_000e6, operator);

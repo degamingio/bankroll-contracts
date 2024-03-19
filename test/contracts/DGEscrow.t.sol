@@ -88,11 +88,12 @@ contract DGEscrowTest is Test {
         bankroll.depositFunds(1_000_000e6);
         vm.stopPrank();
 
-        vm.prank(admin);
+        vm.startPrank(admin);
 
         bankroll.changeEscrowThreshold(5_000);
 
         bankroll.maxContractsApprove();
+        vm.stopPrank();
     }
 
     function test_depositFundsEscrow() public {

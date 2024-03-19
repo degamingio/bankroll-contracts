@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 /**
  * @title IBankroll V2
@@ -115,39 +116,13 @@ interface IBankroll {
      */
     function nullGgrOf(address _operator) external;
 
-    /**
-     * @notice Update the ADMIN role
-     *  Only calleable by contract owner
-     *
-     * @param _oldAdmin address of the old admin
-     * @param _newAdmin address of the new admin
-     *
-     */
-    function updateAdmin(address _oldAdmin, address _newAdmin) external;
-
-    /**
-     * @notice Update the BANKROLL_MANAGER role
-     *  Only calleable by contract owner
-     *
-     * @param _oldBankrollManager address of the old bankroll manager
-     * @param _newBankrollManager address of the new bankroll manager
-     *
-     */
-    function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external;
-
     //   _    ___                 ______                 __  _
     //  | |  / (_)__ _      __   / ____/_  ______  _____/ /_(_)___  ____  _____
     //  | | / / / _ \ | /| / /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
     //  | |/ / /  __/ |/ |/ /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
     //  |___/_/\___/|__/|__/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
-    /**
-     * @notice Returns the adddress of the token associated with this bankroll
-     *
-     * @return _token token address
-     *
-     */
-    function viewTokenAddress() external view returns (address _token);
+    function token() external view returns (IERC20Upgradeable token);
 
     /**
      * @notice Returns the amount of ERC20 tokens held by the bankroll that are available for playes to win and

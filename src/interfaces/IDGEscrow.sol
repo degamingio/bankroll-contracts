@@ -63,24 +63,4 @@ interface IDGEscrow {
      *
      */
     function setEventPeriod(uint256 _newEventPeriod) external;
-
-    /**
-     * @notice Update the ADMIN role
-     *  Only calleable by contract owner
-     *
-     * @param _oldAdmin address of the old admin
-     * @param _newAdmin address of the new admin
-     *
-     */
-    function updateAdmin(address _oldAdmin, address _newAdmin) external;
-
-    /**
-     * @notice Update the BANKROLL_MANAGER role
-     *  Only calleable by contract owner
-     *
-     * @param _oldBankrollManager address of the old bankroll manager
-     * @param _newBankrollManager address of the new bankroll manager
-     *
-     */
-    function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external;
 }
