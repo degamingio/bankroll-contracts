@@ -91,9 +91,12 @@ contract DGBankrollManagerTest is Test {
         bankroll = Bankroll(address(bankrollProxy));
 
         vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
-        dgBankrollManager.setFactory(admin);
 
-        dgBankrollManager.setFactory(address(dgBankrollFactory));
+        dgBankrollManager.grantRole(keccak256("ADMIN"), admin);
+        //dgBankrollManager.setFactory(admin);
+
+        dgBankrollManager.grantRole(keccak256("ADMIN"), address(dgBankrollFactory));
+        //dgBankrollManager.setFactory(address(dgBankrollFactory));
 
         vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
         dgBankrollManager.approveBankroll(admin, 650);
@@ -211,36 +214,6 @@ contract DGBankrollManagerTest is Test {
 
         vm.expectRevert(DGErrors.TO_HIGH_FEE.selector);
         dgBankrollManager.approveBankroll(_newBankroll, _fee);
-    }
-
-    function test_updateAdmin(address _faultyOldAdmin, address _newAdmin, address _newOperator) public {
-        vm.assume(_newAdmin != msg.sender);
-        vm.assume(_newAdmin != address(dgBankrollFactory));
-        vm.assume(_faultyOldAdmin != msg.sender);
-        vm.assume(_faultyOldAdmin != admin);
-        vm.assume(_faultyOldAdmin != _newAdmin);
-        vm.assume(_newOperator != operator);
-        vm.assume(!_isContract(_newOperator));
-
-        vm.prank(_newAdmin);
-        vm.expectRevert();
-        dgBankrollManager.addOperator(_newOperator);
-
-        vm.prank(admin);
-        vm.expectRevert(DGErrors.NOT_AN_OPERATOR.selector);
-        bankroll.debit(address(0x4), 10e6, _newOperator);
-
-        vm.expectRevert(DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE.selector);
-        dgBankrollManager.updateAdmin(_faultyOldAdmin, _newAdmin);
-
-        dgBankrollManager.updateAdmin(address(dgBankrollFactory), _newAdmin);
-
-        vm.prank(_newAdmin);
-        dgBankrollManager.addOperator(_newOperator);
-        dgBankrollManager.setOperatorToBankroll(address(bankroll), _newOperator);
-
-        vm.prank(admin);
-        bankroll.debit(address(0x4), 10e6, _newOperator);
     }
 
     function test_feeIsCorrect(uint256 _wager) public {

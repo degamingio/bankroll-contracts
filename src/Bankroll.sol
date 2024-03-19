@@ -297,7 +297,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
 
         // Check so that operator is associated with this bankroll
-        if (!dgBankrollManager.operatorOfBankroll(_operator, address(this))) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
+        if (!dgBankrollManager.operatorOfBankroll(address(this), _operator)) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
 
         // Check to make sure that wallet is EOA
         if (_isContract(_player)) revert DGErrors.NOT_AN_EOA_WALLET();
@@ -365,7 +365,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
 
         // Check so that operator is associated with this bankroll
-        if (!dgBankrollManager.operatorOfBankroll(_operator, address(this))) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
+        if (!dgBankrollManager.operatorOfBankroll(address(this), _operator)) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
 
         // fetch balance before
         uint256 balanceBefore = token.balanceOf(address(this));
