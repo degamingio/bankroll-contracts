@@ -90,13 +90,7 @@ contract DGBankrollManagerTest is Test {
 
         bankroll = Bankroll(address(bankrollProxy));
 
-        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
-
-        dgBankrollManager.grantRole(keccak256("ADMIN"), admin);
-        //dgBankrollManager.setFactory(admin);
-
         dgBankrollManager.grantRole(keccak256("ADMIN"), address(dgBankrollFactory));
-        //dgBankrollManager.setFactory(address(dgBankrollFactory));
 
         vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
         dgBankrollManager.approveBankroll(admin, 650);

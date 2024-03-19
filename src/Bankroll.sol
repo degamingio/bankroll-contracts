@@ -196,6 +196,8 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         // Check if the bankroll has a minimum lp and if so that the deposition exceeds it
         if (_amount < minimumLp) revert DGErrors.DEPOSITION_TO_LOW(); 
 
+        // store liquidity variable to calculate amounts of shares minted, since 
+        // the liquidity() result will change before we have the amount variable
         uint256 liq = liquidity();
 
         // fetch balance before
