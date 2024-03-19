@@ -51,6 +51,8 @@ interface IDGBankrollManager {
      */
     function setOperatorToBankroll(address _bankroll, address _operator) external;
 
+    function removeOperatorFromBankroll(address _operator, address _bankroll) external;
+
     function blockOperator(address _operator) external;
 
     //     ______     __                        __   ______                 __  _

@@ -222,6 +222,9 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
             operatorsOf[_bankroll][operatorIndex] = operatorsOf[_bankroll][operatorsOf[_bankroll].length - 1];
         }
 
+        // Set operator of bankroll status to true
+        operatorOfBankroll[_bankroll][_operator] = false;
+
         // Remove the last index in the list since this will now be a duplicate
         operatorsOf[_bankroll].pop();
     }
