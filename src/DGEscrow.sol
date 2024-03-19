@@ -53,6 +53,9 @@ contract DGEscrow is AccessControl {
         // Set event period
         eventPeriod = _eventPeriod;
 
+        // Make sure that bankroll manager address actully is a contract
+        if (!_isContract(_bankrollManager)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+
         // Setup bankroll manager instance
         dgBankrollManager = IDGBankrollManager(_bankrollManager);
 
@@ -236,6 +239,21 @@ contract DGEscrow is AccessControl {
 
         // Emit event stating that the escrow is payed out
         emit DGEvents.EscrowPayed(msg.sender, _id, amount);
+    }
+
+    /**
+     * @notice
+     *  Allows admin to update bankroll manager contract
+     *
+     * @param _newBankrollManager address of the new bankroll manager
+     *
+     */
+    function updateBankrollManager(address _newBankrollManager) external onlyRole(ADMIN) {
+        // Make sure that the new bankroll manager is a contract
+        if (!_isContract(_newBankrollManager)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+
+        // set the new bankroll manager
+        dgBankrollManager = IDGBankrollManager(_newBankrollManager);
     }
 
     /**

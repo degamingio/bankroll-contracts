@@ -416,6 +416,26 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     }
 
     /**
+     * @notice
+     *  Allows admin to update bankroll manager contract
+     *
+     * @param _newBankrollManager address of the new bankroll manager
+     *
+     */
+    function updateBankrollManager(address _newBankrollManager) external onlyRole(ADMIN) {
+        // Make sure that the new bankroll manager is a contract
+        if (!_isContract(_newBankrollManager)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+
+        // Revoke old bankroll manager role
+        _revokeRole(BANKROLL_MANAGER, address(dgBankrollManager));
+
+        // set the new bankroll manager
+        dgBankrollManager = IDGBankrollManager(_newBankrollManager);
+
+        // Grant new bankroll manager role
+        _grantRole(BANKROLL_MANAGER, _newBankrollManager);
+    }
+    /**
      * @notice Change staging event period for LPs
      *  Only callable by ADMIN
      *
