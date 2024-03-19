@@ -46,6 +46,11 @@ contract DGEscrow is AccessControl {
     //  / /___/ /_/ / / / (__  ) /_/ /  / /_/ / /__/ /_/ /_/ / /
     //  \____/\____/_/ /_/____/\__/_/   \__,_/\___/\__/\____/_/
 
+    /**
+     * @param _eventPeriod event period in seconds
+     * @param _bankrollManager address of bankrollmanager
+     *
+     */
     constructor(uint256 _eventPeriod, address _bankrollManager) {
         // Set event period
         eventPeriod = _eventPeriod;

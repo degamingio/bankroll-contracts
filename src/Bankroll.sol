@@ -52,8 +52,8 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     /// @dev WithdrawalWindow length
     uint256 public withdrawalWindowLength;
 
-    /// @dev Minimum time between staging
-    uint256 public stagingEventPeriod;
+    /// @dev Minimum time between withdrawal step one
+    uint256 public withdrawalEventPeriod;
 
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
@@ -152,7 +152,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         withdrawalWindowLength = 5 minutes;
 
         // Set default staging period
-        stagingEventPeriod = 1 hours;
+        withdrawalEventPeriod = 1 hours;
 
         // Setup bankroll manager
         dgBankrollManager = IDGBankrollManager(_bankrollManager);
@@ -257,7 +257,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         );
 
         // Set new withdrawal Limit of LP
-        withdrawalLimitOf[msg.sender] = block.timestamp + stagingEventPeriod;
+        withdrawalLimitOf[msg.sender] = block.timestamp + withdrawalEventPeriod;
 
         // Emit withdrawal staged event
         emit DGEvents.WithdrawalStaged(msg.sender, block.timestamp + withdrawalDelay, block.timestamp + withdrawalWindowLength);
@@ -437,14 +437,14 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     }
 
     /**
-     * @notice Change staging event period for LPs
+     * @notice Change withdrawal (stage one) event period for LPs
      *  Only callable by ADMIN
      *
-     * @param _stagingEventPeriod New staging event period in seconds
+     * @param _withdrawalEventPeriod New staging event period in seconds
      *
      */
-    function setStagingEventPeriod(uint256 _stagingEventPeriod) external onlyRole(ADMIN) {
-        stagingEventPeriod = _stagingEventPeriod;
+    function setWithdrawalEventPeriod(uint256 _withdrawalEventPeriod) external onlyRole(ADMIN) {
+        withdrawalEventPeriod = _withdrawalEventPeriod;
     }
 
     /**

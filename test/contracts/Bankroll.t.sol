@@ -194,7 +194,24 @@ contract BankrollTest is Test {
 
         vm.stopPrank();
     }
-    
+
+    function test_updateBankrollManager(address _wallet) public {
+        vm.assume(!_isContract(_wallet));
+        DGBankrollManager newBankrollManager = new DGBankrollManager(admin);
+
+        vm.startPrank(admin);
+
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        bankroll.updateBankrollManager(_wallet);
+
+        bankroll.updateBankrollManager(address(newBankrollManager));
+
+        bankroll.maxContractsApprove();
+
+        vm.stopPrank();
+        assertEq(token.allowance(address(bankroll), address(newBankrollManager)), 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
+    }
+
     function test_withdrawStageTwo() public {
         vm.startPrank(lpOne);
         token.approve(address(bankroll), 1_000_000e6);
@@ -205,6 +222,25 @@ contract BankrollTest is Test {
         vm.warp(3);
 
         bankroll.withdrawalStageTwo();
+
+        vm.stopPrank();
+    }
+
+    function test_setWithdrawalEventPeriod(uint256 _newEventPeriod) public{
+        vm.assume(_newEventPeriod < 45 minutes);
+        vm.assume(_newEventPeriod > 30 minutes);
+        vm.prank(admin);
+        bankroll.setWithdrawalEventPeriod(_newEventPeriod);
+
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000e6);
+        bankroll.depositFunds(1_000_000e6);
+
+        bankroll.withdrawalStageOne((bankroll.sharesOf(lpOne)) / 2);
+
+        vm.warp(_newEventPeriod + 1);
+
+        bankroll.withdrawalStageOne((bankroll.sharesOf(lpOne)) / 2);
 
         vm.stopPrank();
     }

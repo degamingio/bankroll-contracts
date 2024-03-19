@@ -168,7 +168,7 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
 
     /**
      * @notice 
-     *  Adding list of operator to list of operators associated with a bankroll
+     *  Adding operator to list of operators associated with a bankroll
      *  Only calleable by admin role
      *
      * @param _bankroll the bankroll contract address
@@ -195,6 +195,15 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
         isApproved[_operator] = true;
     }
 
+    /**
+     * @notice 
+     *  Remove operator from list of operators associated with a bankroll
+     *  Only calleable by admin role
+     *
+     * @param _bankroll the bankroll contract address
+     * @param _operator address of the operator we want to remove from the list of associated operators
+     *
+     */
     function removeOperatorFromBankroll(address _operator, address _bankroll) external onlyRole(ADMIN) {
         // Check that the bankroll is an approved DeGaming Bankroll
         if (!bankrollStatus[_bankroll]) revert DGErrors.BANKROLL_NOT_APPROVED();

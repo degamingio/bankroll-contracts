@@ -59,13 +59,22 @@ interface IBankroll {
     function setWithdrawalWindow(uint256 _withdrawalWindow) external;
 
     /**
+     * @notice
+     *  Allows admin to update bankroll manager contract
+     *
+     * @param _newBankrollManager address of the new bankroll manager
+     *
+     */
+    function updateBankrollManager(address _newBankrollManager) external;
+
+    /**
      * @notice Change staging event period for LPs
      *  Only callable by ADMIN
      *
-     * @param _stagingEventPeriod New staging event period in seconds
+     * @param _withdrawalEventPeriod New staging event period in seconds
      *
      */
-    function setStagingEventPeriod(uint256 _stagingEventPeriod) external;
+    function setWithdrawalEventPeriod(uint256 _withdrawalEventPeriod) external;
 
     /**
      * @notice Pay player amount in ERC20 tokens from the bankroll
