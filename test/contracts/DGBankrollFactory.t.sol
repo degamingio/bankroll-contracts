@@ -28,6 +28,7 @@ contract DGBankrollFactoryTest is Test {
     address lp;
     address player;
     uint256 maxRisk;
+    uint256 threshold;
     uint256 lpFee;
 
     TransparentUpgradeableProxy public bankrollFactoryProxy;
@@ -50,6 +51,7 @@ contract DGBankrollFactoryTest is Test {
         deGaming = address(0x5);
 
         maxRisk = 10_000;
+        threshold = 10_000;
 
         lpFee = 650;
 
@@ -81,41 +83,44 @@ contract DGBankrollFactoryTest is Test {
         dgBankrollManager.addOperator(operator);
     }
 
-    // function test_deployBankroll(address _operator, address _faultyToken, uint256 _faultyMaxRisk, bytes32 _salt) public {
-        // vm.assume(!_isContract(_operator));
-        // vm.assume(!_isContract(_faultyToken));
-        // vm.assume(_faultyMaxRisk > 10_000);
+    function test_deployBankroll(address _operator, address _faultyToken, uint256 _faultyMaxRisk, bytes32 _salt) public {
+        vm.assume(!_isContract(_operator));
+        vm.assume(!_isContract(_faultyToken));
+        vm.assume(_faultyMaxRisk > 10_000);
 
-        // vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
-        // dgBankrollFactory.deployBankroll(
-            // _faultyToken, 
-            // maxRisk, 
-            // _salt
-        // );
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        dgBankrollFactory.deployBankroll(
+            _faultyToken, 
+            maxRisk,
+            threshold, 
+            _salt
+        );
 
-        // vm.expectRevert(DGErrors.MAXRISK_TOO_HIGH.selector);
-        // dgBankrollFactory.deployBankroll(
-            // address(token), 
-            // _faultyMaxRisk, 
-            // _salt
-        // );
+        vm.expectRevert(DGErrors.MAXRISK_TOO_HIGH.selector);
+        dgBankrollFactory.deployBankroll(
+            address(token), 
+            _faultyMaxRisk,
+            threshold,
+            _salt
+        );
         
-        // dgBankrollFactory.deployBankroll(
-            // address(token), 
-            // maxRisk, 
-            // _salt
-        // );
+        dgBankrollFactory.deployBankroll(
+            address(token), 
+            maxRisk,
+            threshold, 
+            _salt
+        );
 
-        // dgBankrollManager.approveBankroll(
-            // dgBankrollFactory.bankrolls(0),
-            // lpFee
-        // );
+        dgBankrollManager.approveBankroll(
+            dgBankrollFactory.bankrolls(0),
+            lpFee
+        );
 
-        // dgBankrollManager.setOperatorToBankroll(
-            // dgBankrollFactory.bankrolls(0),
-            // _operator
-        // );
-    // }
+        dgBankrollManager.setOperatorToBankroll(
+            dgBankrollFactory.bankrolls(0),
+            _operator
+        );
+    }
 
     function test_setBankrollImplementation(address _sender, address _faultyBankroll) public {
         vm.assume(_sender != address(proxyAdmin));
@@ -155,7 +160,8 @@ contract DGBankrollFactoryTest is Test {
     function test_setDgBankrollManager(address _sender, address _faultyBankrollManager) public {
         vm.assume(_sender != address(proxyAdmin));
         vm.assume(dgBankrollFactory.dgBankrollManager() != _faultyBankrollManager);
-       
+        vm.assume(!_isContract(_faultyBankrollManager));
+
         dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
     
         vm.startPrank(_sender);
@@ -170,8 +176,27 @@ contract DGBankrollFactoryTest is Test {
 
         assertEq(dgBankrollFactory.dgBankrollManager(), address(newBankrollManager));
     }
-
     
+    function test_setDgEscrow(address _sender, address _faultyEscrow) public {
+        vm.assume(_sender != address(proxyAdmin));
+        vm.assume(dgBankrollFactory.escrow() != _faultyEscrow);
+        vm.assume(!_isContract(_faultyEscrow));
+
+        dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
+    
+        vm.startPrank(_sender);
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        dgBankrollFactory.setDgEscrow(_faultyEscrow);
+        vm.stopPrank();
+
+        DGEscrow newEscrow = new DGEscrow(1 weeks, address(dgBankrollManager));
+
+        vm.prank(_sender);
+        dgBankrollFactory.setDgEscrow(address(newEscrow));
+
+        assertEq(dgBankrollFactory.escrow(), address(newEscrow));
+    }
+
     function test_setDgBankrollManager_incorrectRole(address _sender, address _bankrollManager) public {
         vm.assume(_sender != address(proxyAdmin));
         vm.assume(dgBankrollFactory.hasRole(DEFAULT_ADMIN_ROLE_HASH, _sender) != true);

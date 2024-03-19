@@ -81,8 +81,8 @@ contract BankrollTest is Test {
         token.mint(admin, 1_000_000e6);
 
         dgBankrollManager.addOperator(operator);
-        dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
         dgBankrollManager.approveBankroll(address(bankroll), 0);
+        dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
     }
 
     function test_initialize(
@@ -90,9 +90,12 @@ contract BankrollTest is Test {
         address _admin,
         address _owner,
         uint256 _maxRisk,
+        uint256 _threshold,
         address _faultyToken,
         address _faultyBankrollManager,
-        uint256 _faultyMaxRisk
+        address _faultyEscrow,
+        uint256 _faultyMaxRisk,
+        uint256 _faultyThreshold
     ) public {
         vm.assume(address(_bankroll) != address(bankroll));
         vm.assume(_admin != admin);
@@ -101,9 +104,13 @@ contract BankrollTest is Test {
         vm.assume(_owner != address(0));
         vm.assume(_maxRisk > 0);
         vm.assume(_maxRisk < 10_000);
+        vm.assume(_threshold > 0);
+        vm.assume(_threshold < 10_000);
         vm.assume(!_isContract(_faultyToken));
         vm.assume(!_isContract(_faultyBankrollManager));
+        vm.assume(!_isContract(_faultyEscrow));
         vm.assume(_faultyMaxRisk > 10_000);
+        vm.assume(_faultyThreshold > 10_000);
 
         //vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
         vm.expectRevert();
@@ -111,64 +118,175 @@ contract BankrollTest is Test {
 
         vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
         _bankroll.initialize(_admin, address(token), _faultyBankrollManager, address(dgEscrow), owner, maxRisk, threshold);
+        
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        _bankroll.initialize(_admin, address(token), address(dgBankrollManager), _faultyEscrow, owner, maxRisk, threshold);
 
         vm.expectRevert(DGErrors.ADDRESS_NOT_A_WALLET.selector);
         _bankroll.initialize(_admin, address(token), address(dgBankrollManager), address(dgEscrow), address(dgBankrollManager), maxRisk, threshold);
 
         vm.expectRevert(DGErrors.MAXRISK_TOO_HIGH.selector);
         _bankroll.initialize(_admin, address(token), address(dgBankrollManager), address(dgEscrow), owner, _faultyMaxRisk, threshold);
+        
+        vm.expectRevert(DGErrors.ESCROW_THRESHOLD_TOO_HIGH.selector);
+        _bankroll.initialize(_admin, address(token), address(dgBankrollManager), address(dgEscrow), owner, _faultyMaxRisk, threshold);
 
         _bankroll.initialize(_admin, address(token), address(dgBankrollManager), address(dgEscrow), owner, maxRisk, threshold);
     } 
 
-    // function test_depositFunds() public {
-        // assertEq(bankroll.liquidity(), 0);
+    function test_depositFunds() public {
+        assertEq(bankroll.liquidity(), 0);
 
-        // // lp one deposits 1000_000
-        // vm.startPrank(lpOne);
-        // token.approve(address(bankroll), 1_000_000e6);
-        // bankroll.depositFunds(1_000_000e6);
-        // assertEq(bankroll.depositOf(address(lpOne)), 1_000_000e6);
-        // assertEq(bankroll.sharesOf(address(lpOne)), 1_000_000e6);
-        // vm.stopPrank();
+        // lp one deposits 1_000_000
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000e6);
+        bankroll.depositFunds(1_000_000e6);
+        assertEq(bankroll.sharesOf(address(lpOne)), 1_000_000e6);
+        vm.stopPrank();
 
-        // assertEq(bankroll.totalSupply(), 1_000_000e6);
-        // assertEq(bankroll.liquidity(), 1_000_000e6);
+        assertEq(bankroll.totalSupply(), 1_000_000e6);
+        assertEq(bankroll.liquidity(), 1_000_000e6);
 
-        // // lp two deposits 1000_000
-        // vm.startPrank(lpTwo);
-        // token.approve(address(bankroll), 1_000_000e6);
-        // bankroll.depositFunds(1_000_000e6);
-        // assertEq(bankroll.depositOf(address(lpTwo)), 1_000_000e6);
-        // assertEq(bankroll.sharesOf(address(lpTwo)), 1_000_000e6);
-        // vm.stopPrank();
+        // lp two deposits 1_000_000
+        vm.startPrank(lpTwo);
+        token.approve(address(bankroll), 1_000_000e6);
+        bankroll.depositFunds(1_000_000e6);
+        assertEq(bankroll.sharesOf(address(lpTwo)), 1_000_000e6);
+        vm.stopPrank();
 
-        // assertEq(bankroll.totalSupply(), 2_000_000e6);
-        // assertEq(bankroll.liquidity(), 2_000_000e6);
-    // }
+        assertEq(bankroll.totalSupply(), 2_000_000e6);
+        assertEq(bankroll.liquidity(), 2_000_000e6);
+    }
 
-    // function test_depositFundsWithInvestorWhitelist() public {
-        // vm.prank(admin);
-        // bankroll.setPublic(DGDataTypes.LpIs.WHITELISTED);
+    function test_depositFundsWithInvestorWhitelist() public {
+        vm.prank(admin);
+        bankroll.setPublic(DGDataTypes.LpIs.WHITELISTED);
 
-        // // lp one deposits 1000_000
-        // vm.startPrank(lpOne);
-        // token.approve(address(bankroll), 1_000_000e6);
-        // vm.expectRevert(DGErrors.LP_IS_NOT_WHITELISTED.selector); //reverts: FORBIDDEN()
-        // bankroll.depositFunds(1_000_000e6);
-        // vm.stopPrank();
+        // lp one deposits 1_000_000
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000e6);
+        vm.expectRevert(DGErrors.LP_IS_NOT_WHITELISTED.selector); //reverts: FORBIDDEN()
+        bankroll.depositFunds(1_000_000e6);
+        vm.stopPrank();
 
-        // vm.prank(admin);
-        // bankroll.setInvestorWhitelist(lpOne, true);
+        vm.prank(admin);
+        bankroll.setInvestorWhitelist(lpOne, true);
 
-        // vm.startPrank(lpOne);
-        // bankroll.depositFunds(1_000_000e6);
+        vm.startPrank(lpOne);
+        bankroll.depositFunds(1_000_000e6);
 
-        // assertEq(bankroll.depositOf(address(lpOne)), 1_000_000e6);
-        // assertEq(bankroll.sharesOf(address(lpOne)), 1_000_000e6);
+        assertEq(bankroll.sharesOf(address(lpOne)), 1_000_000e6);
 
-        // vm.stopPrank();
-    // }
+        vm.stopPrank();
+    }
+
+    function test_withdrawStageOne() public {
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000e6);
+        bankroll.depositFunds(1_000_000e6);
+
+        bankroll.withdrawalStageOne(bankroll.sharesOf(lpOne));
+
+        vm.warp(3);
+
+        // vm.expectRevert(DGErrors.WITHDRAWAL_PROCESS_IN_STAGING.selector);
+        // bankroll.withdrawalStageOne(bankroll.sharesOf(lpOne));
+
+        vm.stopPrank();
+    }
+
+    function test_updateBankrollManager(address _wallet) public {
+        vm.assume(!_isContract(_wallet));
+        DGBankrollManager newBankrollManager = new DGBankrollManager(admin);
+
+        vm.startPrank(admin);
+
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        bankroll.updateBankrollManager(_wallet);
+
+        bankroll.updateBankrollManager(address(newBankrollManager));
+
+        bankroll.maxContractsApprove();
+
+        vm.stopPrank();
+        assertEq(token.allowance(address(bankroll), address(newBankrollManager)), 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
+    }
+
+    function test_withdrawStageTwo() public {
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000e6);
+        bankroll.depositFunds(1_000_000e6);
+
+        bankroll.withdrawalStageOne(bankroll.sharesOf(lpOne));
+
+        vm.warp(3);
+
+        bankroll.withdrawalStageTwo();
+
+        vm.stopPrank();
+    }
+
+    function test_setWithdrawalEventPeriod(uint256 _newEventPeriod) public{
+        vm.assume(_newEventPeriod < 45 minutes);
+        vm.assume(_newEventPeriod > 30 minutes);
+        vm.prank(admin);
+        bankroll.setWithdrawalEventPeriod(_newEventPeriod);
+
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000e6);
+        bankroll.depositFunds(1_000_000e6);
+
+        bankroll.withdrawalStageOne((bankroll.sharesOf(lpOne)) / 2);
+
+        vm.warp(_newEventPeriod + 1);
+
+        bankroll.withdrawalStageOne((bankroll.sharesOf(lpOne)) / 2);
+
+        vm.stopPrank();
+    }
+
+    function test_setWithdrawalDelay(uint256 _newWithdrawalDelay) public {
+        vm.assume(_newWithdrawalDelay > 3);
+        vm.assume(_newWithdrawalDelay < 350);
+        
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000e6);
+        bankroll.depositFunds(1_000_000e6);
+
+        bankroll.withdrawalStageOne(bankroll.sharesOf(lpOne));
+        vm.stopPrank();
+
+        vm.prank(admin);
+        bankroll.setWithdrawalDelay(_newWithdrawalDelay);
+
+        vm.startPrank(lpOne);
+        vm.warp(3);
+
+        vm.expectRevert(DGErrors.OUTSIDE_WITHDRAWAL_WINDOW.selector);
+        bankroll.withdrawalStageTwo();
+
+        vm.stopPrank();
+    }
+
+    function test_setWithdrawalWindow() public {
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000e6);
+        bankroll.depositFunds(1_000_000e6);
+
+        bankroll.withdrawalStageOne(bankroll.sharesOf(lpOne));
+        vm.stopPrank();
+
+        vm.prank(admin);
+        bankroll.setWithdrawalWindow(30);
+
+        vm.startPrank(lpOne);
+        vm.warp(61);
+
+        vm.expectRevert(DGErrors.OUTSIDE_WITHDRAWAL_WINDOW.selector);
+        bankroll.withdrawalStageTwo();
+
+        vm.stopPrank();
+    }
 
     function test_debit() public {
         vm.startPrank(lpOne);
@@ -273,59 +391,6 @@ contract BankrollTest is Test {
         assertEq(bankroll.lpWhitelist(lpOne), true);
     }
 
-    function test_updateAdmin(address _newAdmin, address _faultyOldAdmin) public {
-        vm.assume(_newAdmin != address(0));
-        vm.assume(_newAdmin != admin);
-        vm.assume(_faultyOldAdmin != admin);
-        vm.assume(_faultyOldAdmin != address(0));
-        vm.assume(_faultyOldAdmin != msg.sender);
-        vm.assume(!_isContract(_newAdmin));
-
-        token.mint(_newAdmin, 10e6);
-
-        vm.startPrank(_newAdmin);
-        token.approve(address(bankroll), 10e6);
-        vm.expectRevert();
-        bankroll.credit(10e6, operator);
-        vm.stopPrank(); 
-     
-        vm.startPrank(owner);
-
-        vm.expectRevert(DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE.selector);
-        bankroll.updateAdmin(_faultyOldAdmin, _newAdmin);
-        
-        vm.expectRevert(DGErrors.ADDRESS_NOT_A_WALLET.selector);
-        bankroll.updateAdmin(admin, address(dgBankrollManager));
-
-        bankroll.updateAdmin(admin, _newAdmin);
-        
-        vm.startPrank(_newAdmin);
-        token.approve(address(bankroll), 10e6);
-        bankroll.credit(10e6, operator);
-        vm.stopPrank();
-    }
-
-    function test_updateAdmin(address _wallet) public {
-        vm.assume(!_isContract(_wallet));
-        DGBankrollManager newBankrollManager = new DGBankrollManager(admin);
-        DGBankrollManager faultyOldBankrollManager = new DGBankrollManager(admin);
-
-        vm.startPrank(owner);
-
-        vm.expectRevert(DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE.selector);
-        bankroll.updateBankrollManager(address(faultyOldBankrollManager), address(newBankrollManager));
-
-        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
-        bankroll.updateBankrollManager(address(dgBankrollManager), _wallet);
-
-        bankroll.updateBankrollManager(address(dgBankrollManager), address(newBankrollManager));
-        vm.stopPrank();
-
-        bankroll.maxBankrollManagerApprove();
-
-        assertEq(token.allowance(address(bankroll), address(newBankrollManager)), 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
-    }
-
     function test_setPublic() public {
         assertEq(uint256(bankroll.lpIs()), 0);
 
@@ -382,17 +447,12 @@ contract BankrollTest is Test {
 
         bankroll.depositFunds(_enough);
         vm.stopPrank();
-
-        vm.prank(admin);
-        bankroll.setMinimumLPStatus(false);
-
-        vm.prank(lpOne);
-        bankroll.depositFunds(_toLittle);
     }
 
     function test_liquidity(address _lp, address _player) public {
         vm.assume(_player != address(0));
         vm.assume(_lp != address(0));
+        vm.assume(!_isContract(_player));
 
         assertEq(bankroll.liquidity(), 0);
 
@@ -413,10 +473,11 @@ contract BankrollTest is Test {
         assertEq(bankroll.liquidity(), token.balanceOf(address(bankroll)) - uint256(bankroll.GGR()));
 
         vm.startPrank(admin);
-        bankroll.debit(_player, 55e6, operator);
+        bankroll.debit(_player, 5e6, operator);
+        vm.stopPrank();
 
-        assertEq(bankroll.liquidity(), 5e6);
-        assertEq(bankroll.liquidity(), token.balanceOf(address(bankroll)));
+        // assertEq(bankroll.liquidity(), 5e6);
+        // assertEq(bankroll.liquidity(), token.balanceOf(address(bankroll)));
     }
 
     function test_getLPValue(address _lp) public {

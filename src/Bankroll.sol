@@ -52,11 +52,8 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     /// @dev WithdrawalWindow length
     uint256 public withdrawalWindowLength;
 
-    /// @dev Minimum time between staging
-    uint256 public stagingEventPeriod;
-
-    /// @dev Status regarding if bankroll has minimum for LPs to pool
-    bool public hasMinimumLP = false;
+    /// @dev Minimum time between withdrawal step one
+    uint256 public withdrawalEventPeriod;
 
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
@@ -125,8 +122,8 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         uint256 _maxRiskPercentage,
         uint256 _escrowThreshold
     ) external initializer {
-        // Check so that both bankroll manager and token are contracts
-        if (!_isContract(_bankrollManager) || !_isContract(_token)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+        // Check so that both bankroll manager,token and escrow are contracts
+        if (!_isContract(_bankrollManager) || !_isContract(_token) || !_isContract(_escrow)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
 
         // Check so that owner is not a contract
         if (_isContract(_owner)) revert DGErrors.ADDRESS_NOT_A_WALLET();
@@ -147,6 +144,15 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
 
         // Set escrow threshold
         escrowTreshold = _escrowThreshold;
+
+        // Set default withdrawal delay in seconfs
+        withdrawalDelay = 1;
+
+        // Set default withdrawal window
+        withdrawalWindowLength = 5 minutes;
+
+        // Set default staging period
+        withdrawalEventPeriod = 1 hours;
 
         // Setup bankroll manager
         dgBankrollManager = IDGBankrollManager(_bankrollManager);
@@ -188,21 +194,11 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         ) revert DGErrors.LP_IS_NOT_WHITELISTED();
 
         // Check if the bankroll has a minimum lp and if so that the deposition exceeds it
-        if (
-            hasMinimumLP &&
-            _amount < minimumLp
-        ) revert DGErrors.DEPOSITION_TO_LOW(); 
+        if (_amount < minimumLp) revert DGErrors.DEPOSITION_TO_LOW(); 
 
-        // calculate the amount of shares to mint
-        uint256 shares;
-        if (totalSupply == 0) {
-            shares = _amount;
-        } else {
-            shares = (_amount * totalSupply) / liquidity();
-        }
-
-        // mint shares to the user
-        _mint(msg.sender, shares);
+        // store liquidity variable to calculate amounts of shares minted, since 
+        // the liquidity() result will change before we have the amount variable
+        uint256 liq = liquidity();
 
         // fetch balance before
         uint256 balanceBefore = token.balanceOf(address(this));
@@ -215,6 +211,17 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
 
         // amount variable calculated from recieved balances
         uint256 amount = balanceAfter - balanceBefore;
+        
+        // calculate the amount of shares to mint
+        uint256 shares;
+        if (totalSupply == 0) {
+            shares = amount;
+        } else {
+            shares = (amount * totalSupply) / liq;
+        }
+
+        // mint shares to the user
+        _mint(msg.sender, shares);
 
         // Emit a funds deposited event 
         emit DGEvents.FundsDeposited(msg.sender, amount);
@@ -227,9 +234,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
      *
      */
     function withdrawalStageOne(uint256 _amount) external {
-        // Check so that event period timestamp has passed
-        if (block.timestamp < withdrawalLimitOf[msg.sender]) revert DGErrors.WITHDRAWAL_TIMESTAMP_HASNT_PASSED();
-
         // Make sure that LPs don't try to withdraw more than they have
         if (_amount > sharesOf[msg.sender]) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
 
@@ -239,28 +243,24 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         // Make sure that previous withdrawal is either fullfilled or window has passed
         if (
             withdrawalInfo.stage == DGDataTypes.WithdrawalIs.STAGED &&
-            block.timestamp < withdrawalInfo.timestampMax
+            block.timestamp < withdrawalInfo.timestamp + withdrawalWindowLength
         ) revert DGErrors.WITHDRAWAL_PROCESS_IN_STAGING();
 
-        // Set minimum withdrawal claiming timestamp
-        uint256 timestampMin = block.timestamp + withdrawalDelay;
-
-        // Set maximum withdrawl claiming timestamp
-        uint256 timestampMax = timestampMin + withdrawalWindowLength;
-
+        // Check so that event period timestamp has passed
+        if (block.timestamp < withdrawalLimitOf[msg.sender]) revert DGErrors.WITHDRAWAL_TIMESTAMP_HASNT_PASSED();
+        
         // Update withdrawalInfo of LP
         withdrawalInfoOf[msg.sender] = DGDataTypes.WithdrawalInfo(
-            timestampMin,
-            timestampMax,
+            block.timestamp,
             _amount,
             DGDataTypes.WithdrawalIs.STAGED
         );
 
         // Set new withdrawal Limit of LP
-        withdrawalLimitOf[msg.sender] = block.timestamp + stagingEventPeriod;
+        withdrawalLimitOf[msg.sender] = block.timestamp + withdrawalEventPeriod;
 
         // Emit withdrawal staged event
-        emit DGEvents.WithdrawalStaged(msg.sender, timestampMin, timestampMax);
+        emit DGEvents.WithdrawalStaged(msg.sender, block.timestamp + withdrawalDelay, block.timestamp + withdrawalWindowLength);
     }
 
     /**
@@ -276,8 +276,8 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
 
         // Make sure it is within withdrawal window
         if (
-            block.timestamp < withdrawalInfo.timestampMin ||
-            block.timestamp > withdrawalInfo.timestampMax
+            block.timestamp < withdrawalInfo.timestamp + withdrawalDelay ||
+            block.timestamp > withdrawalInfo.timestamp + withdrawalWindowLength
         ) revert DGErrors.OUTSIDE_WITHDRAWAL_WINDOW();
 
         // Call internal withdrawal function
@@ -285,39 +285,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
 
         // Set stage status ti FULLFILLED
         withdrawalInfoOf[msg.sender].stage = DGDataTypes.WithdrawalIs.FULLFILLED;
-    }
-
-    /**
-     * @notice Change withdrawal delay for LPs
-     *  Only callable by ADMIN
-     *
-     * @param _withdrawalDelay New withdrawal Delay in seconds
-     *
-     */
-    function setWithdrawalDelay(uint256 _withdrawalDelay) external onlyRole(ADMIN) {
-        withdrawalDelay = _withdrawalDelay;
-    }
-
-    /**
-     * @notice Change withdrawal window for LPs
-     *  Only callable by ADMIN
-     *
-     * @param _withdrawalWindow New withdrawal window in seconds
-     *
-     */
-    function setWithdrawalWindow(uint256 _withdrawalWindow) external onlyRole(ADMIN) {
-        withdrawalWindowLength = _withdrawalWindow;
-    }
-
-    /**
-     * @notice Change staging event period for LPs
-     *  Only callable by ADMIN
-     *
-     * @param _stagingEventPeriod New staging event period in seconds
-     *
-     */
-    function setStagingEventPeriod(uint256 _stagingEventPeriod) external onlyRole(ADMIN) {
-        stagingEventPeriod = _stagingEventPeriod;
     }
 
     /**
@@ -334,7 +301,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
 
         // Check so that operator is associated with this bankroll
-        if (!dgBankrollManager.operatorOfBankroll(_operator, address(this))) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
+        if (!dgBankrollManager.operatorOfBankroll(address(this), _operator)) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
+
+        // Check to make sure that wallet is EOA
+        if (_isContract(_player)) revert DGErrors.NOT_AN_EOA_WALLET();
 
         // pay what is left if amount is bigger than bankroll balance
         uint256 maxRisk = getMaxRisk();
@@ -399,7 +369,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
 
         // Check so that operator is associated with this bankroll
-        if (!dgBankrollManager.operatorOfBankroll(_operator, address(this))) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
+        if (!dgBankrollManager.operatorOfBankroll(address(this), _operator)) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
 
         // fetch balance before
         uint256 balanceBefore = token.balanceOf(address(this));
@@ -421,6 +391,60 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
 
         // Emit credit event
         emit DGEvents.Credit(msg.sender, amount);
+    }
+
+    /**
+     * @notice Change withdrawal delay for LPs
+     *  Only callable by ADMIN
+     *
+     * @param _withdrawalDelay New withdrawal Delay in seconds
+     *
+     */
+    function setWithdrawalDelay(uint256 _withdrawalDelay) external onlyRole(ADMIN) {
+        withdrawalDelay = _withdrawalDelay;
+    }
+
+    /**
+     * @notice Change withdrawal window for LPs
+     *  Only callable by ADMIN
+     *
+     * @param _withdrawalWindow New withdrawal window in seconds
+     *
+     */
+    function setWithdrawalWindow(uint256 _withdrawalWindow) external onlyRole(ADMIN) {
+        withdrawalWindowLength = _withdrawalWindow;
+    }
+
+    /**
+     * @notice
+     *  Allows admin to update bankroll manager contract
+     *
+     * @param _newBankrollManager address of the new bankroll manager
+     *
+     */
+    function updateBankrollManager(address _newBankrollManager) external onlyRole(ADMIN) {
+        // Make sure that the new bankroll manager is a contract
+        if (!_isContract(_newBankrollManager)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+
+        // Revoke old bankroll manager role
+        _revokeRole(BANKROLL_MANAGER, address(dgBankrollManager));
+
+        // set the new bankroll manager
+        dgBankrollManager = IDGBankrollManager(_newBankrollManager);
+
+        // Grant new bankroll manager role
+        _grantRole(BANKROLL_MANAGER, _newBankrollManager);
+    }
+
+    /**
+     * @notice Change withdrawal (stage one) event period for LPs
+     *  Only callable by ADMIN
+     *
+     * @param _withdrawalEventPeriod New staging event period in seconds
+     *
+     */
+    function setWithdrawalEventPeriod(uint256 _withdrawalEventPeriod) external onlyRole(ADMIN) {
+        withdrawalEventPeriod = _withdrawalEventPeriod;
     }
 
     /**
@@ -455,18 +479,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     }
 
     /**
-     * @notice Set the minimum LP status for bankroll
-     *  Called by Admin
-     *
-     * @param _status Toggle minimum lp status true or false
-     *
-     */
-    function setMinimumLPStatus(bool _status) external onlyRole(ADMIN) {
-        // toggle status of has minimum lp variable
-        hasMinimumLP = _status;
-    }
-
-    /**
      * @notice Set the minimum LP amount for bankroll
      *  Called by Admin
      *
@@ -474,9 +486,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
      *
      */
     function setMinimumLp(uint256 _amount) external onlyRole(ADMIN) {
-        // toggle status  of minimum lp variable
-        hasMinimumLP = true;
-
         // set minimum lp
         minimumLp = _amount;
     }
@@ -527,60 +536,18 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     }
 
     /**
-     * @notice Update the ADMIN role
-     *  Only calleable by contract owner
      *
-     * @param _oldAdmin address of the old admin
-     * @param _newAdmin address of the new admin
+     * @notice Max out the approval for the connected DeGaming contracts to spend on behalf of the bankroll contract
      *
      */
-    function updateAdmin(address _oldAdmin, address _newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        // Check that _oldAdmin address is valid
-        if (!hasRole(ADMIN, _oldAdmin)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
-
-        // Make sure so that admin address is a wallet
-        if (_isContract(_newAdmin)) revert DGErrors.ADDRESS_NOT_A_WALLET();
-
-        // Revoke the old admins role
-        _revokeRole(ADMIN, _oldAdmin);
-
-        // Grant the new admin the ADMIN role
-        _grantRole(ADMIN, _newAdmin);
-    }
-
-    /**
-     * @notice Update the BANKROLL_MANAGER role
-     *  Only calleable by contract owner
-     *
-     * @param _oldBankrollManager address of the old bankroll manager
-     * @param _newBankrollManager address of the new bankroll manager
-     *
-     */
-    function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        // Check that _oldBankrollManager is valid
-        if (!hasRole(BANKROLL_MANAGER, _oldBankrollManager)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
-
-        // Check so that bankroll manager actually is a contract
-        if (!_isContract(_newBankrollManager)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
-
-        // Revoke the old bankroll managers role
-        _revokeRole(BANKROLL_MANAGER, _oldBankrollManager);
-
-        // Grant the new bankroll manager the BANKROLL_MANAGER role
-        _grantRole(BANKROLL_MANAGER, _newBankrollManager);
-
-        // Update BankrollManager Contract
-        dgBankrollManager = IDGBankrollManager(_newBankrollManager);
-    }
-
-    /**
-     *
-     * @notice Max out the approval for DGBankrollManager.sol to spend on behalf of the bankroll contract
-     *
-     */
-    function maxBankrollManagerApprove() external {
+    function maxContractsApprove() external onlyRole(ADMIN) {
         token.forceApprove(
             address(dgBankrollManager),
+            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+        );
+        
+        token.forceApprove(
+            address(escrow),
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         );
     } 
@@ -590,16 +557,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
     //  | | / / / _ \ | /| / /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
     //  | |/ / /  __/ |/ |/ /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
     //  |___/_/\___/|__/|__/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
-
-    /**
-     * @notice Returns the adddress of the token associated with this bankroll
-     *
-     * @return _token token address
-     *
-     */
-    function viewTokenAddress() external view returns (address _token) {
-        _token = address(token);
-    }
 
     /**
      * @notice Returns the amount of ERC20 tokens held by the bankroll that are available for playes to win and
@@ -655,8 +612,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
      *
      */
     function getMaxRisk() public view returns (uint256 _maxRisk) {
-        uint256 currentLiquidity = token.balanceOf(address(this));
-        _maxRisk = (currentLiquidity * maxRiskPercentage) / DENOMINATOR;
+        _maxRisk = (liquidity() * maxRiskPercentage) / DENOMINATOR;
     }
 
     /**
@@ -666,8 +622,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
      *
      */
     function getEscrowThreshold() public view returns (uint256 _threshold) {
-        uint256 currentLiquidity = token.balanceOf(address(this));
-        _threshold = (currentLiquidity * escrowTreshold) / DENOMINATOR;
+        _threshold = (liquidity() * escrowTreshold) / DENOMINATOR;
     }
 
     //     ____      __                        __   ______                 __  _
@@ -729,7 +684,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         uint256 balanceAfter = token.balanceOf(address(this));
 
         // amount variable calculated from recieved balances
-        uint256 realizedAmount = balanceAfter - balanceBefore;
+        uint256 realizedAmount = balanceBefore - balanceAfter;
 
         // Emit an event that funds are withdrawn
         emit DGEvents.FundsWithdrawn(_reciever, realizedAmount);

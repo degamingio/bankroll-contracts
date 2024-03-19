@@ -57,6 +57,9 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
     /// @dev Store time claimed + event period
     mapping(address claimer => uint256 timestamp) public eventPeriodEnds;
 
+    /// @dev Store a boolean if an operator s associated with a bankroll
+    mapping(address bankroll => mapping(address operator => bool isAssociated)) public operatorOfBankroll;
+
     //     ______                 __                  __
     //    / ____/___  ____  _____/ /________  _______/ /_____  _____
     //   / /   / __ \/ __ \/ ___/ __/ ___/ / / / ___/ __/ __ \/ ___/
@@ -85,40 +88,6 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
     //  / /_/ / / / / / /_/ /  / /_/ /| |/ |/ / / / /  __/ /     / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
     //  \____/_/ /_/_/\__, /   \____/ |__/|__/_/ /_/\___/_/     /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
     //               /____/
-
-    /**
-     * @notice Update the ADMIN role
-     *  Only calleable by contract owner
-     *
-     * @param _oldAdmin address of the old admin
-     * @param _newAdmin address of the new admin
-     *
-     */
-    function updateAdmin(address _oldAdmin, address _newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        // Check that _oldAdmin address is valid
-        if (!hasRole(ADMIN, _oldAdmin)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
-        
-        // Revoke the old admins role
-        _revokeRole(ADMIN, _oldAdmin);
-
-        // Grant the new admin the ADMIN role
-        _grantRole(ADMIN, _newAdmin);
-    }
-
-    /**
-     * @notice
-     *  Set the address of the dg factory address
-     *
-     * @param _factory bankroll factory contract address to be approved
-     *
-     */
-    function setFactory(address _factory) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        // Make sure that factory is a contract
-        if (!_isContract(_factory)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
-
-        // Grant Admin Role to Factory
-        _grantRole(ADMIN, _factory);
-    }
 
     /**
      * @notice
@@ -199,7 +168,7 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
 
     /**
      * @notice 
-     *  Adding list of operator to list of operators associated with a bankroll
+     *  Adding operator to list of operators associated with a bankroll
      *  Only calleable by admin role
      *
      * @param _bankroll the bankroll contract address
@@ -207,8 +176,11 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
      *
      */
     function setOperatorToBankroll(address _bankroll, address _operator) external onlyRole(ADMIN) {
+        // Check that the bankroll is an approved DeGaming Bankroll
+        if (!bankrollStatus[_bankroll]) revert DGErrors.BANKROLL_NOT_APPROVED();
+
         // Check so that operator isnt added to bankroll already
-        if (operatorOfBankroll(_operator, _bankroll)) revert DGErrors.OPERATOR_ALREADY_ADDED_TO_BANKROLL();
+        if (operatorOfBankroll[_bankroll][_operator]) revert DGErrors.OPERATOR_ALREADY_ADDED_TO_BANKROLL();
         
         // Make sure that operator address is a wallet
         if (_isContract(_operator)) revert DGErrors.ADDRESS_NOT_A_WALLET();
@@ -216,8 +188,54 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
         // Add operator into array of associated operators to bankroll
         operatorsOf[_bankroll].push(_operator);
 
+        // Set operator of bankroll status to true
+        operatorOfBankroll[_bankroll][_operator] = true;
+
         // Approve operator
         isApproved[_operator] = true;
+    }
+
+    /**
+     * @notice 
+     *  Remove operator from list of operators associated with a bankroll
+     *  Only calleable by admin role
+     *
+     * @param _bankroll the bankroll contract address
+     * @param _operator address of the operator we want to remove from the list of associated operators
+     *
+     */
+    function removeOperatorFromBankroll(address _operator, address _bankroll) external onlyRole(ADMIN) {
+        // Check that the bankroll is an approved DeGaming Bankroll
+        if (!bankrollStatus[_bankroll]) revert DGErrors.BANKROLL_NOT_APPROVED();
+
+        // Make sure that operator is associated with bankroll
+        if (!operatorOfBankroll[_bankroll][_operator]) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
+
+        // fetch operators of bankroll
+        address[] memory operators = operatorsOf[_bankroll];
+
+        // Initiate operator intex
+        uint256 operatorIndex;
+
+        // Search what index the operator has in the list of bankroll operators
+        for (uint256 i = 0; i < operators.length; i++) {
+            if (operators[i] == _operator) {
+                operatorIndex = i;
+                break;
+            }
+        }
+
+        // If operatorindex is the last one the switch around is not necessary
+        if (operatorIndex != operators.length - 1) {
+            // Replace the index of the operator with the last operator in the list
+            operatorsOf[_bankroll][operatorIndex] = operatorsOf[_bankroll][operatorsOf[_bankroll].length - 1];
+        }
+
+        // Set operator of bankroll status to true
+        operatorOfBankroll[_bankroll][_operator] = false;
+
+        // Remove the last index in the list since this will now be a duplicate
+        operatorsOf[_bankroll].pop();
     }
 
     /**
@@ -270,7 +288,7 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
         IBankroll bankroll = IBankroll(_bankroll);
         
         // Set up a token instance
-        IERC20 token = IERC20(bankroll.viewTokenAddress());
+        IERC20 token = IERC20(address(bankroll.token()));
         
         // Set up GGR for desired bankroll
         int256 GGR = bankroll.GGR();
@@ -314,27 +332,6 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
         uint256 realizedAmount = balanceAfter - balanceBefore;
 
         emit DGEvents.ProfitsClaimed(_bankroll, totalAmount, realizedAmount);
-    }
-
-    /**
-     * @notice Check if a operator is associated to a bankroll
-     *
-     * @param _operator address of operator we want to check
-     * @param _bankroll address of bankroll contract we want to check operator against
-     *
-     * @return _isRelated return a bool if operator is associated or not
-     *
-     */
-    function operatorOfBankroll(address _operator, address _bankroll) public view returns (bool _isRelated) {
-        // load an array of operators of bankroll
-        address[] memory operatorList = operatorsOf[_bankroll];
-        
-        // If operator arg match any operator found in list, change _isRelated variable to true
-        for (uint256 i; i < operatorList.length; i++) {
-            if (operatorList[i] == _operator) {
-                _isRelated = true;
-            }
-        }
     }
 
     //     ____      __                        __   ______                 __  _

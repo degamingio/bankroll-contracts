@@ -34,9 +34,6 @@ contract DGEscrow is AccessControl {
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
 
-    /// @dev BANKROLL_MANAGER role
-    bytes32 public constant BANKROLL_MANAGER = keccak256("BANKROLL_MANAGER");
-
     /// @dev Mapping for holding the escrow info, acts as a source of truth
     mapping(bytes id => uint256 winnings) public escrowed;
 
@@ -49,9 +46,17 @@ contract DGEscrow is AccessControl {
     //  / /___/ /_/ / / / (__  ) /_/ /  / /_/ / /__/ /_/ /_/ / /
     //  \____/\____/_/ /_/____/\__/_/   \__,_/\___/\__/\____/_/
 
+    /**
+     * @param _eventPeriod event period in seconds
+     * @param _bankrollManager address of bankrollmanager
+     *
+     */
     constructor(uint256 _eventPeriod, address _bankrollManager) {
         // Set event period
         eventPeriod = _eventPeriod;
+
+        // Make sure that bankroll manager address actully is a contract
+        if (!_isContract(_bankrollManager)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
 
         // Setup bankroll manager instance
         dgBankrollManager = IDGBankrollManager(_bankrollManager);
@@ -61,9 +66,6 @@ contract DGEscrow is AccessControl {
 
         // Granting ADMIN to the deoployer
         _grantRole(ADMIN, msg.sender);
-
-        // Granting BANKROLL_MANAGER to the bankrollmanager address
-        _grantRole(BANKROLL_MANAGER, _bankrollManager);
     }
 
     //      ______     __                        __   ______                 __  _
@@ -176,6 +178,9 @@ contract DGEscrow is AccessControl {
         // Fetch balance before reverting the funds back to the bankroll
         uint256 balanceBefore = token.balanceOf(address(this));
 
+        // Approve spending for bankroll to spend on behalf of escrow contract
+        token.approve(entry.bankroll, escrowed[_id]);
+
         // Send the escrowed funds back to the bankroll
         IBankroll(entry.bankroll).credit(escrowed[_id], entry.operator);
 
@@ -208,7 +213,7 @@ contract DGEscrow is AccessControl {
         DGDataTypes.EscrowEntry memory entry = _decode(_id);
 
         // Make sure that the event period is actually passed
-        if (block.timestamp > entry.timestamp + eventPeriod) revert DGErrors.EVENT_PERIOD_NOT_PASSED();
+        if (block.timestamp < entry.timestamp + eventPeriod) revert DGErrors.EVENT_PERIOD_NOT_PASSED();
 
         // Check so that msg.sender is the player of the entry
         if (msg.sender != entry.player) revert DGErrors.UNAUTHORIZED_CLAIM();
@@ -236,50 +241,29 @@ contract DGEscrow is AccessControl {
     }
 
     /**
-     * @notice Update the ADMIN role
-     *  Only calleable by contract owner
+     * @notice
+     *  Allows admin to update bankroll manager contract
      *
-     * @param _oldAdmin address of the old admin
-     * @param _newAdmin address of the new admin
-     *
-     */
-    function updateAdmin(address _oldAdmin, address _newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        // Check that _oldAdmin address is valid
-        if (!hasRole(ADMIN, _oldAdmin)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
-
-        // Make sure so that admin address is a wallet
-        if (_isContract(_newAdmin)) revert DGErrors.ADDRESS_NOT_A_WALLET();
-
-        // Revoke the old admins role
-        _revokeRole(ADMIN, _oldAdmin);
-
-        // Grant the new admin the ADMIN role
-        _grantRole(ADMIN, _newAdmin);
-    }
-
-    /**
-     * @notice Update the BANKROLL_MANAGER role
-     *  Only calleable by contract owner
-     *
-     * @param _oldBankrollManager address of the old bankroll manager
      * @param _newBankrollManager address of the new bankroll manager
      *
      */
-    function updateBankrollManager(address _oldBankrollManager, address _newBankrollManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        // Check that _oldBankrollManager is valid
-        if (!hasRole(BANKROLL_MANAGER, _oldBankrollManager)) revert DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE();
-
-        // Check so that bankroll manager actually is a contract
+    function updateBankrollManager(address _newBankrollManager) external onlyRole(ADMIN) {
+        // Make sure that the new bankroll manager is a contract
         if (!_isContract(_newBankrollManager)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
 
-        // Revoke the old bankroll managers role
-        _revokeRole(BANKROLL_MANAGER, _oldBankrollManager);
-
-        // Grant the new bankroll manager the BANKROLL_MANAGER role
-        _grantRole(BANKROLL_MANAGER, _newBankrollManager);
-
-        // Update BankrollManager Contract
+        // set the new bankroll manager
         dgBankrollManager = IDGBankrollManager(_newBankrollManager);
+    }
+
+    /**
+     * @notice 
+     *  Allows admin to set new event period time
+     *
+     * @param _newEventPeriod New event period time in seconds
+     *
+     */
+    function setEventPeriod(uint256 _newEventPeriod) external onlyRole(ADMIN) {
+        eventPeriod = _newEventPeriod;
     }
 
     //     ____      __                        __   ______                 __  _
