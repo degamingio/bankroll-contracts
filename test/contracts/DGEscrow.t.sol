@@ -80,8 +80,8 @@ contract DGEscrowTest is Test {
         token.mint(admin, 1_000_000e6);
 
         dgBankrollManager.addOperator(operator);
-        dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
         dgBankrollManager.approveBankroll(address(bankroll), 0);
+        dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
 
         vm.startPrank(lpOne);
         token.approve(address(bankroll), 1_000_000e6);
@@ -148,6 +148,7 @@ contract DGEscrowTest is Test {
     }
 
     function test_claimUnaddressed(uint256 _time) public {
+        vm.assume(_time < 10 hours);
         dgEscrow.setEventPeriod(_time);
 
         vm.startPrank(admin);
@@ -172,5 +173,7 @@ contract DGEscrowTest is Test {
         vm.prank(player);
 
         dgEscrow.claimUnaddressed(id);
+
+        assertEq(token.balanceOf(player), 500_001e6);
     }
 }

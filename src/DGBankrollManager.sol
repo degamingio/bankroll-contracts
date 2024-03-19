@@ -176,6 +176,9 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
      *
      */
     function setOperatorToBankroll(address _bankroll, address _operator) external onlyRole(ADMIN) {
+        // Check that the bankroll is an approved DeGaming Bankroll
+        if (!bankrollStatus[_bankroll]) revert DGErrors.BANKROLL_NOT_APPROVED();
+
         // Check so that operator isnt added to bankroll already
         if (operatorOfBankroll[_bankroll][_operator]) revert DGErrors.OPERATOR_ALREADY_ADDED_TO_BANKROLL();
         
@@ -193,6 +196,9 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
     }
 
     function removeOperatorFromBankroll(address _operator, address _bankroll) external onlyRole(ADMIN) {
+        // Check that the bankroll is an approved DeGaming Bankroll
+        if (!bankrollStatus[_bankroll]) revert DGErrors.BANKROLL_NOT_APPROVED();
+
         // Make sure that operator is associated with bankroll
         if (!operatorOfBankroll[_bankroll][_operator]) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
 

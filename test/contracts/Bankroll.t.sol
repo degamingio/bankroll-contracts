@@ -81,8 +81,8 @@ contract BankrollTest is Test {
         token.mint(admin, 1_000_000e6);
 
         dgBankrollManager.addOperator(operator);
-        dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
         dgBankrollManager.approveBankroll(address(bankroll), 0);
+        dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
     }
 
     function test_initialize(
