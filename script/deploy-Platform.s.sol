@@ -47,6 +47,7 @@ contract DeployPlatform is Script {
     // Addresses
     address public admin = vm.addr(adminPrivateKey);
     address public deployer = vm.addr(deployerPrivateKey);
+    address public operator = vm.addr(managerPrivateKey);
     address public token = vm.envAddress("TOKEN_ADDRESS");
 
     string public PATH_PREFIX = string.concat("deployment", vm.toString(block.chainid));
@@ -59,7 +60,7 @@ contract DeployPlatform is Script {
     uint256 maxRisk = 10_000;
     uint256 threshold = 10_000;
 
-    function run() public {
+    function run(bool createCasino) public {
 
         vm.startBroadcast(deployerPrivateKey);
 
@@ -104,7 +105,7 @@ contract DeployPlatform is Script {
             address(proxyAdmin),
             abi.encodeWithSelector(
                 DGBankrollFactory.initialize.selector,
-                address(bankroll),
+                address(bankrollProxy),
                 address(dgBankrollManager),
                 admin,
                 deGaming
@@ -117,7 +118,13 @@ contract DeployPlatform is Script {
 
         dgBankrollManager.grantRole(keccak256("ADMIN"), address(dgBankrollFactory));
 
-        dgBankrollFactory.deployBankroll(token, maxRisk, threshold, _salt);
+        if (createCasino) {
+            dgBankrollFactory.deployBankroll(token, maxRisk, threshold, "0x0");
+            address bankrollAddress = dgBankrollFactory.bankrolls(0);
+            dgBankrollManager.addOperator(operator);
+            dgBankrollManager.approveBankroll(address(bankrollAddress), 0);
+            dgBankrollManager.setOperatorToBankroll(address(bankrollAddress), operator);
+        }
 
         vm.stopBroadcast();
     }
