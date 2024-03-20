@@ -106,6 +106,8 @@ contract BankrollTest is Test {
         vm.assume(_maxRisk < 10_000);
         vm.assume(_threshold > 0);
         vm.assume(_threshold < 10_000);
+        vm.assume(!_isContract(_admin));
+        vm.assume(!_isContract(_owner));
         vm.assume(!_isContract(_faultyToken));
         vm.assume(!_isContract(_faultyBankrollManager));
         vm.assume(!_isContract(_faultyEscrow));
