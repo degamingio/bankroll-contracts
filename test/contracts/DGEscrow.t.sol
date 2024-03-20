@@ -103,6 +103,8 @@ contract DGEscrowTest is Test {
         bankroll.debit(player, 500_001e6, operator);
 
         vm.stopPrank();
+
+        assertEq(token.balanceOf(address(dgEscrow)), 500_001e6);
     }
     
     function test_revertFunds() public {
@@ -112,6 +114,8 @@ contract DGEscrowTest is Test {
         bankroll.debit(player, 500_001e6, operator);
 
         vm.stopPrank();
+
+        assertEq(token.balanceOf(address(dgEscrow)), 500_001e6);
 
         DGDataTypes.EscrowEntry memory entry = DGDataTypes.EscrowEntry(
             address(bankroll),
@@ -124,6 +128,8 @@ contract DGEscrowTest is Test {
         bytes memory id = abi.encode(entry);
 
         dgEscrow.revertFunds(id);
+
+        assertEq(token.balanceOf(address(dgEscrow)), 0);
     }
     
     function test_releaseFunds() public {
@@ -133,6 +139,8 @@ contract DGEscrowTest is Test {
         bankroll.debit(player, 500_001e6, operator);
 
         vm.stopPrank();
+
+        assertEq(token.balanceOf(address(dgEscrow)), 500_001e6);
 
         DGDataTypes.EscrowEntry memory entry = DGDataTypes.EscrowEntry(
             address(bankroll),
@@ -145,6 +153,8 @@ contract DGEscrowTest is Test {
         bytes memory id = abi.encode(entry);
 
         dgEscrow.releaseFunds(id);
+        assertEq(token.balanceOf(address(player)), 500_001e6);
+        assertEq(token.balanceOf(address(dgEscrow)), 0);
     }
 
     function test_claimUnaddressed(uint256 _time) public {
