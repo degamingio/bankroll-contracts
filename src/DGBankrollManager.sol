@@ -34,7 +34,7 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
     uint256 public constant DENOMINATOR = 10_000; 
 
     /// @dev DeGaming Wallet
-    address deGaming;
+    address public deGaming;
 
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
@@ -168,6 +168,18 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
 
     /**
      * @notice 
+     *  Set new degaming address
+     *  Only calleable by admin role
+     *
+     * @param _deGaming new degaming address
+     *
+     */
+    function setDeGaming(address _deGaming) external onlyRole(ADMIN) {
+        deGaming = _deGaming;
+    }
+    
+    /**
+     * @notice 
      *  Adding operator to list of operators associated with a bankroll
      *  Only calleable by admin role
      *
@@ -215,7 +227,7 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
         address[] memory operators = operatorsOf[_bankroll];
 
         // Initiate operator intex
-        uint256 operatorIndex;
+        uint256 operatorIndex = 0;
 
         // Search what index the operator has in the list of bankroll operators
         for (uint256 i = 0; i < operators.length; i++) {
@@ -300,10 +312,10 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
         eventPeriodEnds[_bankroll] = block.timestamp + eventPeriodOf[_bankroll];
 
         // variable for amount per operator
-        uint256 amount;
+        uint256 amount = 0;
 
         // variable for total amount
-        uint256 totalAmount;
+        uint256 totalAmount = 0;
 
         // Loop over the operator list and perform the claim process over each operator
         for (uint256 i = 0; i < operators.length; i++) {

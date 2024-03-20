@@ -7,6 +7,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /* Openzeppelin Contracts */
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /* DeGaming Interfaces */
 import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";
@@ -24,7 +25,7 @@ import {DGEvents} from "src/libraries/DGEvents.sol";
  * @notice Escrow Contract for DeGaming's Bankroll poducts
  *
  */
-contract DGEscrow is AccessControl {
+contract DGEscrow is AccessControl, ReentrancyGuard {
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
 
@@ -179,22 +180,23 @@ contract DGEscrow is AccessControl {
         uint256 balanceBefore = token.balanceOf(address(this));
 
         // Approve spending for bankroll to spend on behalf of escrow contract
-        token.approve(entry.bankroll, escrowed[_id]);
+        if (token.approve(entry.bankroll, escrowed[_id])) {
 
-        // Send the escrowed funds back to the bankroll
-        IBankroll(entry.bankroll).credit(escrowed[_id], entry.operator);
+            // Send the escrowed funds back to the bankroll
+            IBankroll(entry.bankroll).credit(escrowed[_id], entry.operator);
 
-        // Fetch balance after the funds have been reverted
-        uint256 balanceAfter = token.balanceOf(address(this));
+            // Fetch balance after the funds have been reverted
+            uint256 balanceAfter = token.balanceOf(address(this));
 
-        // Setting the amount from the diff between the two
-        uint256 amount = balanceBefore - balanceAfter;
+            // Setting the amount from the diff between the two
+            uint256 amount = balanceBefore - balanceAfter;
 
-        // Subtract the amount fetched from the escrowed mapping, probably nulling it out
-        escrowed[_id] -= amount;
+            // Subtract the amount fetched from the escrowed mapping, probably nulling it out
+            escrowed[_id] -= amount;
 
-        // Emit event that escrow is reverted back into the bankroll
-        emit DGEvents.EscrowReverted(entry.bankroll, _id, amount);
+            // Emit event that escrow is reverted back into the bankroll
+            emit DGEvents.EscrowReverted(entry.bankroll, _id, amount);
+        }
     }
 
     /**
@@ -205,7 +207,7 @@ contract DGEscrow is AccessControl {
      * @param _id id in bytes format
      *
      */
-    function claimUnaddressed(bytes memory _id) external {
+    function claimUnaddressed(bytes memory _id) external nonReentrant {
         // Check so that there are funds to claim for id
         if (escrowed[_id] == 0) revert DGErrors.NOTHING_TO_CLAIM();
 
