@@ -7,6 +7,7 @@ import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20
 /* Openzeppelin Contracts */
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 /* DeGaming Interfaces */
 import {IBankroll} from "src/interfaces/IBankroll.sol";
@@ -24,7 +25,7 @@ import {DGEvents} from "src/libraries/DGEvents.sol";
  * @notice Operator and Game Bankroll Contract
  *
  */
-contract Bankroll is IBankroll, AccessControlUpgradeable {
+contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgradeable {
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -214,7 +215,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
         
         // calculate the amount of shares to mint
         uint256 shares;
-        if (totalSupply == 0) {
+        if (totalSupply < 1) {
             shares = amount;
         } else {
             shares = (amount * totalSupply) / liq;
@@ -267,7 +268,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable {
      * @notice Stage two of withdrawal process
      *
      */
-    function withdrawalStageTwo() external {
+    function withdrawalStageTwo() external nonReentrant {
         // Fetch withdrawal info of sender
         DGDataTypes.WithdrawalInfo memory withdrawalInfo = withdrawalInfoOf[msg.sender];
 
