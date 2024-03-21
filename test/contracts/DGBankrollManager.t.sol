@@ -225,6 +225,14 @@ contract DGBankrollManagerTest is Test {
         assertEq(dgBankrollManager.lpFeeOf(address(bankroll)), _newFee);
     }
 
+    function test_setDeGaming(address _newDegaming) public {
+        vm.assume(_newDegaming != deGaming);
+        assertEq(dgBankrollManager.deGaming(), deGaming);
+
+        dgBankrollManager.setDeGaming(_newDegaming);
+        assertEq(dgBankrollManager.deGaming(), _newDegaming);
+    }
+
     function test_blockBankroll() public {
         vm.prank(admin);
         bankroll.credit(1_000_000e6, operator);

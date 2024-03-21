@@ -21,7 +21,7 @@ import {DGEscrow} from "src/DGEscrow.sol";
 /* DeGaming Libraries */
 import {DGErrors} from "src/libraries/DGErrors.sol";
 
-contract DeployPlatform is Script {
+contract CreateBankroll is Script {
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20 for IERC20;
 
@@ -64,59 +64,19 @@ contract DeployPlatform is Script {
     function run() public {
         vm.startBroadcast(deployerPrivateKey);
 
-        console.log("#######################################################");
-        console.log("ADDRESSES:");
-        console.log("deployer: ", vm.addr(deployerPrivateKey));
-        console.log("admin:    ", admin);
-        console.log("Operator: ", vm.addr(managerPrivateKey));
-        console.log("token:    ", token);
-        console.log("#######################################################");
-        console.log("PATHS:");
-        console.log(PROXY_ADMIN_PATH);
-        console.log(BANKROLL_IMPL_PATH);
-        console.log(BANKROLL_MANAGER_PATH);
-        console.log(FACTORY_PATH);
-        console.log(ESCROW_PATH);
-        console.log(BANKROLL_PATH);
-        console.log("#######################################################");
+        proxyAdmin = ProxyAdmin(vm.parseAddress(vm.readFile(PROXY_ADMIN_PATH)));
+        //bankrollProxy = TransparentUpgradeableProxy(vm.parseAddress(vm.readFile(BANKROLL_IMPL_PATH)));
+        dgBankrollManager = DGBankrollManager(vm.parseAddress(vm.readFile(BANKROLL_MANAGER_PATH)));
+        dgBankrollFactory = DGBankrollFactory(vm.parseAddress(vm.readFile(FACTORY_PATH)));
+        dgEscrow = DGEscrow(vm.parseAddress(vm.readFile(ESCROW_PATH)));
+        //bankroll = Bankroll(vm.parseAddress(vm.readFile(BANKROLL_PATH)));
 
-        dgBankrollManager = new DGBankrollManager(admin);
-
-        vm.writeFile(BANKROLL_MANAGER_PATH, vm.toString(address(dgBankrollManager)));
-
-        dgEscrow = new DGEscrow(1 weeks, address(dgBankrollManager));
-
-        vm.writeFile(ESCROW_PATH, vm.toString(address(dgEscrow)));
-
-        proxyAdmin = new ProxyAdmin();
-
-        vm.writeFile(PROXY_ADMIN_PATH, vm.toString(address(proxyAdmin)));
-
-        bankroll = new Bankroll();
-
-        vm.writeFile(BANKROLL_IMPL_PATH, vm.toString(address(bankroll)));
-
-        bankrollFactoryProxy = new TransparentUpgradeableProxy(
-            address(new DGBankrollFactory()),
-            address(proxyAdmin),
-            abi.encodeWithSelector(
-                DGBankrollFactory.initialize.selector,
-                address(bankroll),
-                address(dgBankrollManager),
-                address(dgEscrow),
-                admin,
-                deGaming
-            )
-        );
-
-        vm.writeFile(FACTORY_PATH, vm.toString(address(bankrollFactoryProxy)));
-
-        dgBankrollFactory = DGBankrollFactory(address(bankrollFactoryProxy));
-
-        dgBankrollManager.grantRole(keccak256("ADMIN"), address(dgBankrollFactory));
-
-        dgBankrollManager.grantRole(keccak256("ADMIN"), deployer);
-
+        dgBankrollFactory.deployBankroll(token, maxRisk, threshold, "0x0");
+        address bankrollAddress = dgBankrollFactory.bankrolls(dgBankrollFactory.bankrollCount() - 1);
+        dgBankrollManager.addOperator(operator);
+        dgBankrollManager.approveBankroll(bankrollAddress, 0);
+        dgBankrollManager.setOperatorToBankroll(bankrollAddress, operator);
+        vm.writeFile(BANKROLL_PATH, vm.toString(bankrollAddress));
         vm.stopBroadcast();
     }
 }

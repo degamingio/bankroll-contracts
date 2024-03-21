@@ -2,17 +2,18 @@
 pragma solidity 0.8.19;
 
 import {Script} from "forge-std/Script.sol";
+import {Bankroll} from "src/Bankroll.sol";
 
-import {MockToken} from "test/mock/MockToken.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract MintTokens is Script {
+contract WithdrawFunds is Script {
     uint256 adminPrivateKey = vm.envUint("ADMIN_PRIVATE_KEY");
 
     address token = vm.envAddress("TOKEN_ADDRESS");
 
-    uint256 constant amount = 100;
+    uint256 operatorPrivateKey = vm.envUint("MANAGER_PRIVATE_KEY");
 
-    MockToken USDT = MockToken(token);
+    address operator = vm.addr(operatorPrivateKey);
 
     string public PATH_PREFIX = string.concat("deployment/", vm.toString(block.chainid));
     string public PROXY_ADMIN_PATH = string.concat(PATH_PREFIX, "/ProxyAdmin/address");
@@ -22,14 +23,15 @@ contract MintTokens is Script {
     string public ESCROW_PATH = string.concat(PATH_PREFIX, "/DGEscrow/address");
     string public BANKROLL_PATH = string.concat(PATH_PREFIX, "/Bankroll/address");
 
-    address bankroll = vm.parseAddress(vm.readFile(BANKROLL_PATH));
+    Bankroll bankroll = Bankroll(vm.parseAddress(vm.readFile(BANKROLL_PATH)));
 
-    function run() public {
+    uint256 constant amount = 100e18;
 
+    function run() external {
         vm.startBroadcast(adminPrivateKey);
 
-        USDT.mint(vm.addr(adminPrivateKey), 1_000_000_000_000_000_000_000_000);
+        bankroll.withdrawalStageOne(amount);
 
-        USDT.approve(bankroll, 1_000_000_000_000_000_000_000_000);
+        vm.stopBroadcast();
     }
 }
