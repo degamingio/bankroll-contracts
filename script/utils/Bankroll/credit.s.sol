@@ -25,12 +25,15 @@ contract Credit is Script {
 
     Bankroll bankroll = Bankroll(vm.parseAddress(vm.readFile(BANKROLL_PATH)));
 
-    uint256 constant amount = 100;
+    uint256 constant amount = 1e18;
 
     function run() external {
-
         vm.startBroadcast(adminPrivateKey);
 
+        IERC20(token).approve(address(bankroll), 100e18);
+
         bankroll.credit(amount, operator);
+
+        vm.stopBroadcast();
     }
 }

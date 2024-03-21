@@ -21,12 +21,11 @@ contract BlockBankroll is Script {
 
     DGBankrollManager bankrollManager = DGBankrollManager(vm.parseAddress(vm.readFile(BANKROLL_MANAGER_PATH)));
 
-    address tempBankroll = address(0x0);
-
-    function run() external {
-
+    function run(address bankroll) external {
         vm.startBroadcast(adminPrivateKey);
 
-        bankrollManager.blockBankroll(tempBankroll);
+        bankrollManager.blockBankroll(bankroll);
+
+        vm.stopBroadcast();
     }
 }

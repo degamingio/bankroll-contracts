@@ -24,9 +24,10 @@ contract ClaimProfit is Script {
     address bankroll = vm.parseAddress(vm.readFile(BANKROLL_PATH));
 
     function run() external {
-
         vm.startBroadcast(adminPrivateKey);
 
         bankrollManager.claimProfit(bankroll);
+
+        vm.stopBroadcast();
     }
 }

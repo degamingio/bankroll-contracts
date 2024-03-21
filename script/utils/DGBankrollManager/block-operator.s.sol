@@ -23,12 +23,12 @@ contract BlockOperator is Script {
 
     address bankroll = vm.parseAddress(vm.readFile(BANKROLL_PATH));
 
-    address tempOperator = address(0x0);
-
-    function run() external {
+    function run(address operatorBlock) external {
 
         vm.startBroadcast(adminPrivateKey);
 
-        bankrollManager.blockOperator(tempOperator);
+        bankrollManager.blockOperator(operatorBlock);
+
+        vm.stopBroadcast();
     }
 }

@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {Script} from "forge-std/Script.sol";
+//import {Script} from "forge-std/Script.sol";
+
+import "forge-std/Script.sol";
+
 import {Bankroll} from "src/Bankroll.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -25,14 +28,16 @@ contract DepositFunds is Script {
 
     Bankroll bankroll = Bankroll(vm.parseAddress(vm.readFile(BANKROLL_PATH)));
 
-    uint256 constant amount = 100e6;
+    uint256 constant amount = 100e18;
 
     function run() external {
 
         vm.startBroadcast(adminPrivateKey);
 
-        IERC20(tokenAddr).approve(address(bankroll), 1_000_000_000_000_000);
+        IERC20(tokenAddr).approve(address(bankroll), 100e18);
 
         bankroll.depositFunds(amount);
+
+        vm.stopBroadcast();
     }
 }

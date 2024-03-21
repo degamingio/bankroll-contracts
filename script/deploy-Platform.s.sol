@@ -92,35 +92,20 @@ contract DeployPlatform is Script {
 
         vm.writeFile(PROXY_ADMIN_PATH, vm.toString(address(proxyAdmin)));
 
-        //bankroll = new Bankroll();
+        bankroll = new Bankroll();
 
-        bankrollProxy = new TransparentUpgradeableProxy(
-            address(new Bankroll()),
-            address(proxyAdmin),
-            abi.encodeWithSelector(
-                Bankroll.initialize.selector,
-                admin,
-                address(token),
-                address(dgBankrollManager),
-                address(dgEscrow),
-                deployer,
-                maxRisk,
-                threshold
-            )
-        );
-
-        vm.writeFile(BANKROLL_IMPL_PATH, vm.toString(address(bankrollProxy)));
+        vm.writeFile(BANKROLL_IMPL_PATH, vm.toString(address(bankroll)));
 
         bankrollFactoryProxy = new TransparentUpgradeableProxy(
             address(new DGBankrollFactory()),
             address(proxyAdmin),
             abi.encodeWithSelector(
                 DGBankrollFactory.initialize.selector,
-                address(bankrollProxy),
+                address(bankroll),
                 address(dgBankrollManager),
                 address(dgEscrow),
-                deGaming,
-                admin
+                admin,
+                deGaming
             )
         );
 
@@ -131,14 +116,6 @@ contract DeployPlatform is Script {
         dgBankrollManager.grantRole(keccak256("ADMIN"), address(dgBankrollFactory));
 
         dgBankrollManager.grantRole(keccak256("ADMIN"), deployer);
-        // if (createCasino) {
-            // dgBankrollFactory.deployBankroll(token, maxRisk, threshold, "0x0");
-            // address bankrollAddress = dgBankrollFactory.bankrolls(0);
-            // dgBankrollManager.addOperator(operator);
-            // dgBankrollManager.approveBankroll(address(bankrollAddress), 0);
-            // dgBankrollManager.setOperatorToBankroll(address(bankrollAddress), operator);
-            // vm.writeFile(BANKROLL_PATH, vm.toString(address(bankrollAddress)));
-        // }
 
         vm.stopBroadcast();
     }
