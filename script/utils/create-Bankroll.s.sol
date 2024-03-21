@@ -71,10 +71,10 @@ contract CreateBankroll is Script {
         dgEscrow = DGEscrow(vm.parseAddress(vm.readFile(ESCROW_PATH)));
         //bankroll = Bankroll(vm.parseAddress(vm.readFile(BANKROLL_PATH)));
 
-        dgBankrollFactory.deployBankroll(token, maxRisk, threshold, "0x0");
+        dgBankrollFactory.deployBankroll(token, maxRisk, threshold, "0x1");
         address bankrollAddress = dgBankrollFactory.bankrolls(dgBankrollFactory.bankrollCount() - 1);
         dgBankrollManager.addOperator(operator);
-        dgBankrollManager.approveBankroll(bankrollAddress, 0);
+        dgBankrollManager.approveBankroll(bankrollAddress, 650);
         dgBankrollManager.setOperatorToBankroll(bankrollAddress, operator);
         vm.writeFile(BANKROLL_PATH, vm.toString(bankrollAddress));
         vm.stopBroadcast();

@@ -28,13 +28,13 @@ contract DepositFunds is Script {
 
     Bankroll bankroll = Bankroll(vm.parseAddress(vm.readFile(BANKROLL_PATH)));
 
-    uint256 constant amount = 100e18;
+    uint256 constant amount = 1_000e18;
 
     function run() external {
 
         vm.startBroadcast(adminPrivateKey);
 
-        IERC20(tokenAddr).approve(address(bankroll), 100e18);
+        IERC20(tokenAddr).approve(address(bankroll), amount);
 
         bankroll.depositFunds(amount);
 

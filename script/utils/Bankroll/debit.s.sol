@@ -25,7 +25,7 @@ contract Debit is Script {
 
     Bankroll bankroll = Bankroll(vm.parseAddress(vm.readFile(BANKROLL_PATH)));
 
-    uint256 constant amount = 1e18;
+    uint256 constant amount = 10_000e18;
 
     function run() external {
         vm.startBroadcast(adminPrivateKey);

@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import {Script} from "forge-std/Script.sol";
 import {DGBankrollManager} from "src/DGBankrollManager.sol";
+import {Bankroll} from "src/Bankroll.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -21,12 +22,14 @@ contract ClaimProfit is Script {
 
     DGBankrollManager bankrollManager = DGBankrollManager(vm.parseAddress(vm.readFile(BANKROLL_MANAGER_PATH)));
 
-    address bankroll = vm.parseAddress(vm.readFile(BANKROLL_PATH));
+    Bankroll bankroll = Bankroll(vm.parseAddress(vm.readFile(BANKROLL_PATH)));
 
     function run() external {
         vm.startBroadcast(adminPrivateKey);
 
-        bankrollManager.claimProfit(bankroll);
+        bankroll.maxContractsApprove();
+
+        bankrollManager.claimProfit(address(bankroll));
 
         vm.stopBroadcast();
     }
