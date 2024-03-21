@@ -50,24 +50,35 @@ contract DeployPlatform is Script {
     address public operator = vm.addr(managerPrivateKey);
     address public token = vm.envAddress("TOKEN_ADDRESS");
 
-    string public PATH_PREFIX = string.concat("deployment", vm.toString(block.chainid));
-    string public PROXY_ADMIN_PATH = string.concat(PATH_PREFIX, "ProxyAdmin/address");
-    string public BANKROLL_PATH = string.concat(PATH_PREFIX, "Bankroll/address");
-    string public BANKROLL_MANAGER_PATH = string.concat(PATH_PREFIX, "DGBankrollManager/address");
-    string public FACTORY_PATH = string.concat(PATH_PREFIX, "DGBankrollFactory/address");
-    string public ESCROW_PATH = string.concat(PATH_PREFIX, "DGEscrow/address");
+    string public PATH_PREFIX = string.concat("deployment/", vm.toString(block.chainid));
+    string public PROXY_ADMIN_PATH = string.concat(PATH_PREFIX, "/ProxyAdmin/address");
+    string public BANKROLL_IMPL_PATH = string.concat(PATH_PREFIX, "/BankrollImpl/address");
+    string public BANKROLL_MANAGER_PATH = string.concat(PATH_PREFIX, "/DGBankrollManager/address");
+    string public FACTORY_PATH = string.concat(PATH_PREFIX, "/DGBankrollFactory/address");
+    string public ESCROW_PATH = string.concat(PATH_PREFIX, "/DGEscrow/address");
+    string public BANKROLL_PATH = string.concat(PATH_PREFIX, "/Bankroll/address");
 
     uint256 maxRisk = 10_000;
     uint256 threshold = 10_000;
 
-    function run(bool createCasino) public {
-
+    function run() public {
         vm.startBroadcast(deployerPrivateKey);
 
+        console.log("#######################################################");
+        console.log("ADDRESSES:");
         console.log("deployer: ", vm.addr(deployerPrivateKey));
         console.log("admin:    ", admin);
         console.log("Operator: ", vm.addr(managerPrivateKey));
         console.log("token:    ", token);
+        console.log("#######################################################");
+        console.log("PATHS:");
+        console.log(PROXY_ADMIN_PATH);
+        console.log(BANKROLL_IMPL_PATH);
+        console.log(BANKROLL_MANAGER_PATH);
+        console.log(FACTORY_PATH);
+        console.log(ESCROW_PATH);
+        console.log(BANKROLL_PATH);
+        console.log("#######################################################");
 
         dgBankrollManager = new DGBankrollManager(admin);
 
@@ -98,7 +109,7 @@ contract DeployPlatform is Script {
             )
         );
 
-        vm.writeFile(BANKROLL_PATH, vm.toString(address(bankrollProxy)));
+        vm.writeFile(BANKROLL_IMPL_PATH, vm.toString(address(bankrollProxy)));
 
         bankrollFactoryProxy = new TransparentUpgradeableProxy(
             address(new DGBankrollFactory()),
@@ -107,8 +118,9 @@ contract DeployPlatform is Script {
                 DGBankrollFactory.initialize.selector,
                 address(bankrollProxy),
                 address(dgBankrollManager),
-                admin,
-                deGaming
+                address(dgEscrow),
+                deGaming,
+                admin
             )
         );
 
@@ -118,13 +130,14 @@ contract DeployPlatform is Script {
 
         dgBankrollManager.grantRole(keccak256("ADMIN"), address(dgBankrollFactory));
 
-        if (createCasino) {
-            dgBankrollFactory.deployBankroll(token, maxRisk, threshold, "0x0");
-            address bankrollAddress = dgBankrollFactory.bankrolls(0);
-            dgBankrollManager.addOperator(operator);
-            dgBankrollManager.approveBankroll(address(bankrollAddress), 0);
-            dgBankrollManager.setOperatorToBankroll(address(bankrollAddress), operator);
-        }
+        // if (createCasino) {
+            // dgBankrollFactory.deployBankroll(token, maxRisk, threshold, "0x0");
+            // address bankrollAddress = dgBankrollFactory.bankrolls(0);
+            // dgBankrollManager.addOperator(operator);
+            // dgBankrollManager.approveBankroll(address(bankrollAddress), 0);
+            // dgBankrollManager.setOperatorToBankroll(address(bankrollAddress), operator);
+            // vm.writeFile(BANKROLL_PATH, vm.toString(address(bankrollAddress)));
+        // }
 
         vm.stopBroadcast();
     }
