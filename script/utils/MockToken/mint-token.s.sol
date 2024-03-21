@@ -1,25 +1,35 @@
-// // SPDX-License-Identifier: MIT
-// pragma solidity ^0.8.18;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.19;
 
-// import {Script} from "forge-std/Script.sol";
+import {Script} from "forge-std/Script.sol";
 
-// import {MockToken} from "test/mock/MockToken.sol";
+import {MockToken} from "test/mock/MockToken.sol";
 
-// contract MintTokens is Script {
-    // uint256 adminPrivateKey = vm.envUint("ADMIN_PRIVATE_KEY");
+contract MintTokens is Script {
+    uint256 adminPrivateKey = vm.envUint("ADMIN_PRIVATE_KEY");
 
-    // address token = vm.envAddress("TOKEN_ADDRESS");
+    address token = vm.envAddress("TOKEN_ADDRESS");
 
-    // uint256 constant amount = 100;
+    uint256 constant amount = 100;
 
-    // MockToken USDT = MockToken(token);
+    MockToken USDT = MockToken(token);
 
-    // function run() public {
+    string public PATH_PREFIX = string.concat("deployment/", vm.toString(block.chainid));
+    string public PROXY_ADMIN_PATH = string.concat(PATH_PREFIX, "/ProxyAdmin/address");
+    string public BANKROLL_IMPL_PATH = string.concat(PATH_PREFIX, "/BankrollImpl/address");
+    string public BANKROLL_MANAGER_PATH = string.concat(PATH_PREFIX, "/DGBankrollManager/address");
+    string public FACTORY_PATH = string.concat(PATH_PREFIX, "/DGBankrollFactory/address");
+    string public ESCROW_PATH = string.concat(PATH_PREFIX, "/DGEscrow/address");
+    string public BANKROLL_PATH = string.concat(PATH_PREFIX, "/Bankroll/address");
 
-        // vm.startBroadcast(adminPrivateKey);
+    address bankroll = vm.parseAddress(vm.readFile(BANKROLL_PATH));
 
-        // USDT.mint(vm.addr(adminPrivateKey), 1_000_000_000_000_000_000_000_000);
+    function run() public {
 
-        // USDT.approve(0x9E2Fb8d43C4F700A9362Ce48dF3DFF53e4877716, 1_000_000_000_000_000_000_000_000);
-    // }
-// }
+        vm.startBroadcast(adminPrivateKey);
+
+        USDT.mint(vm.addr(adminPrivateKey), 1_000_000_000_000_000_000_000_000);
+
+        USDT.approve(bankroll, 1_000_000_000_000_000_000_000_000);
+    }
+}
