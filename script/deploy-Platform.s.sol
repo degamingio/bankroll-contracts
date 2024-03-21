@@ -130,6 +130,7 @@ contract DeployPlatform is Script {
 
         dgBankrollManager.grantRole(keccak256("ADMIN"), address(dgBankrollFactory));
 
+        dgBankrollManager.grantRole(keccak256("ADMIN"), deployer);
         // if (createCasino) {
             // dgBankrollFactory.deployBankroll(token, maxRisk, threshold, "0x0");
             // address bankrollAddress = dgBankrollFactory.bankrolls(0);
