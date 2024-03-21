@@ -116,6 +116,8 @@ contract DeployPlatform is Script {
         dgBankrollManager.grantRole(keccak256("ADMIN"), address(dgBankrollFactory));
 
         dgBankrollManager.grantRole(keccak256("ADMIN"), deployer);
+        
+        dgBankrollManager.grantRole(keccak256("ADMIN"), admin);
 
         vm.stopBroadcast();
     }
