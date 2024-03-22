@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {Script} from "forge-std/Script.sol";
+import "forge-std/Script.sol";
 import {Bankroll} from "src/Bankroll.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -22,6 +22,7 @@ contract Debit is Script {
     string public FACTORY_PATH = string.concat(PATH_PREFIX, "/DGBankrollFactory/address");
     string public ESCROW_PATH = string.concat(PATH_PREFIX, "/DGEscrow/address");
     string public BANKROLL_PATH = string.concat(PATH_PREFIX, "/Bankroll/address");
+    string public ID_PATH = string.concat(PATH_PREFIX, "/EscrowId/bytes");
 
     Bankroll bankroll = Bankroll(vm.parseAddress(vm.readFile(BANKROLL_PATH)));
 
@@ -30,8 +31,8 @@ contract Debit is Script {
     function run() external {
         vm.startBroadcast(adminPrivateKey);
 
-        // bankroll.credit(amount, operator);
         bankroll.debit(0xDef28f7d7F3700e30F403B6350Fb54a358469874, amount, operator);
+
         vm.stopBroadcast();
     }
 }

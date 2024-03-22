@@ -19,6 +19,7 @@ contract ClaimProfit is Script {
     string public FACTORY_PATH = string.concat(PATH_PREFIX, "/DGBankrollFactory/address");
     string public ESCROW_PATH = string.concat(PATH_PREFIX, "/DGEscrow/address");
     string public BANKROLL_PATH = string.concat(PATH_PREFIX, "/Bankroll/address");
+    string public ID_PATH = string.concat(PATH_PREFIX, "/EscrowId/bytes");
 
     DGEscrow escrow = DGEscrow(vm.parseAddress(vm.readFile(ESCROW_PATH)));
 
@@ -26,7 +27,7 @@ contract ClaimProfit is Script {
         vm.startBroadcast(adminPrivateKey);
 
         // PASTE ID HERE
-        // escrow.releaseFunds();
+        //escrow.releaseFunds(vm.parseBytes(vm.readFile(ID_PATH)));
 
         vm.stopBroadcast();
     }
