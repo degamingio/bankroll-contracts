@@ -1,12 +1,15 @@
 # Bankroll Contracts
 
-Bankroll:             0x54bE4777F127019B4E3Fb9E31cf8FAB19287d662
-BankrollImpl:         0xa37ec425f96D9531dD597Ec8932Df8c484B8Eaf2
-DGBankrollFactory:    0x09a40dbb12cA3E06e92F75b21FdBd4994728947D
-DGBankrollManager:    0x343f864EAf4A27706ffD29c6CCf990b2934F1E00
-DGEscrow:             0x5A44Ad2BEdb5f4CE6041706aCAcfF8755D7a96d8
-ProxyAdmin:           0x2f0DDeCC93c2066621951910B41D669162ba2892
+### These are deployed on arbitrum sepolia testnet
 
+```sh
+Bankroll:             0x242f2d72f6B9F534B6182d911e719b7be7a81861
+BankrollImpl:         0x4Fa81D1ee764f5e6E33735b43bbFc17927531717
+DGBankrollFactory:    0xED16f52959b21CC138DEeA8889Fba13841BFba75
+DGBankrollManager:    0xa99F38851444a3728f7F7D702169AFD4e87a6C3C
+DGEscrow:             0xa66271c90e344c6be44C3ECe3856Ed9976136fF5
+ProxyAdmin:           0x5AD4E55c55DA23B9fF75febf2E16Ce117B334112
+```
 ## Compile Project
 
 ```sh
