@@ -58,8 +58,8 @@ contract CreateBankroll is Script {
     string public ESCROW_PATH = string.concat(PATH_PREFIX, "/DGEscrow/address");
     string public BANKROLL_PATH = string.concat(PATH_PREFIX, "/Bankroll/address");
 
-    uint256 maxRisk = 10_000;
-    uint256 threshold = 10_000;
+    uint256 maxRisk = 8_000;
+    uint256 threshold = 5_000;
 
     function run() public {
         vm.startBroadcast(deployerPrivateKey);
@@ -71,12 +71,16 @@ contract CreateBankroll is Script {
         dgEscrow = DGEscrow(vm.parseAddress(vm.readFile(ESCROW_PATH)));
         //bankroll = Bankroll(vm.parseAddress(vm.readFile(BANKROLL_PATH)));
 
-        dgBankrollFactory.deployBankroll(token, maxRisk, threshold, "0x1");
+        dgBankrollFactory.deployBankroll(token, maxRisk, threshold, "0x0");
         address bankrollAddress = dgBankrollFactory.bankrolls(dgBankrollFactory.bankrollCount() - 1);
         dgBankrollManager.addOperator(operator);
         dgBankrollManager.approveBankroll(bankrollAddress, 650);
         dgBankrollManager.setOperatorToBankroll(bankrollAddress, operator);
         vm.writeFile(BANKROLL_PATH, vm.toString(bankrollAddress));
+        bankroll = Bankroll(bankrollAddress);
+        vm.stopBroadcast();
+        vm.startBroadcast(adminPrivateKey);
+        bankroll.maxContractsApprove();
         vm.stopBroadcast();
     }
 }
