@@ -17,4 +17,3 @@
 | BKR-05   |                                             | High Level   | ❌    | ❌     |
 | BKR-06   |                                             | High Level   | ❌    |        |
 | BKR-07   |                                             | High Level   | ❌    |        |
-|          |                                             |              |       |        |
