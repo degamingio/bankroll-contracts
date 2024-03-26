@@ -1,0 +1,16 @@
+testMode: assertion
+testLimit: 50000
+allContracts: false
+sender: ["0x10000", "0x20000", "0x30000"]
+corpusDir: "Corpus"
+workers: 1
+codeSize: 0x7000
+cryticArgs:
+  [
+    "--solc-remaps",
+    "ds-test/=lib/forge-std/lib/ds-test/src/",
+    "--solc-remaps",
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+    "--solc-remaps",
+    "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+  ]

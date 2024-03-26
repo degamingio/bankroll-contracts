@@ -92,7 +92,6 @@ contract DGBankrollFactory is AccessControlUpgradeable {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-
     /**
      * @notice
      *  Deploy a new Bankroll instance
@@ -103,12 +102,10 @@ contract DGBankrollFactory is AccessControlUpgradeable {
      * @param _salt bytes used for deterministic deployment
      *
      */
-    function deployBankroll(
-        address _token,
-        uint256 _maxRiskPercentage,
-        uint256 _escrowThreshold,
-        bytes32 _salt 
-    ) external  onlyRole(DEFAULT_ADMIN_ROLE) {
+    function deployBankroll(address _token, uint256 _maxRiskPercentage, uint256 _escrowThreshold, bytes32 _salt)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         // Make sure that token address is a contract
         if (!_isContract(_token)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
 
@@ -120,18 +117,12 @@ contract DGBankrollFactory is AccessControlUpgradeable {
 
         // Initialize Bankroll contract
         newBankroll.initialize(
-            dgAdmin,
-            _token,
-            dgBankrollManager,
-            escrow,
-            deGaming,
-            _maxRiskPercentage,
-            _escrowThreshold
+            dgAdmin, _token, dgBankrollManager, escrow, deGaming, _maxRiskPercentage, _escrowThreshold
         );
 
         // Add address to list of bankrolls
         bankrolls.push(address(newBankroll));
-        
+
         // Increment bankroll counter
         ++bankrollCount;
     }
@@ -198,7 +189,7 @@ contract DGBankrollFactory is AccessControlUpgradeable {
 
     /**
      * @notice
-     *  Set DeGaming wallet address 
+     *  Set DeGaming wallet address
      *  Only the caller with role `DEFAULT_ADMIN_ROLE` can perform this operation
      *
      * @param _deGaming DeGaming wallet
@@ -233,7 +224,7 @@ contract DGBankrollFactory is AccessControlUpgradeable {
     //  _/ // / / / /_/  __/ /  / / / / /_/ / /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
     // /___/_/ /_/\__/\___/_/  /_/ /_/\__,_/_/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
-        /**
+    /**
      * @notice
      *  Allows contract to check if the Token address actually is a contract
      *

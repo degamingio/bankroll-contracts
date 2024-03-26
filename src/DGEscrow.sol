@@ -18,7 +18,6 @@ import {DGErrors} from "src/libraries/DGErrors.sol";
 import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
 import {DGEvents} from "src/libraries/DGEvents.sol";
 
-
 /**
  * @title DGEscrow
  * @author DeGaming Technical Team
@@ -79,7 +78,7 @@ contract DGEscrow is AccessControl, ReentrancyGuard {
      * @notice
      *  Function called by the bankroll to send funds to the escrow
      *
-     * @param _player address of the player 
+     * @param _player address of the player
      * @param _operator address of the operator
      * @param _token address of the token
      * @param _winnings amount of tokens sent to escrow
@@ -90,13 +89,8 @@ contract DGEscrow is AccessControl, ReentrancyGuard {
         if (!dgBankrollManager.bankrollStatus(msg.sender)) revert DGErrors.BANKROLL_NOT_APPROVED();
 
         // Create escrow entry
-        DGDataTypes.EscrowEntry memory entry = DGDataTypes.EscrowEntry(
-            msg.sender,
-            _operator,
-            _player,
-            _token,
-            block.timestamp
-        );
+        DGDataTypes.EscrowEntry memory entry =
+            DGDataTypes.EscrowEntry(msg.sender, _operator, _player, _token, block.timestamp);
 
         // Encode entry into bytes to use for id of escrow
         bytes memory id = abi.encode(entry);
@@ -181,7 +175,6 @@ contract DGEscrow is AccessControl, ReentrancyGuard {
 
         // Approve spending for bankroll to spend on behalf of escrow contract
         if (token.approve(entry.bankroll, escrowed[_id])) {
-
             // Send the escrowed funds back to the bankroll
             IBankroll(entry.bankroll).credit(escrowed[_id], entry.operator);
 
@@ -258,7 +251,7 @@ contract DGEscrow is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @notice 
+     * @notice
      *  Allows admin to set new event period time
      *
      * @param _newEventPeriod New event period time in seconds
