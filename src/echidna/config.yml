@@ -1,0 +1,29 @@
+testMode: assertion
+testLimit: 50000
+allContracts: false
+sender: ["0x10000", "0x20000", "0x30000"]
+corpusDir: "Corpus"
+# rpcUrl: https://eth-mainnet.g.alchemy.com/v2/zAYBgt5nigLMIq5ypc2hDI9H3gijx2X7
+workers: 1
+rpcBlock: 19396275
+shrinkLimit: 2000
+codeSize: 0x7000
+cryticArgs:
+  [
+    "--solc-remaps",
+    "ds-test/=lib/forge-std/lib/ds-test/src/",
+    "--solc-remaps",
+    "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/",
+    "--solc-remaps",
+    "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+    "--solc-remaps",
+    "openzeppelin/=lib/openzeppelin-contracts-upgradeable/contracts/",
+    "--solc-remaps",
+    "@uniswap/v3-core/=lib/v3-core/",
+    "--solc-remaps",
+    "@uniswap/v3-periphery/=lib/v3-periphery/",
+    "--solc-remaps",
+    "v3-core/=lib/v3-core/contracts/",
+    "--solc-remaps",
+    "v3-periphery/=lib/v3-periphery/contracts/",
+  ]
