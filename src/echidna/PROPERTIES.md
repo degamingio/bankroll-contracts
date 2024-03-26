@@ -6,7 +6,7 @@
 - High-Level Properties
 - Unit Tests
 
-## V3Vault
+## Bankroll
 
 | Property | Description                                 | Category     | Added | Tested |
 | -------- | ------------------------------------------- | ------------ | ----- | ------ |
