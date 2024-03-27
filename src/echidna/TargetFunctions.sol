@@ -20,11 +20,38 @@ abstract contract TargetFunctions is Setup, Properties, BeforeAfter {
         try bankroll.depositFunds(amount) {
             __after(msg.sender);
             sumOfShares += shares;
-            assertWithMsg(invariant_liquidityGteShares(sumOfShares), "BKR1 | Liquidity Gte Shares");
+            uint256 sumOfTokens = _getSharesToAmount(sumOfShares);
+            assertWithMsg(invariant_liquidityGteShares(sumOfTokens), "BKR1 | Liquidity Gte Shares");
         } catch {
             assert(false);
         }
     }
 
-    // function testWithdraw(uint256 shares) public {}
+    function testWithdrawalStages(uint256 _amount) public {
+        if(bankroll.sharesOf(msg.sender) == 0) {
+            return;
+        }
+        uint256 _shares = bankroll.sharesOf(msg.sender);
+        uint256 amount = clampBetween(_amount, 1, _shares);
+        // emit LogUint("Amount: ", amount);
+        __before(msg.sender);
+        hevm.prank(msg.sender);
+        try bankroll.withdrawalStageOne(amount) {
+            __after(msg.sender);
+        } catch {
+            assert(false);
+        }
+        hevm.warp(block.timestamp + 3 minutes);
+        hevm.prank(msg.sender);
+        try bankroll.withdrawalStageTwo() {
+            __after(msg.sender);
+            uint256 _shares = _getAmountToShares(amount);
+            sumOfShares -= _shares;
+            uint256 sumOfTokens = _getSharesToAmount(sumOfShares);
+            hevm.warp(block.timestamp + 1 hours);
+            assertWithMsg(invariant_liquidityGteShares(sumOfTokens), "BKR1 | Liquidity Gte Shares");
+        } catch {
+            assert(false);
+        }
+    }
 }

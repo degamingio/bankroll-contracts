@@ -542,4 +542,18 @@ contract BankrollTest is Test {
 
         _isAddressContract = size > 0;
     }
+
+        function test_withdrawStageTwo_fail() public {
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), type(uint256).max);
+        bankroll.depositFunds(100000e6);
+        bankroll.depositFunds(11930361);
+        bankroll.withdrawalStageOne(4089590315);
+
+        vm.warp(3);
+
+        bankroll.withdrawalStageTwo();
+        bankroll.depositFunds(1);
+        vm.stopPrank();
+    }
 }
