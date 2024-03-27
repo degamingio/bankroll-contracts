@@ -39,25 +39,34 @@ abstract contract TargetFunctions is Setup, Properties, BeforeAfter {
         if (bankroll.sharesOf(msg.sender) == 0) {
             return;
         }
-        uint256 _shares = bankroll.sharesOf(msg.sender);
-        uint256 amount = clampBetween(_amount, 1, _shares);
-        // emit LogUint("Amount: ", amount);
+        uint256 balanceOfShares = bankroll.sharesOf(msg.sender);
+        uint256 amount = clampBetween(_amount, 1, balanceOfShares);
+        // emit LogUint256("Amount: ", amount);
         __before(msg.sender);
+
         hevm.prank(msg.sender);
         try bankroll.withdrawalStageOne(amount) {
             __after(msg.sender);
         } catch {
             assert(false);
         }
+        uint256 _shares = _getAmountToShares(amount);
         hevm.warp(block.timestamp + 3 minutes);
         hevm.prank(msg.sender);
         try bankroll.withdrawalStageTwo() {
             __after(msg.sender);
-            uint256 _shares = _getAmountToShares(amount);
             sumOfShares -= _shares;
             uint256 sumOfTokens = _getSharesToAmount(sumOfShares);
             hevm.warp(block.timestamp + 1 hours);
             assertWithMsg(invariant_liquidityGteShares(sumOfTokens), "BKR1 | Liquidity Gte Shares");
+            _checkWithdrawProperties(
+                _shares,
+                amount,
+                _before.userBalanceToken,
+                _after.userBalanceToken,
+                _before.totalSupply,
+                _after.totalSupply
+            );
         } catch {
             assert(false);
         }

@@ -36,7 +36,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     uint256 public totalSupply;
 
     /// @dev used to calculate percentages
-    uint256 public constant DENOMINATOR = 10_000; 
+    uint256 public constant DENOMINATOR = 10_000;
 
     /// @dev Max percentage of liquidity risked
     uint256 public maxRiskPercentage;
@@ -72,7 +72,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     mapping(address lp => uint256 timestamp) public withdrawalLimitOf;
 
     /// @dev amount of shares per lp
-    mapping(address lp => uint256 shares) public sharesOf; 
+    mapping(address lp => uint256 shares) public sharesOf;
 
     /// @dev allowed LP addresses
     mapping(address lp => bool authorized) public lpWhitelist;
@@ -81,7 +81,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     IERC20Upgradeable public token;
 
     /// @dev Bankroll manager instance
-    IDGBankrollManager dgBankrollManager; 
+    IDGBankrollManager dgBankrollManager;
 
     /// @dev Escrow instance
     IDGEscrow escrow;
@@ -124,7 +124,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         uint256 _escrowThreshold
     ) external initializer {
         // Check so that both bankroll manager,token and escrow are contracts
-        if (!_isContract(_bankrollManager) || !_isContract(_token) || !_isContract(_escrow)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+        if (!_isContract(_bankrollManager) || !_isContract(_token) || !_isContract(_escrow)) {
+            revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+        }
 
         // Check so that owner is not a contract
         if (_isContract(_owner)) revert DGErrors.ADDRESS_NOT_A_WALLET();
@@ -189,15 +191,12 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
      */
     function depositFunds(uint256 _amount) external {
         // check if the user is allowed to deposit if the bankroll is not public
-        if (
-            lpIs == DGDataTypes.LpIs.WHITELISTED && 
-            !lpWhitelist[msg.sender]
-        ) revert DGErrors.LP_IS_NOT_WHITELISTED();
+        if (lpIs == DGDataTypes.LpIs.WHITELISTED && !lpWhitelist[msg.sender]) revert DGErrors.LP_IS_NOT_WHITELISTED();
 
         // Check if the bankroll has a minimum lp and if so that the deposition exceeds it
-        if (_amount < minimumLp) revert DGErrors.DEPOSITION_TO_LOW(); 
+        if (_amount < minimumLp) revert DGErrors.DEPOSITION_TO_LOW();
 
-        // store liquidity variable to calculate amounts of shares minted, since 
+        // store liquidity variable to calculate amounts of shares minted, since
         // the liquidity() result will change before we have the amount variable
         uint256 liq = liquidity();
 
@@ -212,7 +211,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
 
         // amount variable calculated from recieved balances
         uint256 amount = balanceAfter - balanceBefore;
-        
+
         // calculate the amount of shares to mint
         uint256 shares;
         if (totalSupply < 1) {
@@ -224,7 +223,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         // mint shares to the user
         _mint(msg.sender, shares);
 
-        // Emit a funds deposited event 
+        // Emit a funds deposited event
         emit DGEvents.FundsDeposited(msg.sender, amount);
     }
 
@@ -243,25 +242,24 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
 
         // Make sure that previous withdrawal is either fullfilled or window has passed
         if (
-            withdrawalInfo.stage == DGDataTypes.WithdrawalIs.STAGED &&
-            block.timestamp < withdrawalInfo.timestamp + withdrawalWindowLength
+            withdrawalInfo.stage == DGDataTypes.WithdrawalIs.STAGED
+                && block.timestamp < withdrawalInfo.timestamp + withdrawalWindowLength
         ) revert DGErrors.WITHDRAWAL_PROCESS_IN_STAGING();
 
         // Check so that event period timestamp has passed
         if (block.timestamp < withdrawalLimitOf[msg.sender]) revert DGErrors.WITHDRAWAL_TIMESTAMP_HASNT_PASSED();
-        
+
         // Update withdrawalInfo of LP
-        withdrawalInfoOf[msg.sender] = DGDataTypes.WithdrawalInfo(
-            block.timestamp,
-            _amount,
-            DGDataTypes.WithdrawalIs.STAGED
-        );
+        withdrawalInfoOf[msg.sender] =
+            DGDataTypes.WithdrawalInfo(block.timestamp, _amount, DGDataTypes.WithdrawalIs.STAGED);
 
         // Set new withdrawal Limit of LP
         withdrawalLimitOf[msg.sender] = block.timestamp + withdrawalEventPeriod;
 
         // Emit withdrawal staged event
-        emit DGEvents.WithdrawalStaged(msg.sender, block.timestamp + withdrawalDelay, block.timestamp + withdrawalWindowLength);
+        emit DGEvents.WithdrawalStaged(
+            msg.sender, block.timestamp + withdrawalDelay, block.timestamp + withdrawalWindowLength
+        );
     }
 
     /**
@@ -273,12 +271,14 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         DGDataTypes.WithdrawalInfo memory withdrawalInfo = withdrawalInfoOf[msg.sender];
 
         // make sure that withdrawal is in staging
-        if (withdrawalInfo.stage == DGDataTypes.WithdrawalIs.FULLFILLED) revert DGErrors.WITHDRAWAL_ALREADY_FULLFILLED();
+        if (withdrawalInfo.stage == DGDataTypes.WithdrawalIs.FULLFILLED) {
+            revert DGErrors.WITHDRAWAL_ALREADY_FULLFILLED();
+        }
 
         // Make sure it is within withdrawal window
         if (
-            block.timestamp < withdrawalInfo.timestamp + withdrawalDelay ||
-            block.timestamp > withdrawalInfo.timestamp + withdrawalWindowLength
+            block.timestamp < withdrawalInfo.timestamp + withdrawalDelay
+                || block.timestamp > withdrawalInfo.timestamp + withdrawalWindowLength
         ) revert DGErrors.OUTSIDE_WITHDRAWAL_WINDOW();
 
         // Call internal withdrawal function
@@ -302,7 +302,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
 
         // Check so that operator is associated with this bankroll
-        if (!dgBankrollManager.operatorOfBankroll(address(this), _operator)) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
+        if (!dgBankrollManager.operatorOfBankroll(address(this), _operator)) {
+            revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
+        }
 
         // Check to make sure that wallet is EOA
         if (_isContract(_player)) revert DGErrors.NOT_AN_EOA_WALLET();
@@ -334,9 +336,8 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
             // amount variable calculated from recieved balances
             amount = balanceBefore - balanceAfter;
 
-        // ... Else go on with payout
+            // ... Else go on with payout
         } else {
-
             // transfer ERC20 from the vault to the winner
             token.safeTransfer(_player, _amount);
 
@@ -352,7 +353,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
 
         // substract from total GGR
         GGR -= int256(amount);
-        
+
         // subtracting the amount from the specified operator GGR
         ggrOf[_operator] -= int256(amount);
     }
@@ -370,14 +371,16 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
 
         // Check so that operator is associated with this bankroll
-        if (!dgBankrollManager.operatorOfBankroll(address(this), _operator)) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
+        if (!dgBankrollManager.operatorOfBankroll(address(this), _operator)) {
+            revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
+        }
 
         // fetch balance before
         uint256 balanceBefore = token.balanceOf(address(this));
 
         // transfer ERC20 from the manager to the vault
         token.safeTransferFrom(msg.sender, address(this), _amount);
-        
+
         // fetch balance aftrer
         uint256 balanceAfter = token.balanceOf(address(this));
 
@@ -458,10 +461,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
      */
     function setInvestorWhitelist(address _lp, bool _isAuthorized) external {
         // Check if caller is either an approved operator or admin wallet
-        if (
-            !dgBankrollManager.isApproved(msg.sender) &&
-            !hasRole(ADMIN, msg.sender)
-        ) revert DGErrors.NO_LP_ACCESS_PERMISSION();
+        if (!dgBankrollManager.isApproved(msg.sender) && !hasRole(ADMIN, msg.sender)) {
+            revert DGErrors.NO_LP_ACCESS_PERMISSION();
+        }
 
         // Add toggle LPs _isAuthorized status
         lpWhitelist[_lp] = _isAuthorized;
@@ -495,7 +497,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
      *
      * @notice allows admins to change the max risk amount
      *
-     * @param _newAmount new amount in percentage that should be potentially risked per session 
+     * @param _newAmount new amount in percentage that should be potentially risked per session
      *
      */
     function changeMaxRisk(uint256 _newAmount) external onlyRole(ADMIN) {
@@ -510,7 +512,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
      *
      * @notice allows admins to change the max risk amount
      *
-     * @param _newAmount new amount in percentage that should be potentially risked per session 
+     * @param _newAmount new amount in percentage that should be potentially risked per session
      *
      */
     function changeEscrowThreshold(uint256 _newAmount) external onlyRole(ADMIN) {
@@ -522,18 +524,18 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     }
 
     /**
-     * @notice Remove the GGR of a specified operator from the total GGR, 
+     * @notice Remove the GGR of a specified operator from the total GGR,
      *  then null out the operator GGR. Only callable by the bankroll manager
      *
      * @param _operator the address  of the operator we want to null out
      *
      */
-    function nullGgrOf(address _operator) external onlyRole(BANKROLL_MANAGER){
+    function nullGgrOf(address _operator) external onlyRole(BANKROLL_MANAGER) {
         // Subtract the GGR of the operator from the total GGR
         GGR -= ggrOf[_operator];
 
         // Null out operator GGR
-        ggrOf[_operator] =  0;
+        ggrOf[_operator] = 0;
     }
 
     /**
@@ -543,15 +545,11 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
      */
     function maxContractsApprove() external onlyRole(ADMIN) {
         token.forceApprove(
-            address(dgBankrollManager),
-            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+            address(dgBankrollManager), 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         );
-        
-        token.forceApprove(
-            address(escrow),
-            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-        );
-    } 
+
+        token.forceApprove(address(escrow), 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
+    }
 
     //   _    ___                 ______                 __  _
     //  | |  / (_)__ _      __   / ____/_  ______  _____/ /_(_)___  ____  _____
@@ -570,7 +568,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         if (GGR <= 0) {
             _balance = token.balanceOf(address(this));
         } else if (GGR > 0) {
-            _balance = token.balanceOf(address(this)) - uint(GGR);
+            _balance = token.balanceOf(address(this)) - uint256(GGR);
         }
     }
 

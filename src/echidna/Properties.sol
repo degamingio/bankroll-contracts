@@ -46,7 +46,7 @@ abstract contract Properties is Setup, PropertiesAsserts {
     }
 
     function _checkWithdrawProperties(
-        uint256 withdraw,
+        uint256 shares,
         uint256 tokens,
         uint256 balanceBefore,
         uint256 balanceAfter,
@@ -54,8 +54,8 @@ abstract contract Properties is Setup, PropertiesAsserts {
         uint256 totalSupplyAfter
     ) internal {
         assertWithMsg(balanceAfter == balanceBefore + tokens, "WP-1");
-        assertWithMsg(totalSupplyAfter == totalSupplyBefore + tokens, "WP-2");
-        if (withdraw > 0) assertWithMsg(tokens > 0, "WP-3");
-        if (withdraw == 0) assertWithMsg(tokens == 0, "WP-4");
+        assertWithMsg(totalSupplyAfter == totalSupplyBefore - shares, "WP-2");
+        if (shares > 0) assertWithMsg(tokens > 0, "WP-3");
+        if (shares == 0) assertWithMsg(tokens == 0, "WP-4");
     }
 }
