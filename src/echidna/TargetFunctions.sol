@@ -22,6 +22,7 @@ abstract contract TargetFunctions is Setup, Properties, BeforeAfter {
             sumOfShares += shares;
             uint256 sumOfTokens = _getSharesToAmount(sumOfShares);
             assertWithMsg(invariant_liquidityGteShares(sumOfTokens), "BKR1 | Liquidity Gte Shares");
+            assertWithMsg(invariant_balanceGteGGR(), "BKR2 | Balance Gte GGR");
             _checkDepositProperties(
                 amount,
                 shares,
@@ -59,6 +60,7 @@ abstract contract TargetFunctions is Setup, Properties, BeforeAfter {
             uint256 sumOfTokens = _getSharesToAmount(sumOfShares);
             hevm.warp(block.timestamp + 1 hours);
             assertWithMsg(invariant_liquidityGteShares(sumOfTokens), "BKR1 | Liquidity Gte Shares");
+            assertWithMsg(invariant_balanceGteGGR(), "BKR2 | Balance Gte GGR");
             _checkWithdrawProperties(
                 _shares,
                 amount,
