@@ -8,11 +8,6 @@ import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transpa
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-// import {TransparentUpgradeableProxy} from
-//     "../lib/openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-// import {ProxyAdmin} from "../lib/openzeppelin-contracts/contracts/proxy/transparent/ProxyAdmin.sol";
-// import {SafeERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-// import {AccessControl} from "../lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 /* DeGaming Contracts */
 import {Bankroll} from "src/Bankroll.sol";
@@ -30,15 +25,16 @@ import {MockToken} from "test/mock/MockToken.sol";
 
 abstract contract Setup {
     uint256 sumOfShares;
+    int256 sumOfGgr;
 
-    MockToken public mockToken;
-    DGBankrollManager public dgBankrollManager;
-    DGEscrow public dgEscrow;
-    Bankroll public bankroll;
-    DGBankrollFactory public dgBankrollFactory;
-    TransparentUpgradeableProxy public bankrollProxy;
+    MockToken mockToken;
+    DGBankrollManager dgBankrollManager;
+    DGEscrow dgEscrow;
+    Bankroll bankroll;
+    DGBankrollFactory dgBankrollFactory;
+    TransparentUpgradeableProxy bankrollProxy;
 
-    ProxyAdmin public proxyAdmin;
+    ProxyAdmin proxyAdmin;
 
     address admin;
     address deGaming;
@@ -51,9 +47,9 @@ abstract contract Setup {
     uint256 threshold = 10_000;
 
     function setup() internal {
-        admin = address(0x1);
-        deGaming = address(0x2);
-        operator = address(0x3);
+        admin = address(0x11);
+        deGaming = address(0x22);
+        operator = address(0x33);
 
         mockToken = new MockToken("Mock USDC", "mUSDC");
 
@@ -96,10 +92,18 @@ abstract contract Setup {
     }
 
     function _getSharesToAmount(uint256 _shares) internal view returns (uint256 amount) {
-        amount = (_shares * bankroll.liquidity()) / bankroll.totalSupply();
+        if (bankroll.liquidity() == 0) {
+            _shares = amount;
+        } else {
+            amount = (_shares * bankroll.liquidity()) / bankroll.totalSupply();
+        }
     }
 
     function _getAmountToShares(uint256 _amount) internal view returns (uint256 shares) {
-        shares = (_amount * bankroll.totalSupply()) / bankroll.liquidity();
+        if (bankroll.liquidity() == 0) {
+            _amount = shares;
+        } else {
+            shares = (_amount * bankroll.totalSupply()) / bankroll.liquidity();
+        }
     }
 }

@@ -19,7 +19,11 @@ abstract contract Properties is Setup, PropertiesAsserts {
         return balance >= uint256(ggr);
     }
 
-    function invariant003() internal view returns (bool) {}
+    function invariant_ggrEqualSumGgrOf() internal view returns (bool) {
+        int256 ggr = bankroll.GGR();
+
+        return ggr == sumOfGgr;
+    }
 
     function invariant004() internal view returns (bool) {}
 

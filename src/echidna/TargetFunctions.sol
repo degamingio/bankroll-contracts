@@ -8,9 +8,13 @@ import {Setup} from "./Setup.sol";
 
 abstract contract TargetFunctions is Setup, Properties, BeforeAfter {
     function testDepositFunds(uint256 amount) public {
+        amount = clampBetween(amount, 0, 100000e6);
         _initMint(msg.sender, amount);
         __before(msg.sender);
+
         uint256 shares = _getAmountToShares(amount);
+        hevm.prank(msg.sender);
+        mockToken.approve(address(bankroll), amount);
 
         hevm.prank(msg.sender);
         try bankroll.depositFunds(amount) {
