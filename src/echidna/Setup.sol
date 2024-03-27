@@ -93,7 +93,7 @@ abstract contract Setup {
 
     function _getSharesToAmount(uint256 _shares) internal view returns (uint256 amount) {
         if (bankroll.liquidity() == 0) {
-            _shares = amount;
+            amount = _shares;
         } else {
             amount = (_shares * bankroll.liquidity()) / bankroll.totalSupply();
         }
@@ -101,7 +101,7 @@ abstract contract Setup {
 
     function _getAmountToShares(uint256 _amount) internal view returns (uint256 shares) {
         if (bankroll.liquidity() == 0) {
-            _amount = shares;
+            shares = _amount;
         } else {
             shares = (_amount * bankroll.totalSupply()) / bankroll.liquidity();
         }

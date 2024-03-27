@@ -22,13 +22,21 @@ abstract contract TargetFunctions is Setup, Properties, BeforeAfter {
             sumOfShares += shares;
             uint256 sumOfTokens = _getSharesToAmount(sumOfShares);
             assertWithMsg(invariant_liquidityGteShares(sumOfTokens), "BKR1 | Liquidity Gte Shares");
+            _checkDepositProperties(
+                amount,
+                shares,
+                _before.userBalanceShares,
+                _after.userBalanceShares,
+                _before.totalSupply,
+                _after.totalSupply
+            );
         } catch {
             assert(false);
         }
     }
 
     function testWithdrawalStages(uint256 _amount) public {
-        if(bankroll.sharesOf(msg.sender) == 0) {
+        if (bankroll.sharesOf(msg.sender) == 0) {
             return;
         }
         uint256 _shares = bankroll.sharesOf(msg.sender);
