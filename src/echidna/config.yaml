@@ -2,7 +2,7 @@ testMode: assertion
 testLimit: 50000
 allContracts: false
 sender: ["0x10000", "0x20000", "0x30000"]
-corpusDir: "Corpus3"
+corpusDir: "Corpus4"
 workers: 1
 codeSize: 0x7000
 cryticArgs:

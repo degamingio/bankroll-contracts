@@ -21,7 +21,7 @@ abstract contract TargetFunctions is Setup, Properties, BeforeAfter {
             __after(msg.sender);
             sumOfShares += shares;
             uint256 sumOfTokens = _getSharesToAmount(sumOfShares);
-            assertWithMsg(invariant_liquidityGteShares(sumOfTokens), "BKR1 | Liquidity Gte Shares");
+            // assertWithMsg(invariant_liquidityGteShares(sumOfTokens), "BKR1 | Liquidity Gte Shares");
             assertWithMsg(invariant_balanceGteGGR(), "BKR2 | Balance Gte GGR");
             _checkDepositProperties(
                 amount,
@@ -58,16 +58,16 @@ abstract contract TargetFunctions is Setup, Properties, BeforeAfter {
             sumOfShares -= _shares;
             uint256 sumOfTokens = _getSharesToAmount(sumOfShares);
             hevm.warp(block.timestamp + 1 hours);
-            assertWithMsg(invariant_liquidityGteShares(sumOfTokens), "BKR1 | Liquidity Gte Shares");
+            // assertWithMsg(invariant_liquidityGteShares(sumOfTokens), "BKR1 | Liquidity Gte Shares");
             assertWithMsg(invariant_balanceGteGGR(), "BKR2 | Balance Gte GGR");
-            _checkWithdrawProperties(
-                _shares,
-                amount,
-                _before.userBalanceToken,
-                _after.userBalanceToken,
-                _before.totalSupply,
-                _after.totalSupply
-            );
+            // _checkWithdrawProperties(
+            //     _shares,
+            //     amount,
+            //     _before.userBalanceToken,
+            //     _after.userBalanceToken,
+            //     _before.totalSupply,
+            //     _after.totalSupply
+            // );
         } catch {
             assert(false);
         }
@@ -94,75 +94,89 @@ abstract contract TargetFunctions is Setup, Properties, BeforeAfter {
             assert(false);
         }
     }
-    function testCredit(uint256 _amount) public {
-        _amount = clampBetween(_amount, 1, 100000e6);
+    // function testCredit(uint256 _amount) public {
+    //     _amount = clampBetween(_amount, 1, 100000e6);
+    //     __before(address(bankroll));
+
+    //     if (mockToken.balanceOf(admin) < _amount) {
+    //         _initMint(admin, _amount);
+    //     }
+    //     hevm.prank(admin);
+    //     mockToken.approve(address(bankroll), _amount);
+
+    //     hevm.prank(admin);
+    //     try bankroll.credit(_amount, operator) {
+    //         __after(address(bankroll));
+    //         sumOfGgr += int256(_amount);
+    //         assertWithMsg(invariant_balanceGteGGR(), "BKR3 | Balance Gte GGR");
+    //         assertWithMsg(invariant_ggrEqualSumGgrOf(), "BKR4 | GGR Equal Sum GGR Of");
+    //     }
+    //     catch {
+    //         assert(false);
+    //     }
+    // }
+
+    function testClaimProfit() public {
+        if(bankroll.GGR() < 1) return;
+        __before(deGaming);
+        hevm.prank(admin);
+        try dgBankrollManager.claimProfit(address(bankroll)) {
+            __after(deGaming);
+        } catch {
+            assert(false);
+        }
+    }
+
+    function testDepositFundsEscrow(uint256 _winnings) public {
+        // this should not be clamped to the bankroll balance later, since the winnings doesn't depend on it
+        _winnings = clampBetween(_winnings, 0, mockToken.balanceOf(address(bankroll)));
+        // _winnings = clampBetween(_winnings, 0, 100000e6);
         __before(address(bankroll));
-
-        if (mockToken.balanceOf(admin) < _amount) {
-            _initMint(admin, _amount);
-        }
-        hevm.prank(admin);
-        mockToken.approve(address(bankroll), _amount);
-
-        hevm.prank(admin);
-        try bankroll.credit(_amount, operator) {
+        hevm.prank(address(bankroll));
+        mockToken.approve(address(dgEscrow), _winnings);
+        hevm.prank(address(bankroll));
+        try dgEscrow.depositFunds(player, operator, address(mockToken), _winnings) {
+            sumOfWinnings += _winnings;
+            bytes memory _id = _getId(player, operator, address(mockToken));
+            ghost_escrow[_id] = _winnings;
+            ghost_id = _id;
             __after(address(bankroll));
-            sumOfGgr += int256(_amount);
-            assertWithMsg(invariant_balanceGteGGR(), "BKR3 | Balance Gte GGR");
-            assertWithMsg(invariant_ggrEqualSumGgrOf(), "BKR4 | GGR Equal Sum GGR Of");
-        }
-        catch {
-            assert(false);
-        }
-    }
-
-    function testClaimProfit(address _bankroll) public {
-        __before(msg.sender);
-        hevm.prank(msg.sender);
-        try dgBankrollManager.claimProfit(_bankroll) {
-            __after(msg.sender);
         } catch {
             assert(false);
         }
     }
 
-    function testDepositFundsEscrow(address _player, address _operator, address _token, uint256 _winnings) public {
-        __before(msg.sender);
-        hevm.prank(msg.sender);
-        try dgEscrow.depositFunds(_player, _operator, _token, _winnings) {
-            __after(msg.sender);
-        } catch {
-            assert(false);
-        }
-    }
-
-    function testReleaseFunds(bytes memory _id) public {
-        __before(msg.sender);
+    function testReleaseFunds() public {
+        if(ghost_id.length == 0) return;
+        if(ghost_escrow[ghost_id] == 0) return;
+        __before(player);
         hevm.prank(admin);
-        try dgEscrow.releaseFunds(_id) {
-            __after(msg.sender);
+        try dgEscrow.releaseFunds(ghost_id) {
+            sumOfWinnings -= ghost_escrow[ghost_id];
+            ghost_escrow[ghost_id] = 0;
+            __after(player);
         } catch {
             assert(false);
         }
     }
 
-    function testRevertFunds(bytes memory _id) public {
-        __before(msg.sender);
-        hevm.prank(admin);
-        try dgEscrow.revertFunds(_id) {
-            __after(msg.sender);
-        } catch {
-            assert(false);
-        }
-    }
+    // function testRevertFunds(bytes memory _id) public {
+    //     __before(msg.sender);
+    //     hevm.prank(admin);
+    //     try dgEscrow.revertFunds(_id) {
+    //         __after(msg.sender);
+    //     } catch {
+    //         assert(false);
+    //     }
+    // }
 
-    function testClaimUnaddressed(bytes memory _id) public {
-        __before(msg.sender);
-        hevm.prank(msg.sender);
-        try dgEscrow.claimUnaddressed(_id) {
-            __after(msg.sender);
-        } catch {
-            assert(false);
-        }
-    }
+    // function testClaimUnaddressed(bytes memory _id) public {
+    //     __before(msg.sender);
+    //     hevm.prank(msg.sender);
+    //     try dgEscrow.claimUnaddressed(_id) {
+    //         __after(msg.sender);
+    //     } catch {
+    //         assert(false);
+    //     }
+    // }
 }

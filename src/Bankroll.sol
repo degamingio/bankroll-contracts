@@ -568,7 +568,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         if (GGR <= 0) {
             _balance = token.balanceOf(address(this));
         } else if (GGR > 0) {
-            _balance = token.balanceOf(address(this)) - uint256(GGR);
+            _balance = token.balanceOf(address(this)) - uint256(GGR); //@audit-issue can be DoS
         }
     }
 

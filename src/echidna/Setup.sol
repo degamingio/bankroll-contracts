@@ -31,6 +31,9 @@ abstract contract Setup {
     //DGBankrollManager.sol
 
     //DGEscrow.sol
+    mapping(bytes => uint256) ghost_escrow;
+    bytes ghost_id;
+    uint256 sumOfWinnings;
 
     MockToken mockToken;
     DGBankrollManager dgBankrollManager;
@@ -89,6 +92,8 @@ abstract contract Setup {
 
         dgBankrollManager.grantRole(keccak256("ADMIN"), admin);
 
+        dgEscrow.grantRole(keccak256("ADMIN"), admin);
+
         dgBankrollManager.approveBankroll(address(bankroll), 650);
 
         dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
@@ -113,4 +118,15 @@ abstract contract Setup {
             shares = (_amount * bankroll.totalSupply()) / bankroll.liquidity();
         }
     }
-}
+
+function _getId(address _player, address _operator, address _token) internal view returns (bytes memory _id) {
+        DGDataTypes.EscrowEntry memory entry = DGDataTypes.EscrowEntry(
+            address(bankroll),
+            _operator,
+            _player,
+            address(_token),
+            block.timestamp
+        );
+
+        _id = abi.encode(entry);
+    }}

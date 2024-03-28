@@ -24,8 +24,10 @@ abstract contract Properties is Setup, PropertiesAsserts {
 
         return ggr == sumOfGgr;
     }
+    // Invariant: Winning amount should always be less than the bankroll balance
+    function invariant_winningsLteBalance() internal view returns (bool) {
 
-    function invariant004() internal view returns (bool) {}
+    }
 
     function invariant005() internal returns (bool) {}
 
