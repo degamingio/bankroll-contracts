@@ -24,8 +24,13 @@ import {DGEvents} from "src/libraries/DGEvents.sol";
 import {MockToken} from "test/mock/MockToken.sol";
 
 abstract contract Setup {
+    //DGBankroll.sol
     uint256 sumOfShares;
     int256 sumOfGgr;
+
+    //DGBankrollManager.sol
+
+    //DGEscrow.sol
 
     MockToken mockToken;
     DGBankrollManager dgBankrollManager;

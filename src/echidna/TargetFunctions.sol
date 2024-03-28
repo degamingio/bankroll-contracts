@@ -73,27 +73,6 @@ abstract contract TargetFunctions is Setup, Properties, BeforeAfter {
         }
     }
 
-    function testCredit(uint256 _amount) public {
-        _amount = clampBetween(_amount, 1, 100000e6);
-        __before(address(bankroll));
-
-        if (mockToken.balanceOf(admin) < _amount) {
-            _initMint(admin, _amount);
-        }
-        hevm.prank(admin);
-        mockToken.approve(address(bankroll), _amount);
-
-        hevm.prank(admin);
-        try bankroll.credit(_amount, operator) {
-            __after(address(bankroll));
-            sumOfGgr += int256(_amount);
-            assertWithMsg(invariant_balanceGteGGR(), "BKR3 | Balance Gte GGR");
-            assertWithMsg(invariant_ggrEqualSumGgrOf(), "BKR4 | GGR Equal Sum GGR Of");
-        } catch {
-            assert(false);
-        }
-    }
-
     function testDebit(uint256 _amount) public {
         _amount = clampBetween(_amount, 1, 100000e6);
         if (_amount > bankroll.getMaxRisk()) {
@@ -111,6 +90,77 @@ abstract contract TargetFunctions is Setup, Properties, BeforeAfter {
             emit LogUint256("sumOfGgr after: ", uint256(sumOfGgr));
             assertWithMsg(invariant_balanceGteGGR(), "BKR3 | Balance Gte GGR");
             assertWithMsg(invariant_ggrEqualSumGgrOf(), "BKR4 | GGR Equal Sum GGR Of");
+        } catch {
+            assert(false);
+        }
+    }
+    function testCredit(uint256 _amount) public {
+        _amount = clampBetween(_amount, 1, 100000e6);
+        __before(address(bankroll));
+
+        if (mockToken.balanceOf(admin) < _amount) {
+            _initMint(admin, _amount);
+        }
+        hevm.prank(admin);
+        mockToken.approve(address(bankroll), _amount);
+
+        hevm.prank(admin);
+        try bankroll.credit(_amount, operator) {
+            __after(address(bankroll));
+            sumOfGgr += int256(_amount);
+            assertWithMsg(invariant_balanceGteGGR(), "BKR3 | Balance Gte GGR");
+            assertWithMsg(invariant_ggrEqualSumGgrOf(), "BKR4 | GGR Equal Sum GGR Of");
+        }
+        catch {
+            assert(false);
+        }
+    }
+
+    function testClaimProfit(address _bankroll) public {
+        __before(msg.sender);
+        hevm.prank(msg.sender);
+        try dgBankrollManager.claimProfit(_bankroll) {
+            __after(msg.sender);
+        } catch {
+            assert(false);
+        }
+    }
+
+    function testDepositFundsEscrow(address _player, address _operator, address _token, uint256 _winnings) public {
+        __before(msg.sender);
+        hevm.prank(msg.sender);
+        try dgEscrow.depositFunds(_player, _operator, _token, _winnings) {
+            __after(msg.sender);
+        } catch {
+            assert(false);
+        }
+    }
+
+    function testReleaseFunds(bytes memory _id) public {
+        __before(msg.sender);
+        hevm.prank(admin);
+        try dgEscrow.releaseFunds(_id) {
+            __after(msg.sender);
+        } catch {
+            assert(false);
+        }
+    }
+
+    function testRevertFunds(bytes memory _id) public {
+        __before(msg.sender);
+        hevm.prank(admin);
+        try dgEscrow.revertFunds(_id) {
+            __after(msg.sender);
+        } catch {
+            assert(false);
+        }
+    }
+
+    function testClaimUnaddressed(bytes memory _id) public {
+        __before(msg.sender);
+        hevm.prank(msg.sender);
+        try dgEscrow.claimUnaddressed(_id) {
+            __after(msg.sender);
         } catch {
             assert(false);
         }
