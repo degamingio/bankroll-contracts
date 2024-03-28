@@ -39,6 +39,7 @@ abstract contract Setup {
     address admin;
     address deGaming;
     address operator;
+    address player;
 
     address[] operators;
     address[] lps;
@@ -50,6 +51,7 @@ abstract contract Setup {
         admin = address(0x11);
         deGaming = address(0x22);
         operator = address(0x33);
+        player = address(0x44);
 
         mockToken = new MockToken("Mock USDC", "mUSDC");
 

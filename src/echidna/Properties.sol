@@ -16,7 +16,7 @@ abstract contract Properties is Setup, PropertiesAsserts {
         uint256 balance = mockToken.balanceOf(address(bankroll));
         int256 ggr = bankroll.GGR();
 
-        return balance >= uint256(ggr);
+        return int256(balance) >= ggr;
     }
 
     function invariant_ggrEqualSumGgrOf() internal view returns (bool) {
