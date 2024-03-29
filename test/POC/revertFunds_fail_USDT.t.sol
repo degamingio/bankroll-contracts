@@ -101,7 +101,7 @@ contract DGEscrowTest is Test {
         );
 
         bytes memory id = abi.encode(entry);
-        //And then it will not work to revert the funds because we have already approved the escrow contract to spend the USDT
+        //It will revert the transaction because we have already approved the escrow contract to spend the USDT
         vm.expectRevert();
        dgEscrow.revertFunds(id);
 }
