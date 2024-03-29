@@ -73,23 +73,12 @@ contract DGEscrowTest is Test {
 
         bankroll = Bankroll(address(bankrollProxy));
 
-        usdt.mint(lpOne, 1_000_000e6);
-        usdt.mint(lpTwo, 1_000_000e6);
-        usdt.mint(admin, 1_000_000e6);
         usdt.mint(address(bankroll), 1_000_000e6);
 
-
-        dgBankrollManager.addOperator(operator);
         dgBankrollManager.approveBankroll(address(bankroll), 0);
-        dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
-
-
-        vm.startPrank(address(bankroll));
-        usdt.approve(address(dgEscrow), type(uint256).max);
-        vm.stopPrank();
 
         vm.startPrank(admin);
-
+        bankroll.maxContractsApprove();
         bankroll.changeEscrowThreshold(5_000);  
         vm.stopPrank();
     }
@@ -97,6 +86,7 @@ contract DGEscrowTest is Test {
 
         function test_revertFunds_fail_USDT() public {
         vm.startPrank(address(bankroll));
+        //We deposit 500,000 USDT to the escrow contract
         dgEscrow.depositFunds(player, operator, address(usdt), 500_000e6);
         vm.stopPrank();
 
@@ -111,9 +101,9 @@ contract DGEscrowTest is Test {
         );
 
         bytes memory id = abi.encode(entry);
-        bool result = dgEscrow.revertFunds(id);
-        assertFalse(result, "Expected revertFunds to return false");
-    }
-    
+        //And then it will not work to revert the funds because we have already approved the escrow contract to spend the USDT
+        vm.expectRevert();
+       dgEscrow.revertFunds(id);
+}
 
 }
