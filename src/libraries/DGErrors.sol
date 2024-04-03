@@ -81,4 +81,7 @@ library DGErrors {
 
     /// @dev Error thrown if checks regarding setting withdrawal mechanisms params fail
     error WITHDRAWAL_TIME_RANGE_NOT_ALLOWED();
+
+    /// @dev Error thrown if a lp is tryingto withdraw when withdrawals are stopped
+    error WITHDRAWALS_NOT_ALLOWED();
 }

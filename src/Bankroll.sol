@@ -238,6 +238,8 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         // Make sure that LPs don't try to withdraw more than they have
         if (_amount > sharesOf[msg.sender]) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
 
+        if (withdrawalWindowLength == 0) revert DGErrors.WITHDRAWALS_NOT_ALLOWED();
+
         // Fetch withdrawal info
         DGDataTypes.WithdrawalInfo memory withdrawalInfo = withdrawalInfoOf[msg.sender];
 
