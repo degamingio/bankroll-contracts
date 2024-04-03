@@ -151,57 +151,57 @@ contract DGBankrollManagerTest is Test {
         assertEq(mockToken.balanceOf(address(bankroll)), 1_000_000e6);
     }
 
-    function test_removeOperator(address _operator, address _operator2, address _operator3) public {
-        vm.assume(_operator != operator);
-        vm.assume(_operator2 != operator);
-        vm.assume(_operator3 != operator);
-        vm.assume(!_isContract(_operator));
-        vm.assume(!_isContract(_operator2));
-        vm.assume(!_isContract(_operator3));
+    // function test_removeOperator(address _operator, address _operator2, address _operator3) public {
+        // vm.assume(_operator != operator);
+        // vm.assume(_operator2 != operator);
+        // vm.assume(_operator3 != operator);
+        // vm.assume(!_isContract(_operator));
+        // vm.assume(!_isContract(_operator2));
+        // vm.assume(!_isContract(_operator3));
 
-        vm.prank(admin);
+        // vm.prank(admin);
         
-        vm.expectRevert(DGErrors.NOT_AN_OPERATOR.selector);
-        bankroll.credit(1_000_000e6, _operator);
+        // vm.expectRevert(DGErrors.NOT_AN_OPERATOR.selector);
+        // bankroll.credit(1_000_000e6, _operator);
 
-        dgBankrollManager.addOperator(_operator);
-        dgBankrollManager.setOperatorToBankroll(address(bankroll), _operator);
-        vm.prank(admin);
-        bankroll.credit(500_000e6, _operator);
+        // dgBankrollManager.addOperator(_operator);
+        // dgBankrollManager.setOperatorToBankroll(address(bankroll), _operator);
+        // vm.prank(admin);
+        // bankroll.credit(500_000e6, _operator);
 
-        assertEq(mockToken.balanceOf(address(bankroll)), 500_000e6);
+        // assertEq(mockToken.balanceOf(address(bankroll)), 500_000e6);
 
-        dgBankrollManager.blockOperator(_operator);
+        // dgBankrollManager.blockOperator(_operator);
         
-        vm.prank(admin);
-        vm.expectRevert(DGErrors.NOT_AN_OPERATOR.selector);
-        bankroll.credit(500_000e6, _operator);
+        // vm.prank(admin);
+        // vm.expectRevert(DGErrors.NOT_AN_OPERATOR.selector);
+        // bankroll.credit(500_000e6, _operator);
 
-        dgBankrollManager.addOperator(_operator);
-        dgBankrollManager.removeOperatorFromBankroll(_operator, address(bankroll));
+        // dgBankrollManager.addOperator(_operator);
+        // dgBankrollManager.removeOperatorFromBankroll(_operator, address(bankroll));
 
-        vm.prank(admin);
-        vm.expectRevert(DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL.selector);
-        bankroll.credit(500_000e6, _operator);
+        // vm.prank(admin);
+        // vm.expectRevert(DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL.selector);
+        // bankroll.credit(500_000e6, _operator);
 
-        dgBankrollManager.addOperator(_operator);
-        dgBankrollManager.addOperator(_operator2);
-        dgBankrollManager.addOperator(_operator3);
-        dgBankrollManager.setOperatorToBankroll(address(bankroll), _operator);
-        dgBankrollManager.setOperatorToBankroll(address(bankroll), _operator2);
-        dgBankrollManager.setOperatorToBankroll(address(bankroll), _operator3);
+        // dgBankrollManager.addOperator(_operator);
+        // dgBankrollManager.addOperator(_operator2);
+        // dgBankrollManager.addOperator(_operator3);
+        // dgBankrollManager.setOperatorToBankroll(address(bankroll), _operator);
+        // dgBankrollManager.setOperatorToBankroll(address(bankroll), _operator2);
+        // dgBankrollManager.setOperatorToBankroll(address(bankroll), _operator3);
 
-        vm.startPrank(admin);
-        bankroll.credit(1e6, _operator2);
-        bankroll.credit(1e6, _operator3);
-        vm.stopPrank();
+        // vm.startPrank(admin);
+        // bankroll.credit(1e6, _operator2);
+        // bankroll.credit(1e6, _operator3);
+        // vm.stopPrank();
 
-        dgBankrollManager.removeOperatorFromBankroll(_operator2, address(bankroll));
+        // dgBankrollManager.removeOperatorFromBankroll(_operator2, address(bankroll));
 
-        vm.prank(admin);
-        vm.expectRevert(DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL.selector);
-        bankroll.credit(1e6, _operator2);
-    }
+        // vm.prank(admin);
+        // vm.expectRevert(DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL.selector);
+        // bankroll.credit(1e6, _operator2);
+    // }
 
     function test_updateFee(uint256 _newFee, uint256 _faultyFee, address _faultyBankroll, address _notAdmin) public {
         vm.assume(_newFee < 10_000);

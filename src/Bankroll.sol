@@ -41,7 +41,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     /// @dev Max percentage of liquidity risked
     uint256 public maxRiskPercentage;
 
-    /// @dev Escrow threshold percentage
+    /// @dev Escrow threshold absolute value
     uint256 public escrowTreshold;
 
     /// @dev amount for minimum pool in case it exists
@@ -101,6 +101,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
+        _mint(address(this), 1_000);
     }
 
     /**
@@ -131,9 +132,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
 
         // Check so that maxRiskPercentage isnt larger than denominator
         if (_maxRiskPercentage > DENOMINATOR) revert DGErrors.MAXRISK_TOO_HIGH();
-
-        // Check so that maxrisk doestn't exceed 100%
-        if (_escrowThreshold > DENOMINATOR) revert DGErrors.ESCROW_THRESHOLD_TOO_HIGH();
 
         __AccessControl_init();
 
@@ -215,7 +213,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         
         // calculate the amount of shares to mint
         uint256 shares;
-        if (totalSupply < 1) {
+        if (totalSupply < 1 || totalSupply > 0 && liq == 0) {
             shares = amount;
         } else {
             shares = (amount * totalSupply) / liq;
