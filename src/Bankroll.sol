@@ -133,7 +133,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         // Check so that maxRiskPercentage isnt larger than denominator
         if (_maxRiskPercentage > DENOMINATOR) revert DGErrors.MAXRISK_TOO_HIGH();
 
+        // Initialize OZ packages
         __AccessControl_init();
+        __ReentrancyGuard_init();
 
         // Initializing erc20 token associated with bankroll
         token = IERC20Upgradeable(_token);
@@ -307,14 +309,14 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
 
         // pay what is left if amount is bigger than bankroll balance
         uint256 maxRisk = getMaxRisk();
+
+        if (maxRisk == 0) revert DGErrors.MAX_RISK_ZERO();
+
         if (_amount > maxRisk) {
             _amount = maxRisk;
             // Emit event that the bankroll is sweppt
             emit DGEvents.BankrollSwept(_player, _amount);
         }
-
-        // Fetch escrow threshold
-        uint256 threshold = getEscrowThreshold();
 
         // fetch balance before
         uint256 balanceBefore = token.balanceOf(address(this));
@@ -323,7 +325,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         uint256 amount;
 
         // If amount is more then threshold, deposit into escrow...
-        if (_amount > threshold) {
+        if (_amount > escrowTreshold) {
             escrow.depositFunds(_player, _operator, address(token), _amount);
 
             // fetch balance aftrer

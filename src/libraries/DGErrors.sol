@@ -75,4 +75,7 @@ library DGErrors {
 
     /// @dev Error thrown if wallet is not EOA
     error NOT_AN_EOA_WALLET();
+
+    /// @dev Error thrown if maxrisk = 0
+    error MAX_RISK_ZERO();
 }
