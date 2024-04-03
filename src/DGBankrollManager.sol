@@ -306,7 +306,7 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
         int256 GGR = bankroll.GGR();
 
         // Check if Casino GGR is posetive
-        if (GGR < 1) revert DGErrors.NOTHING_TO_CLAIM();
+        if (GGR < 10) revert DGErrors.NOTHING_TO_CLAIM();
 
         // Update event period ends unix timestamp to the eventperiod of specified bankroll
         eventPeriodEnds[_bankroll] = block.timestamp + eventPeriodOf[_bankroll];

@@ -147,7 +147,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         escrowTreshold = _escrowThreshold;
 
         // Set default withdrawal delay in seconfs
-        withdrawalDelay = 1;
+        withdrawalDelay = 30;
 
         // Set default withdrawal window
         withdrawalWindowLength = 5 minutes;
@@ -400,6 +400,8 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
      */
     function setWithdrawalDelay(uint256 _withdrawalDelay) external onlyRole(ADMIN) {
         if (_withdrawalDelay > withdrawalWindowLength) revert DGErrors.WITHDRAWAL_TIME_RANGE_NOT_ALLOWED();
+
+        if (_withdrawalDelay > 30) revert DGErrors.WITHDRAWAL_DELAY_TO_SHORT();
 
         withdrawalDelay = _withdrawalDelay;
     }

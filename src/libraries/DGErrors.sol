@@ -85,6 +85,9 @@ library DGErrors {
     /// @dev Error thrown if a lp is tryingto withdraw when withdrawals are stopped
     error WITHDRAWALS_NOT_ALLOWED();
 
+    /// @dev Error thrown when withdrawal delay is under 30 seconds
+    error WITHDRAWAL_DELAY_TO_SHORT();
+
     /// @dev Error thrown when escrow is locked
     error ESCROW_LOCKED();
 }
