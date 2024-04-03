@@ -310,8 +310,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         // pay what is left if amount is bigger than bankroll balance
         uint256 maxRisk = getMaxRisk();
 
+        // Throw error if maxrisk is 0
         if (maxRisk == 0) revert DGErrors.MAX_RISK_ZERO();
 
+        // Handle sweeping of bankroll
         if (_amount > maxRisk) {
             _amount = maxRisk;
             // Emit event that the bankroll is sweppt
@@ -402,6 +404,8 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
      *
      */
     function setWithdrawalDelay(uint256 _withdrawalDelay) external onlyRole(ADMIN) {
+        if (_withdrawalDelay > withdrawalWindowLength) revert DGErrors.WITHDRAWAL_TIME_RANGE_NOT_ALLOWED();
+
         withdrawalDelay = _withdrawalDelay;
     }
 
@@ -413,7 +417,24 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
      *
      */
     function setWithdrawalWindow(uint256 _withdrawalWindow) external onlyRole(ADMIN) {
+        if (_withdrawalWindow < withdrawalDelay) revert DGErrors.WITHDRAWAL_TIME_RANGE_NOT_ALLOWED();
+
+        if (_withdrawalWindow > withdrawalEventPeriod) revert DGErrors.WITHDRAWAL_TIME_RANGE_NOT_ALLOWED();
+
         withdrawalWindowLength = _withdrawalWindow;
+    }
+
+    /**
+     * @notice Change withdrawal (stage one) event period for LPs
+     *  Only callable by ADMIN
+     *
+     * @param _withdrawalEventPeriod New staging event period in seconds
+     *
+     */
+    function setWithdrawalEventPeriod(uint256 _withdrawalEventPeriod) external onlyRole(ADMIN) {
+        if (_withdrawalEventPeriod < withdrawalWindowLength) revert DGErrors.WITHDRAWAL_TIME_RANGE_NOT_ALLOWED();
+
+        withdrawalEventPeriod = _withdrawalEventPeriod;
     }
 
     /**
@@ -435,17 +456,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
 
         // Grant new bankroll manager role
         _grantRole(BANKROLL_MANAGER, _newBankrollManager);
-    }
-
-    /**
-     * @notice Change withdrawal (stage one) event period for LPs
-     *  Only callable by ADMIN
-     *
-     * @param _withdrawalEventPeriod New staging event period in seconds
-     *
-     */
-    function setWithdrawalEventPeriod(uint256 _withdrawalEventPeriod) external onlyRole(ADMIN) {
-        withdrawalEventPeriod = _withdrawalEventPeriod;
     }
 
     /**

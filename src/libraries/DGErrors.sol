@@ -78,4 +78,7 @@ library DGErrors {
 
     /// @dev Error thrown if maxrisk = 0
     error MAX_RISK_ZERO();
+
+    /// @dev Error thrown if checks regarding setting withdrawal mechanisms params fail
+    error WITHDRAWAL_TIME_RANGE_NOT_ALLOWED();
 }
