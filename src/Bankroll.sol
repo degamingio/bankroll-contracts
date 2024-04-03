@@ -508,13 +508,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
      *
      * @notice allows admins to change the max risk amount
      *
-     * @param _newAmount new amount in percentage that should be potentially risked per session 
+     * @param _newAmount new amount in that should be potentially risked per session
      *
      */
     function changeEscrowThreshold(uint256 _newAmount) external onlyRole(ADMIN) {
-        // Check so that maxrisk doestn't exceed 100%
-        if (_newAmount > DENOMINATOR) revert DGErrors.ESCROW_THRESHOLD_TOO_HIGH();
-
         // Set new maxrisk
         escrowTreshold = _newAmount;
     }
@@ -615,13 +612,15 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     }
 
     /**
-     * @notice returns escrow threshold during the debit() call
+     * @notice calculate percentages for the avalable liquidity, can be used to set the escrowThreshold
      *
-     * @return _threshold threshold before earnings gets sent to escrow
+     * @param _percentage percentage amount that should be calculated
+     *
+     * @return _amount absolute value calculated from the percentage of liquidity
      *
      */
-    function getEscrowThreshold() public view returns (uint256 _threshold) {
-        _threshold = (liquidity() * escrowTreshold) / DENOMINATOR;
+    function calculateLiquidityPercentageAmount(uint256 _percentage) public view returns (uint256 _amount) {
+        _amount = (liquidity() * _percentage) / DENOMINATOR;
     }
 
     //     ____      __                        __   ______                 __  _
