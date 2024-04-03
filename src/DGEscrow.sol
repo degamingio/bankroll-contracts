@@ -30,13 +30,19 @@ contract DGEscrow is AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /// @dev max time funds can be escrowed
-    uint256 eventPeriod;
+    uint256 public eventPeriod;
+
+    /// @dev nonce used to avoid ID collision
+    uint256 nonce;
 
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
 
     /// @dev Mapping for holding the escrow info, acts as a source of truth
     mapping(bytes id => uint256 winnings) public escrowed;
+
+    /// @dev Mapping to block an escrow
+    mapping(bytes id => bool status) public lockedEscrow;
 
     /// @dev Bankroll manager instance
     IDGBankrollManager public dgBankrollManager;
@@ -95,8 +101,12 @@ contract DGEscrow is AccessControl, ReentrancyGuard {
             _operator,
             _player,
             _token,
-            block.timestamp
+            block.timestamp,
+            nonce
         );
+
+        // Increment nonce
+        nonce++;
 
         // Encode entry into bytes to use for id of escrow
         bytes memory id = abi.encode(entry);
@@ -180,7 +190,9 @@ contract DGEscrow is AccessControl, ReentrancyGuard {
         uint256 balanceBefore = token.balanceOf(address(this));
 
         // Approve spending for bankroll to spend on behalf of escrow contract
-        if (token.approve(entry.bankroll, escrowed[_id])) {
+        token.forceApprove(entry.bankroll, escrowed[_id]);
+
+        if (token.allowance(address(this), entry.bankroll) == escrowed[_id]) {
 
             // Send the escrowed funds back to the bankroll
             IBankroll(entry.bankroll).credit(escrowed[_id], entry.operator);
@@ -196,7 +208,16 @@ contract DGEscrow is AccessControl, ReentrancyGuard {
 
             // Emit event that escrow is reverted back into the bankroll
             emit DGEvents.EscrowReverted(entry.bankroll, _id, amount);
+        } else {
+            lockedEscrow[_id] = true;
         }
+    }
+
+    function unlockEscrow(bytes memory _id, bool _status) external onlyRole(ADMIN){
+        // Check so that there are funds to claim for id
+        if (escrowed[_id] == 0) revert DGErrors.NOTHING_TO_CLAIM();
+
+        lockedEscrow[_id] = _status;
     }
 
     /**
@@ -208,6 +229,8 @@ contract DGEscrow is AccessControl, ReentrancyGuard {
      *
      */
     function claimUnaddressed(bytes memory _id) external nonReentrant {
+        if (lockedEscrow[_id]) revert DGErrors.ESCROW_LOCKED();
+
         // Check so that there are funds to claim for id
         if (escrowed[_id] == 0) revert DGErrors.NOTHING_TO_CLAIM();
 
