@@ -197,10 +197,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         // Check if the bankroll has a minimum lp and if so that the deposition exceeds it
         if (_amount < minimumLp) revert DGErrors.DEPOSITION_TO_LOW(); 
 
-        // store liquidity variable to calculate amounts of shares minted, since 
-        // the liquidity() result will change before we have the amount variable
-        uint256 liq = liquidity();
-
         // fetch balance before
         uint256 balanceBefore = token.balanceOf(address(this));
 
@@ -212,14 +208,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
 
         // amount variable calculated from recieved balances
         uint256 amount = balanceAfter - balanceBefore;
-        
+
         // calculate the amount of shares to mint
-        uint256 shares;
-        if (totalSupply < 1 || totalSupply > 0 && liq == 0) {
-            shares = amount;
-        } else {
-            shares = (amount * totalSupply) / liq;
-        }
+        uint256 shares = previewMint(amount);
 
         // mint shares to the user
         _mint(msg.sender, shares);
@@ -317,7 +308,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
 
         // Handle sweeping of bankroll
         if (_amount > maxRisk) {
+            // Set maxRisk value to _amount variable
             _amount = maxRisk;
+
             // Emit event that the bankroll is sweppt
             emit DGEvents.BankrollSwept(_player, _amount);
         }
@@ -568,6 +561,21 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     //  | |/ / /  __/ |/ |/ /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
     //  |___/_/\___/|__/|__/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
+    function previewMint(uint256 _amount) public view returns(uint256 _shares) {
+        // store liquidity variable to calculate amounts of shares minted, since 
+        // the liquidity() result will change before we have the amount variable
+        uint256 liq = liquidity();
+        if (totalSupply < 1 || totalSupply > 0 && liq == 0) {
+            _shares = _amount;
+        } else {
+            _shares = (_amount * totalSupply) / liq;
+        }
+    }
+
+    function previewRedeem(uint256 _shares) public view returns(uint256 _amount) {
+        _amount = (_shares * liquidity()) / totalSupply;
+    }
+
     /**
      * @notice Returns the amount of ERC20 tokens held by the bankroll that are available for playes to win and
      *  will not include funds that are reserved for GGR
@@ -681,7 +689,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
      */
     function _withdraw(uint256 _shares, address _reciever) internal {
         // Calculate the amount of ERC20 worth of shares
-        uint256 amount = (_shares * liquidity()) / totalSupply;
+        uint256 amount = previewRedeem(_shares);
 
         // Burn the shares from the caller
         _burn(_reciever, _shares);
