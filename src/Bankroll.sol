@@ -95,6 +95,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     /// @dev set status regarding if LP is open or whitelisted
     DGDataTypes.LpIs public lpIs = DGDataTypes.LpIs.OPEN;
 
+    /// @dev Storage gap used for future upgrades (30 * 32 bytes)
+    uint256[30] __gap;
+
     //     ______                 __                  __
     //    / ____/___  ____  _____/ /________  _______/ /_____  _____
     //   / /   / __ \/ __ \/ ___/ __/ ___/ / / / ___/ __/ __ \/ ___/
@@ -450,6 +453,14 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         withdrawalEventPeriod = _withdrawalEventPeriod;
     }
 
+    function setMinimumDepositionTime(uint256 _minimumDepositionTime) external onlyRole(ADMIN) {
+        minimumDepositionTime = _minimumDepositionTime;
+    }
+
+    function setWithdrawableTimeOf(uint256 _timeStamp, address _LP) external onlyRole(ADMIN) {
+        withdrawableTimeOf[_LP] = _timeStamp;
+    }
+
     /**
      * @notice
      *  Allows admin to update bankroll manager contract
@@ -469,6 +480,13 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
 
         // Grant new bankroll manager role
         _grantRole(BANKROLL_MANAGER, _newBankrollManager);
+    }
+
+    function updateEscrow(address _newEscrow) external onlyRole(ADMIN) {
+        if (!_isContract(_newEscrow)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+
+        escrow = IDGEscrow(_newEscrow);
+        
     }
 
     /**
