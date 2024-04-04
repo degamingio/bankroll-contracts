@@ -418,7 +418,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     function setWithdrawalDelay(uint256 _withdrawalDelay) external onlyRole(ADMIN) {
         if (_withdrawalDelay > withdrawalWindowLength) revert DGErrors.WITHDRAWAL_TIME_RANGE_NOT_ALLOWED();
 
-        if (_withdrawalDelay > 30) revert DGErrors.WITHDRAWAL_DELAY_TO_SHORT();
+        if (_withdrawalDelay < 30) revert DGErrors.WITHDRAWAL_DELAY_TO_SHORT();
 
         withdrawalDelay = _withdrawalDelay;
     }

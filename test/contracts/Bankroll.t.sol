@@ -100,6 +100,9 @@ contract BankrollTest is Test {
 
         bankroll = Bankroll(address(bankrollProxy));
 
+        vm.prank(admin);
+        bankroll.maxContractsApprove();
+
         token.mint(lpOne, 1_000_000e6);
         token.mint(lpTwo, 1_000_000e6);
         token.mint(admin, 1_000_000e6);
@@ -211,6 +214,8 @@ contract BankrollTest is Test {
         token.approve(address(bankroll), 1_000_000e6);
         bankroll.depositFunds(1_000_000e6);
 
+        vm.warp(block.timestamp + 1 weeks + 1);
+
         bankroll.withdrawalStageOne(bankroll.sharesOf(lpOne));
 
         vm.warp(3);
@@ -242,6 +247,8 @@ contract BankrollTest is Test {
         vm.startPrank(lpOne);
         token.approve(address(bankroll), 1_000_000e6);
         bankroll.depositFunds(1_000_000e6);
+        
+        vm.warp(block.timestamp + 1 weeks + 1);
 
         bankroll.withdrawalStageOne(bankroll.sharesOf(lpOne));
 
@@ -261,10 +268,12 @@ contract BankrollTest is Test {
         vm.startPrank(lpOne);
         token.approve(address(bankroll), 1_000_000e6);
         bankroll.depositFunds(1_000_000e6);
+        
+        vm.warp(block.timestamp + 1 weeks + 1);
 
         bankroll.withdrawalStageOne((bankroll.sharesOf(lpOne)) / 2);
 
-        vm.warp(_newEventPeriod + 1);
+        vm.warp(block.timestamp + _newEventPeriod + 1);
 
         bankroll.withdrawalStageOne((bankroll.sharesOf(lpOne)) / 2);
 
@@ -272,12 +281,14 @@ contract BankrollTest is Test {
     }
 
     function test_setWithdrawalDelay(uint256 _newWithdrawalDelay) public {
-        vm.assume(_newWithdrawalDelay > 3);
-        vm.assume(_newWithdrawalDelay < 350);
+        vm.assume(_newWithdrawalDelay > 31);
+        vm.assume(_newWithdrawalDelay < 300);
         
         vm.startPrank(lpOne);
         token.approve(address(bankroll), 1_000_000e6);
         bankroll.depositFunds(1_000_000e6);
+        
+        vm.warp(block.timestamp + 1 weeks + 1);
 
         bankroll.withdrawalStageOne(bankroll.sharesOf(lpOne));
         vm.stopPrank();
@@ -298,6 +309,8 @@ contract BankrollTest is Test {
         vm.startPrank(lpOne);
         token.approve(address(bankroll), 1_000_000e6);
         bankroll.depositFunds(1_000_000e6);
+        
+        vm.warp(block.timestamp + 1 weeks + 1);
 
         bankroll.withdrawalStageOne(bankroll.sharesOf(lpOne));
         vm.stopPrank();
@@ -335,8 +348,9 @@ contract BankrollTest is Test {
         bankroll.debit(player, 500_000e6, address(69));
 
         // pay player 500_000
-        vm.prank(admin);
+        vm.startPrank(admin);
         bankroll.debit(player, 500_000e6, operator);
+        vm.stopPrank();
 
         // bankroll now has 500_000
         assertEq(bankroll.liquidity(), 500_000e6);
