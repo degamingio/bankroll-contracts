@@ -165,7 +165,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         withdrawalEventPeriod = 1 hours;
 
         // Set minimum deposition time
-        minimumDepositionTime = 4 weeks;
+        minimumDepositionTime = 1 weeks;
 
         // Setup bankroll manager
         dgBankrollManager = IDGBankrollManager(_bankrollManager);
@@ -210,9 +210,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         if (_amount < minimumLp) revert DGErrors.DEPOSITION_TO_LOW(); 
 
         // Set depositionLimit
-        if (withdrawableTimeOf[msg.sender] == 0) {
-            withdrawableTimeOf[msg.sender] = block.timestamp + minimumDepositionTime;
-        }
+        withdrawableTimeOf[msg.sender] = block.timestamp + minimumDepositionTime; 
 
         // fetch balance before
         uint256 balanceBefore = token.balanceOf(address(this));
@@ -729,11 +727,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
 
         // Burn the shares from the caller
         _burn(_reciever, _shares);
-
-        // Reset withdrawable time if LP doesnt hold any shares
-        if (sharesOf[_reciever] == 0) {
-            withdrawableTimeOf[_reciever] = 0;
-        }
 
         // fetch balance before
         uint256 balanceBefore = token.balanceOf(address(this));
