@@ -56,6 +56,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     /// @dev Minimum time between withdrawal step one
     uint256 public withdrawalEventPeriod;
 
+    /// @dev Minimum time between deposit and withdrawal
+    uint256 public minimumDepositionTime;
+
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
 
@@ -76,6 +79,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
 
     /// @dev allowed LP addresses
     mapping(address lp => bool authorized) public lpWhitelist;
+
+    /// @dev timestamp when an LP can withdraw
+    mapping(address lp => uint256 withdrawable) public withdrawableTimeOf;
 
     /// @dev bankroll liquidity token
     IERC20Upgradeable public token;
@@ -155,6 +161,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         // Set default staging period
         withdrawalEventPeriod = 1 hours;
 
+        // Set minimum deposition time
+        minimumDepositionTime = 4 weeks;
+
         // Setup bankroll manager
         dgBankrollManager = IDGBankrollManager(_bankrollManager);
 
@@ -197,6 +206,11 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         // Check if the bankroll has a minimum lp and if so that the deposition exceeds it
         if (_amount < minimumLp) revert DGErrors.DEPOSITION_TO_LOW(); 
 
+        // Set depositionLimit
+        if (withdrawableTimeOf[msg.sender] == 0) {
+            withdrawableTimeOf[msg.sender] = block.timestamp + minimumDepositionTime;
+        }
+
         // fetch balance before
         uint256 balanceBefore = token.balanceOf(address(this));
 
@@ -230,6 +244,8 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         if (_amount > sharesOf[msg.sender]) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
 
         if (withdrawalWindowLength == 0) revert DGErrors.WITHDRAWALS_NOT_ALLOWED();
+
+        if (block.timestamp < withdrawableTimeOf[msg.sender]) revert DGErrors.MINIMUM_DEPOSITION_TIME_NOT_PASSED();
 
         // Fetch withdrawal info
         DGDataTypes.WithdrawalInfo memory withdrawalInfo = withdrawalInfoOf[msg.sender];
@@ -695,6 +711,11 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
 
         // Burn the shares from the caller
         _burn(_reciever, _shares);
+
+        // Reset withdrawable time if LP doesnt hold any shares
+        if (sharesOf[_reciever] == 0) {
+            withdrawableTimeOf[_reciever] = 0;
+        }
 
         // fetch balance before
         uint256 balanceBefore = token.balanceOf(address(this));

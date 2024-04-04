@@ -90,4 +90,7 @@ library DGErrors {
 
     /// @dev Error thrown when escrow is locked
     error ESCROW_LOCKED();
+
+    /// @dev Error thrown when minimum deposition time of LP hasn't passed
+    error MINIMUM_DEPOSITION_TIME_NOT_PASSED();
 }
