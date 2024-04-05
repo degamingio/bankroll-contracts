@@ -53,14 +53,37 @@ contract DGEscrowTest is Test {
         maxRisk = 10_000;
         threshold = 10_000;
 
+        proxyAdmin = new ProxyAdmin();
+
         dgBankrollFactory = new DGBankrollFactory();
 
-        // dgBankrollManager = new DGBankrollManager(admin);
+        bankrollManagerProxy = new TransparentUpgradeableProxy(
+            address(new DGBankrollManager()),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                DGBankrollManager.initialize.selector,
+                admin
+            )
+        );
+
+        dgBankrollManager = DGBankrollManager(address(bankrollManagerProxy));
+
         token = new MockToken("token", "MTK");
 
         // dgEscrow = new DGEscrow(1 weeks, address(dgBankrollManager));
 
-        proxyAdmin = new ProxyAdmin();
+
+        escrowProxy = new TransparentUpgradeableProxy(
+            address(new DGEscrow()),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                DGEscrow.initialize.selector,
+                1 weeks,
+                address(dgBankrollManager)
+            )
+        );
+
+        dgEscrow = DGEscrow(address(escrowProxy));
 
         bankrollProxy = new TransparentUpgradeableProxy(
             address(new Bankroll()),
