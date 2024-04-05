@@ -10,7 +10,6 @@ import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.s
 /* DeGaming Contracts */
 import {Bankroll} from "src/Bankroll.sol";
 import {DGBankrollManager} from "src/DGBankrollManager.sol";
-import {DGBankrollFactory} from "src/DGBankrollFactory.sol";
 import {DGEscrow} from "src/DGEscrow.sol";
 
 /* DeGaming Libraries */
@@ -33,11 +32,9 @@ contract DGEscrowTest is Test {
     TransparentUpgradeableProxy public bankrollProxy;
     TransparentUpgradeableProxy public escrowProxy;
     TransparentUpgradeableProxy public bankrollManagerProxy;
-    TransparentUpgradeableProxy public bankrollFactoryProxy;
 
     ProxyAdmin public proxyAdmin;
 
-    DGBankrollFactory public dgBankrollFactory;
     DGBankrollManager public dgBankrollManager;
     DGEscrow public dgEscrow;
     Bankroll public bankroll;
@@ -55,8 +52,6 @@ contract DGEscrowTest is Test {
 
         proxyAdmin = new ProxyAdmin();
 
-        dgBankrollFactory = new DGBankrollFactory();
-
         bankrollManagerProxy = new TransparentUpgradeableProxy(
             address(new DGBankrollManager()),
             address(proxyAdmin),
@@ -69,9 +64,6 @@ contract DGEscrowTest is Test {
         dgBankrollManager = DGBankrollManager(address(bankrollManagerProxy));
 
         token = new MockToken("token", "MTK");
-
-        // dgEscrow = new DGEscrow(1 weeks, address(dgBankrollManager));
-
 
         escrowProxy = new TransparentUpgradeableProxy(
             address(new DGEscrow()),
