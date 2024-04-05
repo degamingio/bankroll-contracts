@@ -22,66 +22,107 @@ import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
 import {MockToken} from "test/mock/MockToken.sol";
 
 contract DGBankrollFactoryTest is Test {
-    // address admin;
-    // address operator;
-    // address deGaming;
-    // address lp;
-    // address player;
-    // uint256 maxRisk;
-    // uint256 threshold;
-    // uint256 lpFee;
+    address admin;
+    address owner;
+    address operator;
+    address deGaming;
+    address lp;
+    address player;
+    uint256 maxRisk;
+    uint256 threshold;
+    uint256 lpFee;
 
-    // TransparentUpgradeableProxy public bankrollFactoryProxy;
-    // ProxyAdmin public proxyAdmin;
+    TransparentUpgradeableProxy public bankrollProxy;
+    TransparentUpgradeableProxy public escrowProxy;
+    TransparentUpgradeableProxy public bankrollManagerProxy;
+    TransparentUpgradeableProxy public bankrollFactoryProxy;
+    ProxyAdmin public proxyAdmin;
 
-    // DGBankrollFactory public dgBankrollFactory;
-    // DGBankrollManager public dgBankrollManager;
-    // DGEscrow public dgEscrow;
-    // Bankroll public bankroll;
-    // MockToken public token;
+    DGBankrollFactory public dgBankrollFactory;
+    DGBankrollManager public dgBankrollManager;
+    DGEscrow public dgEscrow;
+    Bankroll public bankroll;
+    MockToken public token;
     
-    // bytes32 public constant DEFAULT_ADMIN_ROLE_HASH = 0x0;
+    bytes32 public constant DEFAULT_ADMIN_ROLE_HASH = 0x0;
 
 
-    // function setUp() public {
-        // admin = address(0x1);
-        // operator = address(0x2);
-        // lp = address(0x3);
-        // player = address(0x4);
-        // deGaming = address(0x5);
+    function setUp() public {
+        admin = address(0x1);
+        operator = address(0x2);
+        lp = address(0x3);
+        player = address(0x4);
+        deGaming = address(0x5);
+        owner = address(0x6);
 
-        // maxRisk = 10_000;
-        // threshold = 10_000;
+        maxRisk = 10_000;
+        threshold = 1_000_000e6;
 
-        // lpFee = 650;
+        lpFee = 650;
 
-        // token = new MockToken("token", "MTK");
+        proxyAdmin = new ProxyAdmin();
 
-        // proxyAdmin = new ProxyAdmin();
+        dgBankrollFactory = new DGBankrollFactory();
 
-        // bankroll = new Bankroll();
+        bankrollManagerProxy = new TransparentUpgradeableProxy(
+            address(new DGBankrollManager()),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                DGBankrollManager.initialize.selector,
+                admin
+            )
+        );
 
-        // dgBankrollManager = new DGBankrollManager(admin);
+        dgBankrollManager = DGBankrollManager(address(bankrollManagerProxy));
+        
+        token = new MockToken("token", "MTK");
 
-        // dgEscrow = new DGEscrow(1 weeks, address(dgBankrollManager));
+        escrowProxy = new TransparentUpgradeableProxy(
+            address(new DGEscrow()),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                DGEscrow.initialize.selector,
+                1 weeks,
+                address(dgBankrollManager)
+            )
+        );
 
-        // bankrollFactoryProxy = new TransparentUpgradeableProxy(
-            // address(new DGBankrollFactory()),
+        dgEscrow = DGEscrow(address(escrowProxy));
+
+        // bankrollProxy = new TransparentUpgradeableProxy(
+            // address(new Bankroll()),
             // address(proxyAdmin),
             // abi.encodeWithSelector(
-                // DGBankrollFactory.initialize.selector,
-                // address(bankroll),
+                // Bankroll.initialize.selector,
+                // admin,
+                // address(token),
                 // address(dgBankrollManager),
                 // address(dgEscrow),
-                // deGaming,
-                // admin
+                // owner,
+                // maxRisk,
+                // threshold
             // )
         // );
 
-        // dgBankrollFactory = DGBankrollFactory(address(bankrollFactoryProxy));
+        // bankroll = Bankroll(address(bankrollProxy));
 
-        // dgBankrollManager.addOperator(operator);
-    // }
+        bankroll = new Bankroll();    
+
+        bankrollFactoryProxy = new TransparentUpgradeableProxy(
+            address(dgBankrollFactory),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                DGBankrollFactory.initialize.selector,
+                address(bankroll),
+                address(dgBankrollManager),
+                address(dgEscrow),
+                deGaming,
+                admin
+            )
+        );
+
+        dgBankrollManager.addOperator(operator);
+    }
 
     // function test_deployBankroll(address _operator, address _faultyToken, uint256 _faultyMaxRisk, bytes32 _salt) public {
         // vm.assume(!_isContract(_operator));
@@ -127,6 +168,7 @@ contract DGBankrollFactoryTest is Test {
         // vm.assume(dgBankrollFactory.bankrollImpl() != _faultyBankroll);
         // vm.assume(!_isContract(_faultyBankroll));
 
+        // vm.prank(admin);
         // dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
     
         // vm.startPrank(_sender);
@@ -148,14 +190,14 @@ contract DGBankrollFactoryTest is Test {
         // assertEq(dgBankrollFactory.deGaming(), _deGaming);
     // }
 
-    // function test_setBankrollImplementation_incorrectRole(address _sender, address _bankroll) public {
-        // vm.assume(_sender != address(proxyAdmin));
-        // vm.assume(dgBankrollFactory.hasRole(DEFAULT_ADMIN_ROLE_HASH, _sender) != true);
+    function test_setBankrollImplementation_incorrectRole(address _sender, address _bankroll) public {
+        vm.assume(_sender != address(proxyAdmin));
+        vm.assume(dgBankrollFactory.hasRole(DEFAULT_ADMIN_ROLE_HASH, _sender) != true);
 
-        // vm.prank(_sender);
-        // vm.expectRevert();
-        // dgBankrollFactory.setBankrollImplementation(_bankroll);
-    // }
+        vm.prank(_sender);
+        vm.expectRevert();
+        dgBankrollFactory.setBankrollImplementation(_bankroll);
+    }
 
     // function test_setDgBankrollManager(address _sender, address _faultyBankrollManager) public {
         // vm.assume(_sender != address(proxyAdmin));
@@ -197,15 +239,15 @@ contract DGBankrollFactoryTest is Test {
         // assertEq(dgBankrollFactory.escrow(), address(newEscrow));
     // }
 
-    // function test_setDgBankrollManager_incorrectRole(address _sender, address _bankrollManager) public {
-        // vm.assume(_sender != address(proxyAdmin));
-        // vm.assume(dgBankrollFactory.hasRole(DEFAULT_ADMIN_ROLE_HASH, _sender) != true);
+    function test_setDgBankrollManager_incorrectRole(address _sender, address _bankrollManager) public {
+        vm.assume(_sender != address(proxyAdmin));
+        vm.assume(dgBankrollFactory.hasRole(DEFAULT_ADMIN_ROLE_HASH, _sender) != true);
 
-        // vm.prank(_sender);
-        // vm.expectRevert();
+        vm.prank(_sender);
+        vm.expectRevert();
 
-        // dgBankrollFactory.setDgBankrollManager(_bankrollManager);
-    // }
+        dgBankrollFactory.setDgBankrollManager(_bankrollManager);
+    }
 
     // function test_setDgAdmin(address _sender, address _admin) public {
         // vm.assume(_sender != address(proxyAdmin));
@@ -219,43 +261,43 @@ contract DGBankrollFactoryTest is Test {
         // assertEq(dgBankrollFactory.dgAdmin(), _admin);
     // }
 
-    // function test_setDgAdmin_incorrectRole(address _sender, address _admin) public {
-        // vm.assume(_sender != address(proxyAdmin));
-        // vm.assume(dgBankrollFactory.hasRole(DEFAULT_ADMIN_ROLE_HASH, _sender) != true);
+    function test_setDgAdmin_incorrectRole(address _sender, address _admin) public {
+        vm.assume(_sender != address(proxyAdmin));
+        vm.assume(dgBankrollFactory.hasRole(DEFAULT_ADMIN_ROLE_HASH, _sender) != true);
 
-        // vm.prank(_sender);
-        // vm.expectRevert();
+        vm.prank(_sender);
+        vm.expectRevert();
 
-        // dgBankrollFactory.setDgAdmin(_admin);
-    // }
+        dgBankrollFactory.setDgAdmin(_admin);
+    }
 
-    // function test_predictBankrollAddress(bytes32 _salt) public {
-        // assertEq(
-            // dgBankrollFactory.predictBankrollAddress(_salt),
-            // Clones.predictDeterministicAddress(
-                // dgBankrollFactory.bankrollImpl(), 
-                // _salt, 
-                // address(dgBankrollFactory)
-            // )
-        // );
-    // }
+    function test_predictBankrollAddress(bytes32 _salt) public {
+        assertEq(
+            dgBankrollFactory.predictBankrollAddress(_salt),
+            Clones.predictDeterministicAddress(
+                dgBankrollFactory.bankrollImpl(), 
+                _salt, 
+                address(dgBankrollFactory)
+            )
+        );
+    }
 
-    // /**
-     // * @notice
-     // *  Allows contract to check if the Token address actually is a contract
-     // *
-     // * @param _address address we want to  check
-     // *
-     // * @return _isAddressContract returns true if token is a contract, otherwise returns false
-     // *
-     // */
-    // function _isContract(address _address) internal view returns (bool _isAddressContract) {
-        // uint256 size;
+    /**
+     * @notice
+     *  Allows contract to check if the Token address actually is a contract
+     *
+     * @param _address address we want to  check
+     *
+     * @return _isAddressContract returns true if token is a contract, otherwise returns false
+     *
+     */
+    function _isContract(address _address) internal view returns (bool _isAddressContract) {
+        uint256 size;
 
-        // assembly {
-            // size := extcodesize(_address)
-        // }
+        assembly {
+            size := extcodesize(_address)
+        }
 
-        // _isAddressContract = size > 0;
-    // }
+        _isAddressContract = size > 0;
+    }
 }

@@ -212,6 +212,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         // Set depositionLimit
         withdrawableTimeOf[msg.sender] = block.timestamp + minimumDepositionTime; 
 
+        // store liquidity variable to calculate amounts of shares minted, since 
+        // the liquidity() result will change before we have the amount variable
+        uint256 liq = liquidity();
+
         // fetch balance before
         uint256 balanceBefore = token.balanceOf(address(this));
 
@@ -224,8 +228,13 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         // amount variable calculated from recieved balances
         uint256 amount = balanceAfter - balanceBefore;
 
-        // calculate the amount of shares to mint
-        uint256 shares = previewMint(amount);
+        // // calculate the amount of shares to mint
+        uint256 shares;
+        if (totalSupply < 1 || totalSupply > 0 && liq == 0) {
+            shares = amount;
+        } else {
+            shares = (amount * totalSupply) / liq;
+        }
 
         // mint shares to the user
         _mint(msg.sender, shares);

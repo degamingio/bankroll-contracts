@@ -163,7 +163,7 @@ contract BankrollTest is Test {
         // _bankroll.initialize(_admin, address(token), address(dgBankrollManager), address(dgEscrow), owner, maxRisk, threshold);
     // } 
 
-    function test_depositFunds() public {
+    function test_depositFunds_() public {
         assertEq(bankroll.liquidity(), 0);
 
         // lp one deposits 1_000_000
@@ -182,6 +182,8 @@ contract BankrollTest is Test {
         bankroll.depositFunds(1_000_000e6);
         assertEq(bankroll.sharesOf(address(lpTwo)), 1_000_000e6);
         vm.stopPrank();
+
+        console.log(bankroll.sharesOf(address(lpTwo)));
 
         assertEq(bankroll.totalSupply(), 2_000_000e6);
         assertEq(bankroll.liquidity(), 2_000_000e6);

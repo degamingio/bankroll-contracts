@@ -21,194 +21,201 @@ import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
 import {MockToken} from "test/mock/MockToken.sol";
 
 contract DGEscrowTest is Test {
-    // address admin;
-    // address operator;
-    // address lpOne;
-    // address lpTwo;
-    // address player;
-    // address owner;
-    // uint256 maxRisk;
-    // uint256 threshold;
-    // TransparentUpgradeableProxy public bankrollProxy;
+    address admin;
+    address operator;
+    address lpOne;
+    address lpTwo;
+    address player;
+    address owner;
+    uint256 maxRisk;
+    uint256 threshold;
 
-    // ProxyAdmin public proxyAdmin;
+    TransparentUpgradeableProxy public bankrollProxy;
+    TransparentUpgradeableProxy public escrowProxy;
+    TransparentUpgradeableProxy public bankrollManagerProxy;
+    TransparentUpgradeableProxy public bankrollFactoryProxy;
 
-    // DGBankrollFactory public dgBankrollFactory;
-    // DGBankrollManager public dgBankrollManager;
-    // DGEscrow public dgEscrow;
-    // Bankroll public bankroll;
-    // MockToken public token;
+    ProxyAdmin public proxyAdmin;
 
-    // function setUp() public {
-        // admin = address(0x1);
-        // operator = address(0x2);
-        // lpOne = address(0x3);
-        // lpTwo = address(0x4);
-        // player = address(0x5);
-        // owner = address(0x6);
-        // maxRisk = 10_000;
-        // threshold = 10_000;
+    DGBankrollFactory public dgBankrollFactory;
+    DGBankrollManager public dgBankrollManager;
+    DGEscrow public dgEscrow;
+    Bankroll public bankroll;
+    MockToken public token;
 
-        // dgBankrollFactory = new DGBankrollFactory();
+    function setUp() public {
+        admin = address(0x1);
+        operator = address(0x2);
+        lpOne = address(0x3);
+        lpTwo = address(0x4);
+        player = address(0x5);
+        owner = address(0x6);
+        maxRisk = 10_000;
+        threshold = 10_000;
+
+        dgBankrollFactory = new DGBankrollFactory();
 
         // dgBankrollManager = new DGBankrollManager(admin);
-        // token = new MockToken("token", "MTK");
+        token = new MockToken("token", "MTK");
 
         // dgEscrow = new DGEscrow(1 weeks, address(dgBankrollManager));
 
-        // proxyAdmin = new ProxyAdmin();
+        proxyAdmin = new ProxyAdmin();
 
-        // bankrollProxy = new TransparentUpgradeableProxy(
-            // address(new Bankroll()),
-            // address(proxyAdmin),
-            // abi.encodeWithSelector(
-                // Bankroll.initialize.selector,
-                // admin,
-                // address(token),
-                // address(dgBankrollManager),
-                // address(dgEscrow),
-                // owner,
-                // maxRisk,
-                // threshold
-            // )
-        // );
+        bankrollProxy = new TransparentUpgradeableProxy(
+            address(new Bankroll()),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                Bankroll.initialize.selector,
+                admin,
+                address(token),
+                address(dgBankrollManager),
+                address(dgEscrow),
+                owner,
+                maxRisk,
+                threshold
+            )
+        );
 
-        // bankroll = Bankroll(address(bankrollProxy));
+        bankroll = Bankroll(address(bankrollProxy));
 
-        // token.mint(lpOne, 1_000_000e6);
-        // token.mint(lpTwo, 1_000_000e6);
-        // token.mint(admin, 1_000_000e6);
+        token.mint(lpOne, 1_000_000e6);
+        token.mint(lpTwo, 1_000_000e6);
+        token.mint(admin, 1_000_000e6);
 
-        // dgBankrollManager.addOperator(operator);
-        // dgBankrollManager.approveBankroll(address(bankroll), 0);
-        // dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
+        dgBankrollManager.addOperator(operator);
+        dgBankrollManager.approveBankroll(address(bankroll), 0);
+        dgBankrollManager.setOperatorToBankroll(address(bankroll), operator);
 
-        // vm.startPrank(lpOne);
-        // token.approve(address(bankroll), 1_000_000e6);
-        // bankroll.depositFunds(1_000_000e6);
-        // vm.stopPrank();
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000_000e6);
+        bankroll.depositFunds(1_000_000e6);
+        vm.stopPrank();
 
-        // vm.startPrank(admin);
+        vm.startPrank(admin);
 
-        // bankroll.changeEscrowThreshold(5_000);
+        bankroll.changeEscrowThreshold(5_000);
 
-        // bankroll.maxContractsApprove();
-        // vm.stopPrank();
-    // }
+        bankroll.maxContractsApprove();
+        vm.stopPrank();
+    }
 
-    // function test_depositFundsEscrow() public {
-        // vm.startPrank(admin);
-        // token.approve(address(bankroll), 500e6);
+    function test_depositFundsEscrow() public {
+        vm.startPrank(admin);
+        token.approve(address(bankroll), 500e6);
 
-        // bankroll.debit(player, 500_001e6, operator);
+        bankroll.debit(player, 500_001e6, operator);
 
-        // vm.stopPrank();
+        vm.stopPrank();
 
-        // assertEq(token.balanceOf(address(dgEscrow)), 500_001e6);
-    // }
+        assertEq(token.balanceOf(address(dgEscrow)), 500_001e6);
+    }
     
-    // function test_revertFunds() public {
-        // vm.startPrank(admin);
-        // token.approve(address(bankroll), 500e6);
+    function test_revertFunds() public {
+        vm.startPrank(admin);
+        token.approve(address(bankroll), 500e6);
 
-        // bankroll.debit(player, 500_001e6, operator);
+        bankroll.debit(player, 500_001e6, operator);
 
-        // vm.stopPrank();
+        vm.stopPrank();
 
-        // assertEq(token.balanceOf(address(dgEscrow)), 500_001e6);
+        assertEq(token.balanceOf(address(dgEscrow)), 500_001e6);
 
-        // DGDataTypes.EscrowEntry memory entry = DGDataTypes.EscrowEntry(
-            // address(bankroll),
-            // operator,
-            // player,
-            // address(token),
-            // block.timestamp
-        // );
+        DGDataTypes.EscrowEntry memory entry = DGDataTypes.EscrowEntry(
+            address(bankroll),
+            operator,
+            player,
+            address(token),
+            block.timestamp,
+            0
+        );
 
-        // bytes memory id = abi.encode(entry);
+        bytes memory id = abi.encode(entry);
 
-        // dgEscrow.revertFunds(id);
+        dgEscrow.revertFunds(id);
 
-        // assertEq(token.balanceOf(address(dgEscrow)), 0);
-    // }
+        assertEq(token.balanceOf(address(dgEscrow)), 0);
+    }
     
-    // function test_releaseFunds() public {
-        // vm.startPrank(admin);
-        // token.approve(address(bankroll), 500e6);
+    function test_releaseFunds() public {
+        vm.startPrank(admin);
+        token.approve(address(bankroll), 500e6);
 
-        // bankroll.debit(player, 500_001e6, operator);
+        bankroll.debit(player, 500_001e6, operator);
 
-        // vm.stopPrank();
+        vm.stopPrank();
 
-        // assertEq(token.balanceOf(address(dgEscrow)), 500_001e6);
+        assertEq(token.balanceOf(address(dgEscrow)), 500_001e6);
 
-        // DGDataTypes.EscrowEntry memory entry = DGDataTypes.EscrowEntry(
-            // address(bankroll),
-            // operator,
-            // player,
-            // address(token),
-            // block.timestamp
-        // );
+        DGDataTypes.EscrowEntry memory entry = DGDataTypes.EscrowEntry(
+            address(bankroll),
+            operator,
+            player,
+            address(token),
+            block.timestamp,
+            0
+        );
 
-        // bytes memory id = abi.encode(entry);
+        bytes memory id = abi.encode(entry);
 
-        // dgEscrow.releaseFunds(id);
-        // assertEq(token.balanceOf(address(player)), 500_001e6);
-        // assertEq(token.balanceOf(address(dgEscrow)), 0);
-    // }
+        dgEscrow.releaseFunds(id);
+        assertEq(token.balanceOf(address(player)), 500_001e6);
+        assertEq(token.balanceOf(address(dgEscrow)), 0);
+    }
 
-    // function test_claimUnaddressed(uint256 _time) public {
-        // vm.assume(_time < 10 hours);
-        // dgEscrow.setEventPeriod(_time);
+    function test_claimUnaddressed(uint256 _time) public {
+        vm.assume(_time < 10 hours);
+        dgEscrow.setEventPeriod(_time);
 
-        // vm.startPrank(admin);
-        // token.approve(address(bankroll), 500e6);
+        vm.startPrank(admin);
+        token.approve(address(bankroll), 500e6);
 
-        // bankroll.debit(player, 500_001e6, operator);
+        bankroll.debit(player, 500_001e6, operator);
 
-        // vm.stopPrank();
+        vm.stopPrank();
 
-        // DGDataTypes.EscrowEntry memory entry = DGDataTypes.EscrowEntry(
-            // address(bankroll),
-            // operator,
-            // player,
-            // address(token),
-            // block.timestamp
-        // );
+        DGDataTypes.EscrowEntry memory entry = DGDataTypes.EscrowEntry(
+            address(bankroll),
+            operator,
+            player,
+            address(token),
+            block.timestamp,
+            0
+        );
 
-        // bytes memory id = abi.encode(entry);
+        bytes memory id = abi.encode(entry);
 
-        // vm.warp(_time + 1);
+        vm.warp(_time + 1);
 
-        // vm.prank(player);
+        vm.prank(player);
 
-        // dgEscrow.claimUnaddressed(id);
+        dgEscrow.claimUnaddressed(id);
 
-        // assertEq(token.balanceOf(player), 500_001e6);
-    // }
+        assertEq(token.balanceOf(player), 500_001e6);
+    }
 
-    // function test_updateManager_escrow(address _faultyManager) external {
-        // vm.assume(!_isContract(_faultyManager));
+    function test_updateManager_escrow(address _faultyManager) external {
+        vm.assume(!_isContract(_faultyManager));
 
-        // address oldManager = address(dgEscrow.dgBankrollManager());
+        address oldManager = address(dgEscrow.dgBankrollManager());
 
-        // DGBankrollManager newManager = new DGBankrollManager(admin);
+        DGBankrollManager newManager = new DGBankrollManager();
 
-        // vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
-        // dgEscrow.updateBankrollManager(_faultyManager);
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        dgEscrow.updateBankrollManager(_faultyManager);
 
-        // dgEscrow.updateBankrollManager(address(newManager));
+        dgEscrow.updateBankrollManager(address(newManager));
 
-        // assertNotEq(oldManager, address(newManager));
-    // }
+        assertNotEq(oldManager, address(newManager));
+    }
 
-    // function _isContract(address _address) internal view returns (bool _isAddressContract) {
-        // uint256 size;
+    function _isContract(address _address) internal view returns (bool _isAddressContract) {
+        uint256 size;
 
-        // assembly {
-            // size := extcodesize(_address)
-        // }
+        assembly {
+            size := extcodesize(_address)
+        }
 
-        // _isAddressContract = size > 0;
-    // }
+        _isAddressContract = size > 0;
+    }
 }
