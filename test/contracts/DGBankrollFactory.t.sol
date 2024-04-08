@@ -62,7 +62,7 @@ contract DGBankrollFactoryTest is Test {
 
         proxyAdmin = new ProxyAdmin();
 
-        dgBankrollFactory = new DGBankrollFactory();
+        //dgBankrollFactory = new DGBankrollFactory();
 
         bankrollManagerProxy = new TransparentUpgradeableProxy(
             address(new DGBankrollManager()),
@@ -111,7 +111,7 @@ contract DGBankrollFactoryTest is Test {
         // vm.startPrank(admin);
 
         bankrollFactoryProxy = new TransparentUpgradeableProxy(
-            address(dgBankrollFactory),
+            address(new DGBankrollFactory()),
             address(proxyAdmin),
             abi.encodeWithSelector(
                 DGBankrollFactory.initialize.selector,
@@ -123,80 +123,77 @@ contract DGBankrollFactoryTest is Test {
             )
         );
 
+        dgBankrollFactory = DGBankrollFactory(address(bankrollFactoryProxy));
         // vm.stopPrank();
 
         dgBankrollManager.addOperator(operator);
     }
 
-    // function test_deployBankroll(address _operator, address _faultyToken, uint256 _faultyMaxRisk, bytes32 _salt) public {
-        // vm.assume(!_isContract(_operator));
-        // vm.assume(!_isContract(_faultyToken));
-        // vm.assume(_faultyMaxRisk > 10_000);
+    function test_deployBankroll(address _operator, address _faultyToken, uint256 _faultyMaxRisk, bytes32 _salt) public {
+        vm.assume(!_isContract(_operator));
+        vm.assume(!_isContract(_faultyToken));
+        vm.assume(_faultyMaxRisk > 10_000);
 
-        // vm.startPrank(admin);
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        dgBankrollFactory.deployBankroll(
+            _faultyToken, 
+            maxRisk,
+            threshold, 
+            _salt
+        );
 
-        // vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
-        // dgBankrollFactory.deployBankroll(
-            // _faultyToken, 
-            // maxRisk,
-            // threshold, 
-            // _salt
-        // );
-
-        // vm.expectRevert(DGErrors.MAXRISK_TOO_HIGH.selector);
-        // dgBankrollFactory.deployBankroll(
-            // address(token), 
-            // _faultyMaxRisk,
-            // threshold,
-            // _salt
-        // );
+        vm.expectRevert(DGErrors.MAXRISK_TOO_HIGH.selector);
+        dgBankrollFactory.deployBankroll(
+            address(token), 
+            _faultyMaxRisk,
+            threshold,
+            _salt
+        );
         
-        // dgBankrollFactory.deployBankroll(
-            // address(token), 
-            // maxRisk,
-            // threshold, 
-            // _salt
-        // );
+        dgBankrollFactory.deployBankroll(
+            address(token), 
+            maxRisk,
+            threshold, 
+            _salt
+        );
 
-        // dgBankrollManager.approveBankroll(
-            // dgBankrollFactory.bankrolls(0),
-            // lpFee
-        // );
+        dgBankrollManager.approveBankroll(
+            dgBankrollFactory.bankrolls(0),
+            lpFee
+        );
 
-        // dgBankrollManager.setOperatorToBankroll(
-            // dgBankrollFactory.bankrolls(0),
-            // _operator
-        // );
+        dgBankrollManager.setOperatorToBankroll(
+            dgBankrollFactory.bankrolls(0),
+            _operator
+        );
+    }
 
-        // vm.stopPrank();
-    // }
+    function test_setBankrollImplementation(address _sender, address _faultyBankroll) public {
+        vm.assume(_sender != address(proxyAdmin));
+        vm.assume(dgBankrollFactory.bankrollImpl() != _faultyBankroll);
+        vm.assume(!_isContract(_faultyBankroll));
 
-    // function test_setBankrollImplementation(address _sender, address _faultyBankroll) public {
-        // vm.assume(_sender != address(proxyAdmin));
-        // vm.assume(dgBankrollFactory.bankrollImpl() != _faultyBankroll);
-        // vm.assume(!_isContract(_faultyBankroll));
-
-        // vm.prank(admin);
-        // dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
+        vm.prank(admin);
+        dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
     
-        // vm.startPrank(_sender);
-        // vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
-        // dgBankrollFactory.setBankrollImplementation(_faultyBankroll);
+        vm.startPrank(_sender);
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        dgBankrollFactory.setBankrollImplementation(_faultyBankroll);
 
-        // vm.stopPrank();
+        vm.stopPrank();
 
-        // Bankroll newBankroll = new Bankroll();
+        Bankroll newBankroll = new Bankroll();
 
-        // vm.prank(_sender);
-        // dgBankrollFactory.setBankrollImplementation(address(newBankroll));
+        vm.prank(_sender);
+        dgBankrollFactory.setBankrollImplementation(address(newBankroll));
 
-        // assertEq(dgBankrollFactory.bankrollImpl(), address(newBankroll));
-    // }
+        assertEq(dgBankrollFactory.bankrollImpl(), address(newBankroll));
+    }
 
-    // function test_setDeGaming(address _deGaming) public {
-        // dgBankrollFactory.setDeGaming(_deGaming);
-        // assertEq(dgBankrollFactory.deGaming(), _deGaming);
-    // }
+    function test_setDeGaming(address _deGaming) public {
+        dgBankrollFactory.setDeGaming(_deGaming);
+        assertEq(dgBankrollFactory.deGaming(), _deGaming);
+    }
 
     function test_setBankrollImplementation_incorrectRole(address _sender, address _bankroll) public {
         vm.assume(_sender != address(proxyAdmin));
@@ -207,45 +204,45 @@ contract DGBankrollFactoryTest is Test {
         dgBankrollFactory.setBankrollImplementation(_bankroll);
     }
 
-    // function test_setDgBankrollManager(address _sender, address _faultyBankrollManager) public {
-        // vm.assume(_sender != address(proxyAdmin));
-        // vm.assume(dgBankrollFactory.dgBankrollManager() != _faultyBankrollManager);
-        // vm.assume(!_isContract(_faultyBankrollManager));
+    function test_setDgBankrollManager(address _sender, address _faultyBankrollManager) public {
+        vm.assume(_sender != address(proxyAdmin));
+        vm.assume(dgBankrollFactory.dgBankrollManager() != _faultyBankrollManager);
+        vm.assume(!_isContract(_faultyBankrollManager));
 
-        // dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
+        dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
     
-        // vm.startPrank(_sender);
-        // vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
-        // dgBankrollFactory.setDgBankrollManager(_faultyBankrollManager);
-        // vm.stopPrank();
+        vm.startPrank(_sender);
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        dgBankrollFactory.setDgBankrollManager(_faultyBankrollManager);
+        vm.stopPrank();
 
-        // DGBankrollManager newBankrollManager = new DGBankrollManager(admin);
+        DGBankrollManager newBankrollManager = new DGBankrollManager();
 
-        // vm.prank(_sender);
-        // dgBankrollFactory.setDgBankrollManager(address(newBankrollManager));
+        vm.prank(_sender);
+        dgBankrollFactory.setDgBankrollManager(address(newBankrollManager));
 
-        // assertEq(dgBankrollFactory.dgBankrollManager(), address(newBankrollManager));
-    // }
+        assertEq(dgBankrollFactory.dgBankrollManager(), address(newBankrollManager));
+    }
+
+    function test_setDgEscrow(address _sender, address _faultyEscrow) public {
+        vm.assume(_sender != address(proxyAdmin));
+        vm.assume(dgBankrollFactory.escrow() != _faultyEscrow);
+        vm.assume(!_isContract(_faultyEscrow));
+
+        dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
     
-    // function test_setDgEscrow(address _sender, address _faultyEscrow) public {
-        // vm.assume(_sender != address(proxyAdmin));
-        // vm.assume(dgBankrollFactory.escrow() != _faultyEscrow);
-        // vm.assume(!_isContract(_faultyEscrow));
+        vm.startPrank(_sender);
+        vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
+        dgBankrollFactory.setDgEscrow(_faultyEscrow);
+        vm.stopPrank();
 
-        // dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
-    
-        // vm.startPrank(_sender);
-        // vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
-        // dgBankrollFactory.setDgEscrow(_faultyEscrow);
-        // vm.stopPrank();
+        DGEscrow newEscrow = new DGEscrow();
 
-        // DGEscrow newEscrow = new DGEscrow(1 weeks, address(dgBankrollManager));
+        vm.prank(_sender);
+        dgBankrollFactory.setDgEscrow(address(newEscrow));
 
-        // vm.prank(_sender);
-        // dgBankrollFactory.setDgEscrow(address(newEscrow));
-
-        // assertEq(dgBankrollFactory.escrow(), address(newEscrow));
-    // }
+        assertEq(dgBankrollFactory.escrow(), address(newEscrow));
+    }
 
     function test_setDgBankrollManager_incorrectRole(address _sender, address _bankrollManager) public {
         vm.assume(_sender != address(proxyAdmin));
@@ -257,17 +254,17 @@ contract DGBankrollFactoryTest is Test {
         dgBankrollFactory.setDgBankrollManager(_bankrollManager);
     }
 
-    // function test_setDgAdmin(address _sender, address _admin) public {
-        // vm.assume(_sender != address(proxyAdmin));
-        // vm.assume(dgBankrollFactory.dgAdmin() != _admin);
+    function test_setDgAdmin(address _sender, address _admin) public {
+        vm.assume(_sender != address(proxyAdmin));
+        vm.assume(dgBankrollFactory.dgAdmin() != _admin);
         
-        // dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
+        dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
 
-        // vm.prank(_sender);
-        // dgBankrollFactory.setDgAdmin(_admin);
+        vm.prank(_sender);
+        dgBankrollFactory.setDgAdmin(_admin);
 
-        // assertEq(dgBankrollFactory.dgAdmin(), _admin);
-    // }
+        assertEq(dgBankrollFactory.dgAdmin(), _admin);
+    }
 
     function test_setDgAdmin_incorrectRole(address _sender, address _admin) public {
         vm.assume(_sender != address(proxyAdmin));

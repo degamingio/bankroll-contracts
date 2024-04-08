@@ -90,6 +90,7 @@ contract DGBankrollFactory is AccessControlUpgradeable {
         // initialize access controll
         __AccessControl_init();
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, dgAdmin);
     }
 
 
