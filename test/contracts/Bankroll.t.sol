@@ -523,50 +523,47 @@ contract BankrollTest is Test {
     function test_getLPValue(address _lp) public {
         assertEq(bankroll.getLpValue(_lp), 0);
     }
-    
+
     function test_printErrors() public view {
-        // 0x89ae3f9a
-        console.logBytes4(DGErrors.ADDRESS_DOES_NOT_HOLD_ROLE.selector);
-        
         // 0x5c2a0858
         console.logBytes4(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
-        
+
         // 0x192498bf
         console.logBytes4(DGErrors.ADDRESS_NOT_A_WALLET.selector);
-        
+
         // 0x85ef85ac
         console.logBytes4(DGErrors.BANKROLL_NOT_APPROVED.selector);
-        
+
         // 0x2220bdd0
         console.logBytes4(DGErrors.DEPOSITION_TO_LOW.selector);
-        
+
         // 0x2d03b3fd
         console.logBytes4(DGErrors.EVENT_PERIOD_NOT_PASSED.selector);
-        
+
         // 0x1f22f3b3
         console.logBytes4(DGErrors.LP_IS_NOT_WHITELISTED.selector);
-        
+
         // 0xf792d5d9
         console.logBytes4(DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW.selector);
-        
+
         // 0xb717644a
         console.logBytes4(DGErrors.MAXRISK_TOO_HIGH.selector);
-        
+
         // 0x59184bad
         console.logBytes4(DGErrors.NO_LP_ACCESS_PERMISSION.selector);
-        
+
         // 0xf202cc93
         console.logBytes4(DGErrors.NOT_AN_OPERATOR.selector);
-        
+
         // 0x76914729
         console.logBytes4(DGErrors.NOTHING_TO_CLAIM.selector);
-        
+
         // 0x6c07c0e7
         console.logBytes4(DGErrors.OPERATOR_ALREADY_ADDED_TO_BANKROLL.selector);
-        
+
         // 0x341e934a
         console.logBytes4(DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL.selector);
-        
+
         // 0xb0647df7
         console.logBytes4(DGErrors.TO_HIGH_FEE.selector);
     }

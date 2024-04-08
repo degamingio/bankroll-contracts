@@ -28,9 +28,6 @@ library DGErrors {
     /// @dev Error thrown when bankroll with a > 100% fee is being requested to be added  
     error TO_HIGH_FEE();
 
-    /// @dev Error thrown if we are trying to update a role with the previous role holder not being valid
-    error ADDRESS_DOES_NOT_HOLD_ROLE();
-
     /// @dev Error thrown if operator is not associated with this specific bankroll
     error OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
 
@@ -52,12 +49,6 @@ library DGErrors {
     /// @dev Error thrown when max risk is too high
     error MAXRISK_TOO_HIGH();
 
-    /// @dev Error thrown when withdrawal queue is full
-    error WITHDRAWAL_QUEUE_FULL();
-
-    /// @dev Error thrown when withdrawal queue is empty
-    error WITHDRAWAL_QUEUE_EMPTY();
-
     /// @dev Error thrown when withdrawal timestamp hasnt passed
     error WITHDRAWAL_TIMESTAMP_HASNT_PASSED();
 
@@ -72,9 +63,6 @@ library DGErrors {
 
     /// @dev Error thrown when someone unauthorized is trying to claim
     error UNAUTHORIZED_CLAIM();
-
-    /// @dev Error thrown if wallet is not EOA
-    error NOT_AN_EOA_WALLET();
 
     /// @dev Error thrown if maxrisk = 0
     error MAX_RISK_ZERO();

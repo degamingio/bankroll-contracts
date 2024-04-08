@@ -63,4 +63,6 @@ interface IDGEscrow {
      *
      */
     function setEventPeriod(uint256 _newEventPeriod) external;
+
+    function toggleLockEscrow(bytes memory _id, bool _status) external;
 }

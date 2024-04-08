@@ -204,6 +204,7 @@ contract DGEscrow is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
         // Approve spending for bankroll to spend on behalf of escrow contract
         token.forceApprove(entry.bankroll, escrowed[_id]);
 
+        // Make sure that approval went through
         if (token.allowance(address(this), entry.bankroll) == escrowed[_id]) {
 
             // Send the escrowed funds back to the bankroll
@@ -220,15 +221,27 @@ contract DGEscrow is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
 
             // Emit event that escrow is reverted back into the bankroll
             emit DGEvents.EscrowReverted(entry.bankroll, _id, amount);
+
+        // If we encounter some error reverting the funds back into the bankroll....
         } else {
+            // ... lock the escrowed funds so that they cant be claimed through claimUnaddressed
             lockedEscrow[_id] = true;
         }
     }
 
-    function unlockEscrow(bytes memory _id, bool _status) external onlyRole(ADMIN){
+    /**
+     * @notice
+     *  Allows admin to set the lock status of escrowed funds
+     *
+     * @param _id id of escrowed funds
+     * @param _status boolean status if the funds should be locked or not
+     *
+     */
+    function toggleLockEscrow(bytes memory _id, bool _status) external onlyRole(ADMIN){
         // Check so that there are funds to claim for id
         if (escrowed[_id] == 0) revert DGErrors.NOTHING_TO_CLAIM();
 
+        // Toggle the lock status
         lockedEscrow[_id] = _status;
     }
 
@@ -300,6 +313,7 @@ contract DGEscrow is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
      *
      */
     function setEventPeriod(uint256 _newEventPeriod) external onlyRole(ADMIN) {
+        // Set eventPeriod global var
         eventPeriod = _newEventPeriod;
     }
 

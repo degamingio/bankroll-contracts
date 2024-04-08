@@ -323,9 +323,6 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         // Check so that operator is associated with this bankroll
         if (!dgBankrollManager.operatorOfBankroll(address(this), _operator)) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
 
-        // Check to make sure that wallet is EOA
-        if (_isContract(_player)) revert DGErrors.NOT_AN_EOA_WALLET();
-
         // pay what is left if amount is bigger than bankroll balance
         uint256 maxRisk = getMaxRisk();
 

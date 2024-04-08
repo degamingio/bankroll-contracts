@@ -354,6 +354,7 @@ contract DGBankrollManager is IDGBankrollManager, AccessControlUpgradeable {
         // amount variable calculated from recieved balances
         uint256 realizedAmount = balanceAfter - balanceBefore;
 
+        // Emit event about claimed profits
         emit DGEvents.ProfitsClaimed(_bankroll, totalAmount, realizedAmount);
     }
 
