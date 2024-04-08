@@ -29,6 +29,12 @@ contract DGEscrow is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
+    //     _____ __        __
+    //    / ___// /_____ _/ /____  _____
+    //    \__ \/ __/ __ `/ __/ _ \/ ___/
+    //   ___/ / /_/ /_/ / /_/  __(__  )
+    //  /____/\__/\__,_/\__/\___/____/
+
     /// @dev max time funds can be escrowed
     uint256 public eventPeriod;
 

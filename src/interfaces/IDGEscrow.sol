@@ -47,6 +47,16 @@ interface IDGEscrow {
 
     /**
      * @notice
+     *  Allows admin to set the lock status of escrowed funds
+     *
+     * @param _id id of escrowed funds
+     * @param _status boolean status if the funds should be locked or not
+     *
+     */
+    function toggleLockEscrow(bytes memory _id, bool _status) external;
+
+    /**
+     * @notice
      *  Allows players to claim their escrowed amount after a certain period has passed
      *  id escrow is left unaddressed by DeGaming
      *
@@ -63,6 +73,4 @@ interface IDGEscrow {
      *
      */
     function setEventPeriod(uint256 _newEventPeriod) external;
-
-    function toggleLockEscrow(bytes memory _id, bool _status) external;
 }

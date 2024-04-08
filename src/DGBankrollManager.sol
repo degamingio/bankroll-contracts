@@ -30,6 +30,12 @@ contract DGBankrollManager is IDGBankrollManager, AccessControlUpgradeable {
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
+    //     _____ __        __
+    //    / ___// /_____ _/ /____  _____
+    //    \__ \/ __/ __ `/ __/ _ \/ ___/
+    //   ___/ / /_/ /_/ / /_/  __(__  )
+    //  /____/\__/\__,_/\__/\___/____/
+
     /// @dev used to calculate percentages
     uint256 public constant DENOMINATOR = 10_000; 
 

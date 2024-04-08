@@ -29,6 +29,12 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
+    //     _____ __        __
+    //    / ___// /_____ _/ /____  _____
+    //    \__ \/ __/ __ `/ __/ _ \/ ___/
+    //   ___/ / /_/ /_/ / /_/  __(__  )
+    //  /____/\__/\__,_/\__/\___/____/
+
     /// @dev the current aggregated profit of the bankroll balance
     int256 public GGR;
 
@@ -457,10 +463,26 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         withdrawalEventPeriod = _withdrawalEventPeriod;
     }
 
+    /**
+     * @notice 
+     *  Change the minumum time that has to pass between deposition and withdrawal
+     *
+     * @param _minimumDepositionTime new minimum deposition time in seconds
+     *
+     */
     function setMinimumDepositionTime(uint256 _minimumDepositionTime) external onlyRole(ADMIN) {
         minimumDepositionTime = _minimumDepositionTime;
     }
 
+
+    /**
+     * @notice
+     *  Change an individual LPs withdrawable time for their deposition
+     *
+     * @param _timeStamp unix timestamp for when funds should get withdrawable
+     * @param _LP Address of LP
+     *
+     */
     function setWithdrawableTimeOf(uint256 _timeStamp, address _LP) external onlyRole(ADMIN) {
         withdrawableTimeOf[_LP] = _timeStamp;
     }
@@ -486,11 +508,19 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         _grantRole(BANKROLL_MANAGER, _newBankrollManager);
     }
 
+    /**
+     * @notice
+     *  Setter for escrow contract
+     *
+     * @param _newEscrow address of new escrow
+     *
+     */
     function updateEscrow(address _newEscrow) external onlyRole(ADMIN) {
+        // Make sure that new escrow address is a contract
         if (!_isContract(_newEscrow)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
 
+        // Set new escrow contract 
         escrow = IDGEscrow(_newEscrow);
-        
     }
 
     /**
@@ -584,11 +614,13 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
      *
      */
     function maxContractsApprove() external onlyRole(ADMIN) {
+        // Approve bankroll manager address as a spender
         token.forceApprove(
             address(dgBankrollManager),
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         );
-        
+
+        // Approve escrow contract address as a spender
         token.forceApprove(
             address(escrow),
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
@@ -601,6 +633,13 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     //  | |/ / /  __/ |/ |/ /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
     //  |___/_/\___/|__/|__/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
+    /**
+     * @notice
+     *  Preview how much shares gets generated from _amount of tokens deposited
+     *
+     * @param _amount how many tokens should be checked
+     *
+     */
     function previewMint(uint256 _amount) public view returns(uint256 _shares) {
         // store liquidity variable to calculate amounts of shares minted, since 
         // the liquidity() result will change before we have the amount variable
@@ -612,6 +651,13 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         }
     }
 
+    /**
+     * @notice
+     *  Check the value of x amount of shares
+     *
+     * @param _shares amount of shares to be checked
+     *
+     */
     function previewRedeem(uint256 _shares) public view returns(uint256 _amount) {
         _amount = (_shares * liquidity()) / totalSupply;
     }

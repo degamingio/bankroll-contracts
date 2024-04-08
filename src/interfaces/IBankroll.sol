@@ -59,6 +59,25 @@ interface IBankroll {
     function setWithdrawalWindow(uint256 _withdrawalWindow) external;
 
     /**
+     * @notice 
+     *  Change the minumum time that has to pass between deposition and withdrawal
+     *
+     * @param _minimumDepositionTime new minimum deposition time in seconds
+     *
+     */
+    function setMinimumDepositionTime(uint256 _minimumDepositionTime) external;
+
+    /**
+     * @notice
+     *  Change an individual LPs withdrawable time for their deposition
+     *
+     * @param _timeStamp unix timestamp for when funds should get withdrawable
+     * @param _LP Address of LP
+     *
+     */
+    function setWithdrawableTimeOf(uint256 _timeStamp, address _LP) external;
+
+    /**
      * @notice
      *  Allows admin to update bankroll manager contract
      *
@@ -98,6 +117,15 @@ interface IBankroll {
     function credit(uint256 _amount, address _operator) external;
 
     /**
+     * @notice
+     *  Setter for escrow contract
+     *
+     * @param _newEscrow address of new escrow
+     *
+     */
+    function updateEscrow(address _newEscrow) external;
+
+    /**
      * @notice Remove or add authorized liquidity provider to the bankroll
      *  Called by Admin
      *
@@ -130,6 +158,24 @@ interface IBankroll {
     //  | | / / / _ \ | /| / /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
     //  | |/ / /  __/ |/ |/ /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
     //  |___/_/\___/|__/|__/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
+
+    /**
+     * @notice
+     *  Preview how much shares gets generated from _amount of tokens deposited
+     *
+     * @param _amount how many tokens should be checked
+     *
+     */
+    function previewMint(uint256 _amount) external view returns(uint256 _shares);
+
+    /**
+     * @notice
+     *  Check the value of x amount of shares
+     *
+     * @param _shares amount of shares to be checked
+     *
+     */
+    function previewRedeem(uint256 _shares) external view returns(uint256 _amount);
 
     function token() external view returns (IERC20Upgradeable token);
 
