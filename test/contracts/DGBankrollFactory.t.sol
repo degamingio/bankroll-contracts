@@ -106,7 +106,7 @@ contract DGBankrollFactoryTest is Test {
 
         // bankroll = Bankroll(address(bankrollProxy));
 
-        bankroll = new Bankroll();    
+        bankroll = new Bankroll();
 
         bankrollFactoryProxy = new TransparentUpgradeableProxy(
             address(dgBankrollFactory),
