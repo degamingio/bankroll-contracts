@@ -161,7 +161,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         // Set escrow threshold
         escrowTreshold = _escrowThreshold;
 
-        // Set default withdrawal delay in seconfs
+        // Set default withdrawal delay in seconds
         withdrawalDelay = 30;
 
         // Set default withdrawal window
@@ -259,8 +259,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         // Make sure that LPs don't try to withdraw more than they have
         if (_amount > sharesOf[msg.sender]) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
 
+        // Make sure that withdrawals are allowed
         if (withdrawalWindowLength == 0) revert DGErrors.WITHDRAWALS_NOT_ALLOWED();
 
+        // Make sure that minimum deposition time has passed
         if (block.timestamp < withdrawableTimeOf[msg.sender]) revert DGErrors.MINIMUM_DEPOSITION_TIME_NOT_PASSED();
 
         // Fetch withdrawal info
