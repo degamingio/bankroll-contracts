@@ -89,24 +89,26 @@ contract DGBankrollFactoryTest is Test {
 
         dgEscrow = DGEscrow(address(escrowProxy));
 
-        // bankrollProxy = new TransparentUpgradeableProxy(
-            // address(new Bankroll()),
-            // address(proxyAdmin),
-            // abi.encodeWithSelector(
-                // Bankroll.initialize.selector,
-                // admin,
-                // address(token),
-                // address(dgBankrollManager),
-                // address(dgEscrow),
-                // owner,
-                // maxRisk,
-                // threshold
-            // )
-        // );
+        bankrollProxy = new TransparentUpgradeableProxy(
+            address(new Bankroll()),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                Bankroll.initialize.selector,
+                admin,
+                address(token),
+                address(dgBankrollManager),
+                address(dgEscrow),
+                owner,
+                maxRisk,
+                threshold
+            )
+        );
 
-        // bankroll = Bankroll(address(bankrollProxy));
+        bankroll = Bankroll(address(bankrollProxy));
 
-        bankroll = new Bankroll();
+        // bankroll = new Bankroll();
+
+        // vm.startPrank(admin);
 
         bankrollFactoryProxy = new TransparentUpgradeableProxy(
             address(dgBankrollFactory),
@@ -116,10 +118,12 @@ contract DGBankrollFactoryTest is Test {
                 address(bankroll),
                 address(dgBankrollManager),
                 address(dgEscrow),
-                deGaming,
-                admin
+                admin,
+                deGaming
             )
         );
+
+        // vm.stopPrank();
 
         dgBankrollManager.addOperator(operator);
     }
@@ -128,6 +132,8 @@ contract DGBankrollFactoryTest is Test {
         // vm.assume(!_isContract(_operator));
         // vm.assume(!_isContract(_faultyToken));
         // vm.assume(_faultyMaxRisk > 10_000);
+
+        // vm.startPrank(admin);
 
         // vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
         // dgBankrollFactory.deployBankroll(
@@ -161,6 +167,8 @@ contract DGBankrollFactoryTest is Test {
             // dgBankrollFactory.bankrolls(0),
             // _operator
         // );
+
+        // vm.stopPrank();
     // }
 
     // function test_setBankrollImplementation(address _sender, address _faultyBankroll) public {
