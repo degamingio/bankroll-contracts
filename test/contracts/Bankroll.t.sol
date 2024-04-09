@@ -131,7 +131,15 @@ contract BankrollTest is Test {
         vm.prank(admin);
         bankroll.setMinimumDepositionTime(2 days);
         assertEq(bankroll.minimumDepositionTime(), 2 days);
-        assertEq
+    }
+
+    function test_predictShares() public {
+        uint256 prediction = bankroll.previewMint(1_000e6);
+        vm.startPrank(lpOne);
+        token.approve(address(bankroll), 1_000e6);
+        bankroll.depositFunds(1_000e6);
+        vm.stopPrank();
+        assertEq(bankroll.sharesOf(lpOne), prediction);
     }
 
     function test_depositFunds_() public {
