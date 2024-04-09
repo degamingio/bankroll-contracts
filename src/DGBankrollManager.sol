@@ -2,11 +2,11 @@
 pragma solidity 0.8.19;
 
 /* Openzeppelin Interfaces */
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 /* Openzeppelin Contracts */
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 /* DeGaming Contracts */
 import {Bankroll} from "src/Bankroll.sol";
@@ -26,9 +26,15 @@ import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
  * @notice Fee management of GGR 
  *
  */
-contract DGBankrollManager is IDGBankrollManager, AccessControl {
+contract DGBankrollManager is IDGBankrollManager, AccessControlUpgradeable {
     /// @dev Using SafeERC20 for safer token interaction
-    using SafeERC20 for IERC20;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
+
+    //     _____ __        __
+    //    / ___// /_____ _/ /____  _____
+    //    \__ \/ __/ __ `/ __/ _ \/ ___/
+    //   ___/ / /_/ /_/ / /_/  __(__  )
+    //  /____/\__/\__,_/\__/\___/____/
 
     /// @dev used to calculate percentages
     uint256 public constant DENOMINATOR = 10_000; 
@@ -67,13 +73,24 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
     //  \____/\____/_/ /_/____/\__/_/   \__,_/\___/\__/\____/_/
 
     /**
+     * @notice
+     *  Contract Constructor
+     */
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    /**
      * @notice DGBankrollManager constructor
      *   Just sets the deployer of this contract as the owner
      *
-     */
-    constructor(address _deGaming) {
+     */ 
+    function initialize(address _deGaming) external initializer {
         // Set DeGaming global variable
         deGaming = _deGaming;
+
+        __AccessControl_init();
 
         // Grant default admin role to deployer
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -300,13 +317,13 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
         IBankroll bankroll = IBankroll(_bankroll);
         
         // Set up a token instance
-        IERC20 token = IERC20(address(bankroll.token()));
+        IERC20Upgradeable token = IERC20Upgradeable(address(bankroll.token()));
         
         // Set up GGR for desired bankroll
         int256 GGR = bankroll.GGR();
 
         // Check if Casino GGR is posetive
-        if (GGR < 1) revert DGErrors.NOTHING_TO_CLAIM();
+        if (GGR < 10) revert DGErrors.NOTHING_TO_CLAIM();
 
         // Update event period ends unix timestamp to the eventperiod of specified bankroll
         eventPeriodEnds[_bankroll] = block.timestamp + eventPeriodOf[_bankroll];
@@ -343,6 +360,7 @@ contract DGBankrollManager is IDGBankrollManager, AccessControl {
         // amount variable calculated from recieved balances
         uint256 realizedAmount = balanceAfter - balanceBefore;
 
+        // Emit event about claimed profits
         emit DGEvents.ProfitsClaimed(_bankroll, totalAmount, realizedAmount);
     }
 

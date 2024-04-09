@@ -29,6 +29,12 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     /// @dev Using SafeERC20 for safer token interaction
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
+    //     _____ __        __
+    //    / ___// /_____ _/ /____  _____
+    //    \__ \/ __/ __ `/ __/ _ \/ ___/
+    //   ___/ / /_/ /_/ / /_/  __(__  )
+    //  /____/\__/\__,_/\__/\___/____/
+
     /// @dev the current aggregated profit of the bankroll balance
     int256 public GGR;
 
@@ -41,7 +47,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     /// @dev Max percentage of liquidity risked
     uint256 public maxRiskPercentage;
 
-    /// @dev Escrow threshold percentage
+    /// @dev Escrow threshold absolute value
     uint256 public escrowTreshold;
 
     /// @dev amount for minimum pool in case it exists
@@ -55,6 +61,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
 
     /// @dev Minimum time between withdrawal step one
     uint256 public withdrawalEventPeriod;
+
+    /// @dev Minimum time between deposit and withdrawal
+    uint256 public minimumDepositionTime;
 
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
@@ -77,6 +86,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     /// @dev allowed LP addresses
     mapping(address lp => bool authorized) public lpWhitelist;
 
+    /// @dev timestamp when an LP can withdraw
+    mapping(address lp => uint256 withdrawable) public withdrawableTimeOf;
+
     /// @dev bankroll liquidity token
     IERC20Upgradeable public token;
 
@@ -88,6 +100,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
 
     /// @dev set status regarding if LP is open or whitelisted
     DGDataTypes.LpIs public lpIs = DGDataTypes.LpIs.OPEN;
+
+    /// @dev Storage gap used for future upgrades (30 * 32 bytes)
+    uint256[30] __gap;
 
     //     ______                 __                  __
     //    / ____/___  ____  _____/ /________  _______/ /_____  _____
@@ -101,6 +116,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
+        _mint(address(this), 1_000);
     }
 
     /**
@@ -132,10 +148,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         // Check so that maxRiskPercentage isnt larger than denominator
         if (_maxRiskPercentage > DENOMINATOR) revert DGErrors.MAXRISK_TOO_HIGH();
 
-        // Check so that maxrisk doestn't exceed 100%
-        if (_escrowThreshold > DENOMINATOR) revert DGErrors.ESCROW_THRESHOLD_TOO_HIGH();
-
+        // Initialize OZ packages
         __AccessControl_init();
+        __ReentrancyGuard_init();
 
         // Initializing erc20 token associated with bankroll
         token = IERC20Upgradeable(_token);
@@ -146,14 +161,17 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         // Set escrow threshold
         escrowTreshold = _escrowThreshold;
 
-        // Set default withdrawal delay in seconfs
-        withdrawalDelay = 1;
+        // Set default withdrawal delay in seconds
+        withdrawalDelay = 30;
 
         // Set default withdrawal window
         withdrawalWindowLength = 5 minutes;
 
         // Set default staging period
         withdrawalEventPeriod = 1 hours;
+
+        // Set minimum deposition time
+        minimumDepositionTime = 1 weeks;
 
         // Setup bankroll manager
         dgBankrollManager = IDGBankrollManager(_bankrollManager);
@@ -197,6 +215,9 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         // Check if the bankroll has a minimum lp and if so that the deposition exceeds it
         if (_amount < minimumLp) revert DGErrors.DEPOSITION_TO_LOW(); 
 
+        // Set depositionLimit
+        withdrawableTimeOf[msg.sender] = block.timestamp + minimumDepositionTime; 
+
         // store liquidity variable to calculate amounts of shares minted, since 
         // the liquidity() result will change before we have the amount variable
         uint256 liq = liquidity();
@@ -212,10 +233,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
 
         // amount variable calculated from recieved balances
         uint256 amount = balanceAfter - balanceBefore;
-        
-        // calculate the amount of shares to mint
+
+        // // calculate the amount of shares to mint
         uint256 shares;
-        if (totalSupply < 1) {
+        if (totalSupply < 1 || totalSupply > 0 && liq == 0) {
             shares = amount;
         } else {
             shares = (amount * totalSupply) / liq;
@@ -237,6 +258,12 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     function withdrawalStageOne(uint256 _amount) external {
         // Make sure that LPs don't try to withdraw more than they have
         if (_amount > sharesOf[msg.sender]) revert DGErrors.LP_REQUESTED_AMOUNT_OVERFLOW();
+
+        // Make sure that withdrawals are allowed
+        if (withdrawalWindowLength == 0) revert DGErrors.WITHDRAWALS_NOT_ALLOWED();
+
+        // Make sure that minimum deposition time has passed
+        if (block.timestamp < withdrawableTimeOf[msg.sender]) revert DGErrors.MINIMUM_DEPOSITION_TIME_NOT_PASSED();
 
         // Fetch withdrawal info
         DGDataTypes.WithdrawalInfo memory withdrawalInfo = withdrawalInfoOf[msg.sender];
@@ -304,19 +331,20 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         // Check so that operator is associated with this bankroll
         if (!dgBankrollManager.operatorOfBankroll(address(this), _operator)) revert DGErrors.OPERATOR_NOT_ASSOCIATED_WITH_BANKROLL();
 
-        // Check to make sure that wallet is EOA
-        if (_isContract(_player)) revert DGErrors.NOT_AN_EOA_WALLET();
-
         // pay what is left if amount is bigger than bankroll balance
         uint256 maxRisk = getMaxRisk();
+
+        // Throw error if maxrisk is 0
+        if (maxRisk == 0) revert DGErrors.MAX_RISK_ZERO();
+
+        // Handle sweeping of bankroll
         if (_amount > maxRisk) {
+            // Set maxRisk value to _amount variable
             _amount = maxRisk;
+
             // Emit event that the bankroll is sweppt
             emit DGEvents.BankrollSwept(_player, _amount);
         }
-
-        // Fetch escrow threshold
-        uint256 threshold = getEscrowThreshold();
 
         // fetch balance before
         uint256 balanceBefore = token.balanceOf(address(this));
@@ -325,7 +353,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
         uint256 amount;
 
         // If amount is more then threshold, deposit into escrow...
-        if (_amount > threshold) {
+        if (_amount > escrowTreshold) {
             escrow.depositFunds(_player, _operator, address(token), _amount);
 
             // fetch balance aftrer
@@ -402,6 +430,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
      *
      */
     function setWithdrawalDelay(uint256 _withdrawalDelay) external onlyRole(ADMIN) {
+        if (_withdrawalDelay > withdrawalWindowLength) revert DGErrors.WITHDRAWAL_TIME_RANGE_NOT_ALLOWED();
+
+        if (_withdrawalDelay < 30) revert DGErrors.WITHDRAWAL_DELAY_TO_SHORT();
+
         withdrawalDelay = _withdrawalDelay;
     }
 
@@ -413,7 +445,48 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
      *
      */
     function setWithdrawalWindow(uint256 _withdrawalWindow) external onlyRole(ADMIN) {
+        if (_withdrawalWindow < withdrawalDelay) revert DGErrors.WITHDRAWAL_TIME_RANGE_NOT_ALLOWED();
+
+        if (_withdrawalWindow > withdrawalEventPeriod) revert DGErrors.WITHDRAWAL_TIME_RANGE_NOT_ALLOWED();
+
         withdrawalWindowLength = _withdrawalWindow;
+    }
+
+    /**
+     * @notice Change withdrawal (stage one) event period for LPs
+     *  Only callable by ADMIN
+     *
+     * @param _withdrawalEventPeriod New staging event period in seconds
+     *
+     */
+    function setWithdrawalEventPeriod(uint256 _withdrawalEventPeriod) external onlyRole(ADMIN) {
+        if (_withdrawalEventPeriod < withdrawalWindowLength) revert DGErrors.WITHDRAWAL_TIME_RANGE_NOT_ALLOWED();
+
+        withdrawalEventPeriod = _withdrawalEventPeriod;
+    }
+
+    /**
+     * @notice 
+     *  Change the minumum time that has to pass between deposition and withdrawal
+     *
+     * @param _minimumDepositionTime new minimum deposition time in seconds
+     *
+     */
+    function setMinimumDepositionTime(uint256 _minimumDepositionTime) external onlyRole(ADMIN) {
+        minimumDepositionTime = _minimumDepositionTime;
+    }
+
+
+    /**
+     * @notice
+     *  Change an individual LPs withdrawable time for their deposition
+     *
+     * @param _timeStamp unix timestamp for when funds should get withdrawable
+     * @param _LP Address of LP
+     *
+     */
+    function setWithdrawableTimeOf(uint256 _timeStamp, address _LP) external onlyRole(ADMIN) {
+        withdrawableTimeOf[_LP] = _timeStamp;
     }
 
     /**
@@ -438,14 +511,18 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     }
 
     /**
-     * @notice Change withdrawal (stage one) event period for LPs
-     *  Only callable by ADMIN
+     * @notice
+     *  Setter for escrow contract
      *
-     * @param _withdrawalEventPeriod New staging event period in seconds
+     * @param _newEscrow address of new escrow
      *
      */
-    function setWithdrawalEventPeriod(uint256 _withdrawalEventPeriod) external onlyRole(ADMIN) {
-        withdrawalEventPeriod = _withdrawalEventPeriod;
+    function updateEscrow(address _newEscrow) external onlyRole(ADMIN) {
+        // Make sure that new escrow address is a contract
+        if (!_isContract(_newEscrow)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+
+        // Set new escrow contract 
+        escrow = IDGEscrow(_newEscrow);
     }
 
     /**
@@ -510,13 +587,10 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
      *
      * @notice allows admins to change the max risk amount
      *
-     * @param _newAmount new amount in percentage that should be potentially risked per session 
+     * @param _newAmount new amount in that should be potentially risked per session
      *
      */
     function changeEscrowThreshold(uint256 _newAmount) external onlyRole(ADMIN) {
-        // Check so that maxrisk doestn't exceed 100%
-        if (_newAmount > DENOMINATOR) revert DGErrors.ESCROW_THRESHOLD_TOO_HIGH();
-
         // Set new maxrisk
         escrowTreshold = _newAmount;
     }
@@ -542,11 +616,13 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
      *
      */
     function maxContractsApprove() external onlyRole(ADMIN) {
+        // Approve bankroll manager address as a spender
         token.forceApprove(
             address(dgBankrollManager),
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         );
-        
+
+        // Approve escrow contract address as a spender
         token.forceApprove(
             address(escrow),
             0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
@@ -558,6 +634,35 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     //  | | / / / _ \ | /| / /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
     //  | |/ / /  __/ |/ |/ /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
     //  |___/_/\___/|__/|__/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
+
+    /**
+     * @notice
+     *  Preview how much shares gets generated from _amount of tokens deposited
+     *
+     * @param _amount how many tokens should be checked
+     *
+     */
+    function previewMint(uint256 _amount) public view returns(uint256 _shares) {
+        // store liquidity variable to calculate amounts of shares minted, since 
+        // the liquidity() result will change before we have the amount variable
+        uint256 liq = liquidity();
+        if (totalSupply < 1 || totalSupply > 0 && liq == 0) {
+            _shares = _amount;
+        } else {
+            _shares = (_amount * totalSupply) / liq;
+        }
+    }
+
+    /**
+     * @notice
+     *  Check the value of x amount of shares
+     *
+     * @param _shares amount of shares to be checked
+     *
+     */
+    function previewRedeem(uint256 _shares) public view returns(uint256 _amount) {
+        _amount = (_shares * liquidity()) / totalSupply;
+    }
 
     /**
      * @notice Returns the amount of ERC20 tokens held by the bankroll that are available for playes to win and
@@ -617,13 +722,15 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     }
 
     /**
-     * @notice returns escrow threshold during the debit() call
+     * @notice calculate percentages for the avalable liquidity, can be used to set the escrowThreshold
      *
-     * @return _threshold threshold before earnings gets sent to escrow
+     * @param _percentage percentage amount that should be calculated
+     *
+     * @return _amount absolute value calculated from the percentage of liquidity
      *
      */
-    function getEscrowThreshold() public view returns (uint256 _threshold) {
-        _threshold = (liquidity() * escrowTreshold) / DENOMINATOR;
+    function calculateLiquidityPercentageAmount(uint256 _percentage) public view returns (uint256 _amount) {
+        _amount = (liquidity() * _percentage) / DENOMINATOR;
     }
 
     //     ____      __                        __   ______                 __  _
@@ -670,7 +777,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
      */
     function _withdraw(uint256 _shares, address _reciever) internal {
         // Calculate the amount of ERC20 worth of shares
-        uint256 amount = (_shares * liquidity()) / totalSupply;
+        uint256 amount = previewRedeem(_shares);
 
         // Burn the shares from the caller
         _burn(_reciever, _shares);

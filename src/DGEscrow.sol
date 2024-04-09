@@ -2,12 +2,12 @@
 pragma solidity 0.8.19;
 
 /* Openzeppelin Interfaces */
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 /* Openzeppelin Contracts */
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 /* DeGaming Interfaces */
 import {IDGBankrollManager} from "src/interfaces/IDGBankrollManager.sol";
@@ -25,18 +25,30 @@ import {DGEvents} from "src/libraries/DGEvents.sol";
  * @notice Escrow Contract for DeGaming's Bankroll poducts
  *
  */
-contract DGEscrow is AccessControl, ReentrancyGuard {
+contract DGEscrow is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
     /// @dev Using SafeERC20 for safer token interaction
-    using SafeERC20 for IERC20;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
+
+    //     _____ __        __
+    //    / ___// /_____ _/ /____  _____
+    //    \__ \/ __/ __ `/ __/ _ \/ ___/
+    //   ___/ / /_/ /_/ / /_/  __(__  )
+    //  /____/\__/\__,_/\__/\___/____/
 
     /// @dev max time funds can be escrowed
-    uint256 eventPeriod;
+    uint256 public eventPeriod;
+
+    /// @dev nonce used to avoid ID collision
+    uint256 nonce;
 
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
 
     /// @dev Mapping for holding the escrow info, acts as a source of truth
     mapping(bytes id => uint256 winnings) public escrowed;
+
+    /// @dev Mapping to block an escrow
+    mapping(bytes id => bool status) public lockedEscrow;
 
     /// @dev Bankroll manager instance
     IDGBankrollManager public dgBankrollManager;
@@ -48,16 +60,34 @@ contract DGEscrow is AccessControl, ReentrancyGuard {
     //  \____/\____/_/ /_/____/\__/_/   \__,_/\___/\__/\____/_/
 
     /**
+     * @notice
+     *  Contract Constructor
+     */
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    //      ______     __                        __   ______                 __  _
+    //     / ____/  __/ /____  _________  ____ _/ /  / ____/_  ______  _____/ /_(_)___  ____  _____
+    //    / __/ | |/_/ __/ _ \/ ___/ __ \/ __ `/ /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
+    //   / /____>  </ /_/  __/ /  / / / / /_/ / /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
+    //  /_____/_/|_|\__/\___/_/  /_/ /_/\__,_/_/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
+    
+    /**
      * @param _eventPeriod event period in seconds
      * @param _bankrollManager address of bankrollmanager
      *
      */
-    constructor(uint256 _eventPeriod, address _bankrollManager) {
+    function initialize(uint256 _eventPeriod, address _bankrollManager) external initializer {
         // Set event period
         eventPeriod = _eventPeriod;
 
         // Make sure that bankroll manager address actully is a contract
         if (!_isContract(_bankrollManager)) revert DGErrors.ADDRESS_NOT_A_CONTRACT();
+
+        __AccessControl_init();
+        __ReentrancyGuard_init();
 
         // Setup bankroll manager instance
         dgBankrollManager = IDGBankrollManager(_bankrollManager);
@@ -68,12 +98,6 @@ contract DGEscrow is AccessControl, ReentrancyGuard {
         // Granting ADMIN to the deoployer
         _grantRole(ADMIN, msg.sender);
     }
-
-    //      ______     __                        __   ______                 __  _
-    //     / ____/  __/ /____  _________  ____ _/ /  / ____/_  ______  _____/ /_(_)___  ____  _____
-    //    / __/ | |/_/ __/ _ \/ ___/ __ \/ __ `/ /  / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
-    //   / /____>  </ /_/  __/ /  / / / / /_/ / /  / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
-    //  /_____/_/|_|\__/\___/_/  /_/ /_/\__,_/_/  /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
 
     /**
      * @notice
@@ -95,14 +119,18 @@ contract DGEscrow is AccessControl, ReentrancyGuard {
             _operator,
             _player,
             _token,
-            block.timestamp
+            block.timestamp,
+            nonce
         );
+
+        // Increment nonce
+        nonce++;
 
         // Encode entry into bytes to use for id of escrow
         bytes memory id = abi.encode(entry);
 
         // Set up token intance
-        IERC20 token = IERC20(_token);
+        IERC20Upgradeable token = IERC20Upgradeable(_token);
 
         // Fetch token balance before funds are getting escrowed
         uint256 balanceBefore = token.balanceOf(address(this));
@@ -138,7 +166,7 @@ contract DGEscrow is AccessControl, ReentrancyGuard {
         DGDataTypes.EscrowEntry memory entry = _decode(_id);
 
         // Setup token instance
-        IERC20 token = IERC20(entry.token);
+        IERC20Upgradeable token = IERC20Upgradeable(entry.token);
 
         // Fetch balance before releasing the funds
         uint256 balanceBefore = token.balanceOf(address(this));
@@ -174,13 +202,16 @@ contract DGEscrow is AccessControl, ReentrancyGuard {
         DGDataTypes.EscrowEntry memory entry = _decode(_id);
 
         // Setup token instance
-        IERC20 token = IERC20(entry.token);
+        IERC20Upgradeable token = IERC20Upgradeable(entry.token);
 
         // Fetch balance before reverting the funds back to the bankroll
         uint256 balanceBefore = token.balanceOf(address(this));
 
         // Approve spending for bankroll to spend on behalf of escrow contract
-        if (token.approve(entry.bankroll, escrowed[_id])) {
+        token.forceApprove(entry.bankroll, escrowed[_id]);
+
+        // Make sure that approval went through
+        if (token.allowance(address(this), entry.bankroll) == escrowed[_id]) {
 
             // Send the escrowed funds back to the bankroll
             IBankroll(entry.bankroll).credit(escrowed[_id], entry.operator);
@@ -196,7 +227,28 @@ contract DGEscrow is AccessControl, ReentrancyGuard {
 
             // Emit event that escrow is reverted back into the bankroll
             emit DGEvents.EscrowReverted(entry.bankroll, _id, amount);
+
+        // If we encounter some error reverting the funds back into the bankroll....
+        } else {
+            // ... lock the escrowed funds so that they cant be claimed through claimUnaddressed
+            lockedEscrow[_id] = true;
         }
+    }
+
+    /**
+     * @notice
+     *  Allows admin to set the lock status of escrowed funds
+     *
+     * @param _id id of escrowed funds
+     * @param _status boolean status if the funds should be locked or not
+     *
+     */
+    function toggleLockEscrow(bytes memory _id, bool _status) external onlyRole(ADMIN){
+        // Check so that there are funds to claim for id
+        if (escrowed[_id] == 0) revert DGErrors.NOTHING_TO_CLAIM();
+
+        // Toggle the lock status
+        lockedEscrow[_id] = _status;
     }
 
     /**
@@ -208,6 +260,8 @@ contract DGEscrow is AccessControl, ReentrancyGuard {
      *
      */
     function claimUnaddressed(bytes memory _id) external nonReentrant {
+        if (lockedEscrow[_id]) revert DGErrors.ESCROW_LOCKED();
+
         // Check so that there are funds to claim for id
         if (escrowed[_id] == 0) revert DGErrors.NOTHING_TO_CLAIM();
 
@@ -221,7 +275,7 @@ contract DGEscrow is AccessControl, ReentrancyGuard {
         if (msg.sender != entry.player) revert DGErrors.UNAUTHORIZED_CLAIM();
 
         // Send the escrowed funds back to the bankroll
-        IERC20 token = IERC20(entry.token);
+        IERC20Upgradeable token = IERC20Upgradeable(entry.token);
 
         // Fetch balance before releasing the funds
         uint256 balanceBefore = token.balanceOf(address(this));
@@ -265,6 +319,7 @@ contract DGEscrow is AccessControl, ReentrancyGuard {
      *
      */
     function setEventPeriod(uint256 _newEventPeriod) external onlyRole(ADMIN) {
+        // Set eventPeriod global var
         eventPeriod = _newEventPeriod;
     }
 

@@ -33,5 +33,6 @@ library DGDataTypes {
         address player;
         address token;
         uint256 timestamp;
+        uint256 nonce;
     }
 }

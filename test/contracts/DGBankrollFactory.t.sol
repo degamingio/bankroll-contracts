@@ -23,6 +23,7 @@ import {MockToken} from "test/mock/MockToken.sol";
 
 contract DGBankrollFactoryTest is Test {
     address admin;
+    address owner;
     address operator;
     address deGaming;
     address lp;
@@ -31,6 +32,9 @@ contract DGBankrollFactoryTest is Test {
     uint256 threshold;
     uint256 lpFee;
 
+    TransparentUpgradeableProxy public bankrollProxy;
+    TransparentUpgradeableProxy public escrowProxy;
+    TransparentUpgradeableProxy public bankrollManagerProxy;
     TransparentUpgradeableProxy public bankrollFactoryProxy;
     ProxyAdmin public proxyAdmin;
 
@@ -49,21 +53,62 @@ contract DGBankrollFactoryTest is Test {
         lp = address(0x3);
         player = address(0x4);
         deGaming = address(0x5);
+        owner = address(0x6);
 
         maxRisk = 10_000;
-        threshold = 10_000;
+        threshold = 1_000_000e6;
 
         lpFee = 650;
 
-        token = new MockToken("token", "MTK");
-
         proxyAdmin = new ProxyAdmin();
 
-        bankroll = new Bankroll();
+        //dgBankrollFactory = new DGBankrollFactory();
 
-        dgBankrollManager = new DGBankrollManager(admin);
+        bankrollManagerProxy = new TransparentUpgradeableProxy(
+            address(new DGBankrollManager()),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                DGBankrollManager.initialize.selector,
+                admin
+            )
+        );
 
-        dgEscrow = new DGEscrow(1 weeks, address(dgBankrollManager));
+        dgBankrollManager = DGBankrollManager(address(bankrollManagerProxy));
+        
+        token = new MockToken("token", "MTK");
+
+        escrowProxy = new TransparentUpgradeableProxy(
+            address(new DGEscrow()),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                DGEscrow.initialize.selector,
+                1 weeks,
+                address(dgBankrollManager)
+            )
+        );
+
+        dgEscrow = DGEscrow(address(escrowProxy));
+
+        bankrollProxy = new TransparentUpgradeableProxy(
+            address(new Bankroll()),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                Bankroll.initialize.selector,
+                admin,
+                address(token),
+                address(dgBankrollManager),
+                address(dgEscrow),
+                owner,
+                maxRisk,
+                threshold
+            )
+        );
+
+        bankroll = Bankroll(address(bankrollProxy));
+
+        // bankroll = new Bankroll();
+
+        // vm.startPrank(admin);
 
         bankrollFactoryProxy = new TransparentUpgradeableProxy(
             address(new DGBankrollFactory()),
@@ -73,12 +118,13 @@ contract DGBankrollFactoryTest is Test {
                 address(bankroll),
                 address(dgBankrollManager),
                 address(dgEscrow),
-                deGaming,
-                admin
+                admin,
+                deGaming
             )
         );
 
         dgBankrollFactory = DGBankrollFactory(address(bankrollFactoryProxy));
+        // vm.stopPrank();
 
         dgBankrollManager.addOperator(operator);
     }
@@ -127,6 +173,7 @@ contract DGBankrollFactoryTest is Test {
         vm.assume(dgBankrollFactory.bankrollImpl() != _faultyBankroll);
         vm.assume(!_isContract(_faultyBankroll));
 
+        vm.prank(admin);
         dgBankrollFactory.grantRole(DEFAULT_ADMIN_ROLE_HASH, _sender);
     
         vm.startPrank(_sender);
@@ -169,14 +216,14 @@ contract DGBankrollFactoryTest is Test {
         dgBankrollFactory.setDgBankrollManager(_faultyBankrollManager);
         vm.stopPrank();
 
-        DGBankrollManager newBankrollManager = new DGBankrollManager(admin);
+        DGBankrollManager newBankrollManager = new DGBankrollManager();
 
         vm.prank(_sender);
         dgBankrollFactory.setDgBankrollManager(address(newBankrollManager));
 
         assertEq(dgBankrollFactory.dgBankrollManager(), address(newBankrollManager));
     }
-    
+
     function test_setDgEscrow(address _sender, address _faultyEscrow) public {
         vm.assume(_sender != address(proxyAdmin));
         vm.assume(dgBankrollFactory.escrow() != _faultyEscrow);
@@ -189,7 +236,7 @@ contract DGBankrollFactoryTest is Test {
         dgBankrollFactory.setDgEscrow(_faultyEscrow);
         vm.stopPrank();
 
-        DGEscrow newEscrow = new DGEscrow(1 weeks, address(dgBankrollManager));
+        DGEscrow newEscrow = new DGEscrow();
 
         vm.prank(_sender);
         dgBankrollFactory.setDgEscrow(address(newEscrow));

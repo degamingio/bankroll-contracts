@@ -2,8 +2,8 @@
 pragma solidity 0.8.19;
 
 /* Openzeppelin Contract */
-import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {ClonesUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
 
 /* DeGaming Contract */
 import {Bankroll} from "src/Bankroll.sol";
@@ -90,6 +90,7 @@ contract DGBankrollFactory is AccessControlUpgradeable {
         // initialize access controll
         __AccessControl_init();
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, dgAdmin);
     }
 
 
@@ -116,7 +117,7 @@ contract DGBankrollFactory is AccessControlUpgradeable {
         if (_maxRiskPercentage > 10_000) revert DGErrors.MAXRISK_TOO_HIGH();
 
         // Deploy new Bankroll contract
-        Bankroll newBankroll = Bankroll(Clones.cloneDeterministic(bankrollImpl, _salt));
+        Bankroll newBankroll = Bankroll(ClonesUpgradeable.cloneDeterministic(bankrollImpl, _salt));
 
         // Initialize Bankroll contract
         newBankroll.initialize(
@@ -224,7 +225,7 @@ contract DGBankrollFactory is AccessControlUpgradeable {
      *
      */
     function predictBankrollAddress(bytes32 _salt) external view returns (address _predicted) {
-        _predicted = Clones.predictDeterministicAddress(bankrollImpl, _salt, address(this));
+        _predicted = ClonesUpgradeable.predictDeterministicAddress(bankrollImpl, _salt, address(this));
     }
 
     //     ____      __                        __   ______                 __  _

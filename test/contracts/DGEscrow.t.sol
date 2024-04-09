@@ -10,7 +10,6 @@ import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.s
 /* DeGaming Contracts */
 import {Bankroll} from "src/Bankroll.sol";
 import {DGBankrollManager} from "src/DGBankrollManager.sol";
-import {DGBankrollFactory} from "src/DGBankrollFactory.sol";
 import {DGEscrow} from "src/DGEscrow.sol";
 
 /* DeGaming Libraries */
@@ -29,11 +28,13 @@ contract DGEscrowTest is Test {
     address owner;
     uint256 maxRisk;
     uint256 threshold;
+
     TransparentUpgradeableProxy public bankrollProxy;
+    TransparentUpgradeableProxy public escrowProxy;
+    TransparentUpgradeableProxy public bankrollManagerProxy;
 
     ProxyAdmin public proxyAdmin;
 
-    DGBankrollFactory public dgBankrollFactory;
     DGBankrollManager public dgBankrollManager;
     DGEscrow public dgEscrow;
     Bankroll public bankroll;
@@ -49,14 +50,32 @@ contract DGEscrowTest is Test {
         maxRisk = 10_000;
         threshold = 10_000;
 
-        dgBankrollFactory = new DGBankrollFactory();
+        proxyAdmin = new ProxyAdmin();
 
-        dgBankrollManager = new DGBankrollManager(admin);
+        bankrollManagerProxy = new TransparentUpgradeableProxy(
+            address(new DGBankrollManager()),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                DGBankrollManager.initialize.selector,
+                admin
+            )
+        );
+
+        dgBankrollManager = DGBankrollManager(address(bankrollManagerProxy));
+
         token = new MockToken("token", "MTK");
 
-        dgEscrow = new DGEscrow(1 weeks, address(dgBankrollManager));
+        escrowProxy = new TransparentUpgradeableProxy(
+            address(new DGEscrow()),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                DGEscrow.initialize.selector,
+                1 weeks,
+                address(dgBankrollManager)
+            )
+        );
 
-        proxyAdmin = new ProxyAdmin();
+        dgEscrow = DGEscrow(address(escrowProxy));
 
         bankrollProxy = new TransparentUpgradeableProxy(
             address(new Bankroll()),
@@ -122,7 +141,8 @@ contract DGEscrowTest is Test {
             operator,
             player,
             address(token),
-            block.timestamp
+            block.timestamp,
+            0
         );
 
         bytes memory id = abi.encode(entry);
@@ -131,7 +151,41 @@ contract DGEscrowTest is Test {
 
         assertEq(token.balanceOf(address(dgEscrow)), 0);
     }
-    
+
+    function test_toggleLockEscrow() public {
+        vm.startPrank(admin);
+        token.approve(address(bankroll), 500e6);
+
+        bankroll.debit(player, 500_001e6, operator);
+
+        vm.stopPrank();
+
+        assertEq(token.balanceOf(address(dgEscrow)), 500_001e6);
+
+        DGDataTypes.EscrowEntry memory entry = DGDataTypes.EscrowEntry(
+            address(bankroll),
+            operator,
+            player,
+            address(token),
+            block.timestamp,
+            0
+        );
+
+        bytes memory id = abi.encode(entry);
+
+        //dgEscrow.revertFunds(id);
+        dgEscrow.toggleLockEscrow(id, true);
+
+        vm.warp(1 weeks + 1);
+
+        vm.startPrank(player);
+
+        vm.expectRevert(DGErrors.ESCROW_LOCKED.selector);
+        dgEscrow.claimUnaddressed(id);
+
+        vm.stopPrank();
+    }
+
     function test_releaseFunds() public {
         vm.startPrank(admin);
         token.approve(address(bankroll), 500e6);
@@ -147,7 +201,8 @@ contract DGEscrowTest is Test {
             operator,
             player,
             address(token),
-            block.timestamp
+            block.timestamp,
+            0
         );
 
         bytes memory id = abi.encode(entry);
@@ -173,7 +228,8 @@ contract DGEscrowTest is Test {
             operator,
             player,
             address(token),
-            block.timestamp
+            block.timestamp,
+            0
         );
 
         bytes memory id = abi.encode(entry);
@@ -192,7 +248,7 @@ contract DGEscrowTest is Test {
 
         address oldManager = address(dgEscrow.dgBankrollManager());
 
-        DGBankrollManager newManager = new DGBankrollManager(admin);
+        DGBankrollManager newManager = new DGBankrollManager();
 
         vm.expectRevert(DGErrors.ADDRESS_NOT_A_CONTRACT.selector);
         dgEscrow.updateBankrollManager(_faultyManager);
