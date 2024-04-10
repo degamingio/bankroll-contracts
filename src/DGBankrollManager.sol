@@ -45,9 +45,6 @@ contract DGBankrollManager is IDGBankrollManager, AccessControlUpgradeable {
     /// @dev ADMIN role
     bytes32 public constant ADMIN = keccak256("ADMIN");
 
-    /// @dev Event period of specific bankroll
-    mapping(address bankroll => uint256 eventPeriod) public eventPeriodOf;
-
     /// @dev store bankroll status
     mapping(address bankroll => bool isApproved) public bankrollStatus;
 
@@ -59,9 +56,6 @@ contract DGBankrollManager is IDGBankrollManager, AccessControlUpgradeable {
 
     /// @dev mapping that if operator is approved
     mapping(address operator => bool approved) public isApproved;
-
-    /// @dev Store time claimed + event period
-    mapping(address claimer => uint256 timestamp) public eventPeriodEnds;
 
     /// @dev Store a boolean if an operator s associated with a bankroll
     mapping(address bankroll => mapping(address operator => bool isAssociated)) public operatorOfBankroll;
@@ -126,9 +120,6 @@ contract DGBankrollManager is IDGBankrollManager, AccessControlUpgradeable {
 
         // set LP fee
         lpFeeOf[_bankroll] = _fee;
-    
-        // set default eventPeriod
-        eventPeriodOf[_bankroll] = 30 days;
     }
 
     /**
@@ -164,23 +155,6 @@ contract DGBankrollManager is IDGBankrollManager, AccessControlUpgradeable {
 
         // set new LP fee
         lpFeeOf[_bankroll] = _newFee;
-    }
-
-    /**
-     * @notice
-     *  Allows admins to update eventperiods for bankrolls
-     *  Oly calleable by admin role
-     *
-     * @param _bankroll address of the desired bankroll we want to update event period for
-     * @param _eventPeriod the new updated event period
-     *
-     */
-    function updateEventPeriod(address _bankroll, uint256 _eventPeriod) external onlyRole(ADMIN) {
-        // Check that the bankroll is an approved DeGaming Bankroll
-        if (!bankrollStatus[_bankroll]) revert DGErrors.BANKROLL_NOT_APPROVED();
-
-        // Set new eventperiod
-        eventPeriodOf[_bankroll] = _eventPeriod;
     }
 
     /**
@@ -324,9 +298,6 @@ contract DGBankrollManager is IDGBankrollManager, AccessControlUpgradeable {
 
         // Check if Casino GGR is posetive
         if (GGR < 10) revert DGErrors.NOTHING_TO_CLAIM();
-
-        // Update event period ends unix timestamp to the eventperiod of specified bankroll
-        eventPeriodEnds[_bankroll] = block.timestamp + eventPeriodOf[_bankroll];
 
         // variable for amount per operator
         uint256 amount = 0;

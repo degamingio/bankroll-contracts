@@ -393,17 +393,6 @@ contract DGBankrollManagerTest is Test {
         // assertEq(expectedValue, bankroll.getLpValue(lps[rand]));
     // }
 
-    function test_updateEventPeriod(uint256 _newEventPeriod, address _wrongBankroll) public {
-        assertEq(dgBankrollManager.eventPeriodOf(address(bankroll)), 30 days);
-
-        vm.expectRevert(DGErrors.BANKROLL_NOT_APPROVED.selector);
-        dgBankrollManager.updateEventPeriod(_wrongBankroll, _newEventPeriod);
-
-        dgBankrollManager.updateEventPeriod(address(bankroll), _newEventPeriod);
-
-        assertEq(dgBankrollManager.eventPeriodOf(address(bankroll)), _newEventPeriod);
-    }
-
     /**
      * @notice
      *  Allows contract to check if the Token address actually is a contract
