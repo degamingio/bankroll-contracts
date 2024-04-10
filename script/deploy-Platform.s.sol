@@ -81,6 +81,8 @@ contract DeployPlatform is Script {
         console.log(BANKROLL_PATH);
         console.log("#######################################################");
 
+        proxyAdmin = new ProxyAdmin();
+
         bankrollManagerProxy = new TransparentUpgradeableProxy(
             address(new DGBankrollManager()),
             address(proxyAdmin),
@@ -109,8 +111,6 @@ contract DeployPlatform is Script {
         dgEscrow = DGEscrow(address(escrowProxy));
 
         vm.writeFile(ESCROW_PATH, vm.toString(address(dgEscrow)));
-
-        proxyAdmin = new ProxyAdmin();
 
         vm.writeFile(PROXY_ADMIN_PATH, vm.toString(address(proxyAdmin)));
 
