@@ -67,10 +67,13 @@ contract DeployPlatform is Script {
 
         console.log("#######################################################");
         console.log("ADDRESSES:");
-        console.log("deployer: ", vm.addr(deployerPrivateKey));
-        console.log("admin:    ", admin);
-        console.log("Operator: ", vm.addr(managerPrivateKey));
-        console.log("token:    ", token);
+        console.log("deployer:    ", vm.addr(deployerPrivateKey));
+        console.log("Eth balance: ", vm.addr(deployerPrivateKey).balance);
+        console.log("admin:       ", admin);
+        console.log("Eth balance: ", admin.balance);
+        console.log("Operator:    ", vm.addr(managerPrivateKey));
+        console.log("Eth balance: ", vm.addr(managerPrivateKey).balance);
+        console.log("token:       ", token);
         console.log("#######################################################");
         console.log("PATHS:");
         console.log(PROXY_ADMIN_PATH);

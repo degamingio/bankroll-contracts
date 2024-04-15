@@ -13,8 +13,13 @@ xdc-apothem = "${XDC_APOTHEM_RPC}"
 xdc-mainnet = "${XDC_MAINNET_RPC}"
 arbitrum = "${ARBITRUM_RPC}"
 arbitrum-sepolia = "${ARBITRUM_SEPOLIA_RPC}"
+blast = "${BLAST_MAINNET_RPC}"
+blast-sepolia = "${BLAST_SEPOLIA_RPC}"
 
 [etherscan]
 arbitrum-sepolia = { key = "${ARBITRUM_ETHERSCAN_API_KEY}", chain = 421614, url = "https://api-sepolia.arbiscan.io/api" }
+arbitrum = { key = "${ARBITRUM_ETHERSCAN_API_KEY}", chain = 42161, url = "https://api.arbiscan.io/api" }
+blast-sepolia = { key = "${BLAST_ETHERSCAN_API_KEY}", chain = 168587773, url = "https://api-sepolia.blastscan.io/api" }
+blast = { key = "${BLAST_ETHERSCAN_API_KEY}", chain = 81457, url = "https://api.blastscan.io/api" }
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
