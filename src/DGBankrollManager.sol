@@ -60,6 +60,9 @@ contract DGBankrollManager is IDGBankrollManager, AccessControlUpgradeable {
     /// @dev Store a boolean if an operator s associated with a bankroll
     mapping(address bankroll => mapping(address operator => bool isAssociated)) public operatorOfBankroll;
 
+    /// @dev Storage gap used for future upgrades (30 * 32 bytes)
+    uint256[30] __gap;
+
     //     ______                 __                  __
     //    / ____/___  ____  _____/ /________  _______/ /_____  _____
     //   / /   / __ \/ __ \/ ___/ __/ ___/ / / / ___/ __/ __ \/ ___/
