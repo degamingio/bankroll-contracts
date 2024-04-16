@@ -324,7 +324,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
      * @param _operator The operator from which the call comes from
      *
      */
-    function debit(address _player, uint256 _amount, address _operator) external onlyRole(ADMIN) {
+    function debit(address _player, uint256 _amount, address _operator) public onlyRole(ADMIN) {
         // Check that operator is approved
         if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
 
@@ -393,7 +393,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
      * @param _operator The operator from which the call comes from
      *
      */
-    function credit(uint256 _amount, address _operator) external onlyRole(ADMIN) {
+    function credit(uint256 _amount, address _operator) public onlyRole(ADMIN) {
         // Check that operator is approved
         if (!dgBankrollManager.isApproved(_operator)) revert DGErrors.NOT_AN_OPERATOR();
 
@@ -420,6 +420,24 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
 
         // Emit credit event
         emit DGEvents.Credit(msg.sender, amount);
+    }
+
+
+    /**
+     * @notice Function for calling both the creditAndDebit function in order
+     *  Called by Admin
+     *
+     * @param _creditAmount amount argument for credit function
+     * @param _debitAmount amount argument for debit function
+     * @param _operator The operator from which the call comes from
+     * @param _player The player that should recieve the final payout
+     *
+     */
+    function creditAndDebit(uint256 _creditAmount, uint256 _debitAmount, address _operator, address _player) external onlyRole(ADMIN) {
+        // Credit function call
+        credit(_creditAmount, _operator);
+        // Debit function call
+        debit(_player, _debitAmount, _operator);
     }
 
     /**

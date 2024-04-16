@@ -117,6 +117,18 @@ interface IBankroll {
     function credit(uint256 _amount, address _operator) external;
 
     /**
+     * @notice Function for calling both the creditAndDebit function in order
+     *  Called by Admin
+     *
+     * @param _creditAmount amount argument for credit function
+     * @param _debitAmount amount argument for debit function
+     * @param _operator The operator from which the call comes from
+     * @param _player The player that should recieve the final payout
+     *
+     */
+    function creditAndDebit(uint256 _creditAmount, uint256 _debitAmount, address _operator, address _player) external;
+
+    /**
      * @notice
      *  Setter for escrow contract
      *
