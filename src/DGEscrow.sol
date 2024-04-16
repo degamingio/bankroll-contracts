@@ -53,6 +53,9 @@ contract DGEscrow is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
     /// @dev Bankroll manager instance
     IDGBankrollManager public dgBankrollManager;
 
+    /// @dev Storage gap used for future upgrades (30 * 32 bytes)
+    uint256[30] __gap;
+
     //     ______                 __                  __
     //    / ____/___  ____  _____/ /________  _______/ /_____  _____
     //   / /   / __ \/ __ \/ ___/ __/ ___/ / / / ___/ __/ __ \/ ___/
