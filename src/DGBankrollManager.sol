@@ -299,18 +299,12 @@ contract DGBankrollManager is IDGBankrollManager, AccessControlUpgradeable {
         // Check if Casino GGR is posetive
         if (GGR < 10) revert DGErrors.NOTHING_TO_CLAIM();
 
-        // variable for amount per operator
-        uint256 amount = 0;
-
         // variable for total amount
         uint256 totalAmount = 0;
 
         // Loop over the operator list and perform the claim process over each operator
         for (uint256 i = 0; i < operators.length; i++) {
             if (bankroll.ggrOf(operators[i]) > 0) {
-                // Amount to send
-                amount += uint256(bankroll.ggrOf(operators[i])) - ((lpFeeOf[_bankroll] * uint256(bankroll.ggrOf(operators[i]))) / DENOMINATOR);
-
                 // Increment total amount
                 totalAmount += uint256(bankroll.ggrOf(operators[i]));
 
@@ -319,11 +313,14 @@ contract DGBankrollManager is IDGBankrollManager, AccessControlUpgradeable {
             }
         }
 
+        // Calculating the amount that should be transfered
+        uint256 amountToTransfer = totalAmount - ((lpFeeOf[_bankroll] * totalAmount) / DENOMINATOR);
+
         // fetch balance before
         uint256 balanceBefore = token.balanceOf(address(this));
 
         // transfer the GGR to DeGaming
-        token.safeTransferFrom(_bankroll, deGaming, amount);
+        token.safeTransferFrom(_bankroll, deGaming, amountToTransfer);
 
         // fetch balance aftrer
         uint256 balanceAfter = token.balanceOf(address(this));
