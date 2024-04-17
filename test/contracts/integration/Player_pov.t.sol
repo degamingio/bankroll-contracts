@@ -55,7 +55,7 @@ contract LPPov is Test {
     address LP_3 = address(0x23);
     address LP_4 = address(0x24);
 
-    uint256 LPsUSDTAmount = 100e6;
+    uint256 LPsUSDTAmount = 10000e6;
     uint256 playerUSDTAmount = 10000e6;
 
     uint256 maxRisk = 8_000;
@@ -150,7 +150,7 @@ contract LPPov is Test {
 
     }
 
-    function test_working() external view {
+    function test_PlayerPov() external view {
         console.log(bankroll.maxRiskPercentage());
     }
 }
