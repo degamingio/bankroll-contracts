@@ -156,12 +156,15 @@ contract LPPov is Test {
 
         token.approve(address(bankroll), LPsUSDTAmount);
 
+        // FIRST COUNTDOWN (1 week) FOR MINIMUM DEPOSITION TIME
+        // This will be reset 
         bankroll.depositFunds(8_000e6);
         vm.stopPrank();
 
         assertEq(token.balanceOf(address(bankroll)), 80_00e6);
         assertNotEq(bankroll.sharesOf(LP_0), 0);
 
+        // LP_0 deposition time = 2 days
         vm.warp(block.timestamp + 2 days);
 
         // Play and win 20 USDT some from player_0
@@ -180,6 +183,7 @@ contract LPPov is Test {
         assertEq(token.balanceOf(address(bankroll)), 7_980e6);
         assertEq(bankroll.GGR(), 0-20e6);
 
+        // LP_0 depoisition time = 2 days + 3 hours
         vm.warp(block.timestamp + 3 hours);
 
         // player_1 and player_2 both plays, player_2 wins 10 USDT, and player_1 loses everything
@@ -203,11 +207,11 @@ contract LPPov is Test {
         assertEq(bankroll.GGR(), 70e6);
         assertEq(token.balanceOf(address(bankroll)), 8_070e6);
 
-        console.log(bankroll.getLpValue(LP_0));
-
-        vm.warp(30 hours);
+        // LP_0 deposition time = 2days + 33 hours = 3 days + 9 hours
+        vm.warp(block.timestamp + 30 hours);
 
         // Deposit liquidity from LP_1
+        // COUNTDOWN (1 weeks) minimumDepositionTime FOR LP_1 STARTS HERE
         vm.startPrank(LP_1);
 
         token.approve(address(bankroll), LPsUSDTAmount);
@@ -215,9 +219,12 @@ contract LPPov is Test {
         bankroll.depositFunds(LPsUSDTAmount);
         vm.stopPrank();
 
-        vm.warp(4 hours);
+        // LP_0 deposition time = 3days + 13 hours
+        // LP_1 deposition time = 4 hours
+        vm.warp(block.timestamp + 4 hours);
 
         // Deposit liquidity from LP_2
+        // COUNTDOWN (1 weeks) minimumDepositionTime FOR LP_2 STARTS HERE
         vm.startPrank(LP_2);
 
         token.approve(address(bankroll), LPsUSDTAmount);
@@ -245,25 +252,85 @@ contract LPPov is Test {
         assertEq(token.balanceOf(player_3), 200e6);
         assertEq(bankroll.GGR(), 85e6);
 
-        vm.warp(1 days);
+        // LP_0 deposition time = 4 days + 13 hours
+        // LP_1 deposition time = 1 days + 4 hours
+        // LP_2 deposition time = 1 days
+        vm.warp(block.timestamp + 1 days);
 
         // LP_0 decides to put all of his USDT into the contract
+        // LP_0 deposition time will be nulled from here
         vm.startPrank(LP_0);
 
         token.approve(address(bankroll), LPsUSDTAmount - 8_000e6);
 
+        // LP_0 deposition time = 0
+        // LP_1 deposition time = 1 days + 4 hours
+        // LP_2 deposition time = 1 days
         bankroll.depositFunds(LPsUSDTAmount - 8_000e6);
         vm.stopPrank();
 
-        // LP_0 decides to put all of his USDT into the contract
+        // LP_0 deposition time = 0 + 40 hours = 1 days + 16 hours
+        // LP_1 deposition time = 1 days + 44 hours = 2 days and 20 hour
+        // LP_2 deposition time = 1 days + 40 hours = 2 days and 16 hours
+        vm.warp(40 hours);
+
+        // LP_3 eposits
+        // COUNTDOWN (1 weeks) minimumDepositionTime FOR LP_3 STARTS HERE
         vm.startPrank(LP_3);
 
         token.approve(address(bankroll), LPsUSDTAmount);
 
         bankroll.depositFunds(LPsUSDTAmount);
         vm.stopPrank();
+
         assertEq(token.balanceOf(address(bankroll)), 40_085e6);
 
-        vm.prank
+        // LP_0 deposition time = 3 days + 16 hours
+        // LP_1 deposition time = 4 days and 20 hour
+        // LP_2 deposition time = 4 days and 16 hours
+        // LP_3 deporition time = 2 days
+        vm.warp(block.timestamp + 2 days);
+
+        // player_3 loses 150 and player_4 loses 20
+        vm.prank(player_3);
+        token.transfer(admin, 180e6);
+
+        vm.prank(player_4);
+        token.transfer(admin, playerUSDTAmount);
+
+        // LP 4 deposits
+        // COUNTDOWN (1 weeks) minimumDepositionTime FOR LP_4 STARTS HERE
+        vm.startPrank(LP_4);
+
+        token.approve(address(bankroll), LPsUSDTAmount);
+
+        bankroll.depositFunds(LPsUSDTAmount);
+        vm.stopPrank();
+
+        vm.startPrank(admin);
+        bankroll.creditAndDebit(180e6, 30e6, operator, player_3);
+        bankroll.creditAndDebit(playerUSDTAmount, 80e6, operator, player_4);
+        vm.stopPrank();
+
+        assertEq(token.balanceOf(admin), 0);
+        assertEq(token.balanceOf(player_3), 50e6);
+        assertEq(token.balanceOf(player_4), 80e6);
+        assertEq(token.balanceOf(address(bankroll)), 50_255e6);
+        assertEq(bankroll.GGR(), 255e6);
+
+        // LP_0 deposition time = 5 days + 18 hours
+        // LP_1 deposition time = 6 days and 22 hour
+        // LP_2 deposition time = 6 days and 18 hours
+        // LP_3 deposition time = 4 days and 2 hours
+        // LP_4 deposition time = 2 days and 2 hours
+        vm.warp(block.timestamp + 50 hours);
+
+        // Degaming calls the claim profit function
+
+        vm.startPrank(admin);
+        dgBankrollManager.claimProfit(address(bankroll));
+
+        console.log(bankroll.getLpValue(LP_0));
+        console.log(bankroll.getLpValue(LP_4));
     }
 }
