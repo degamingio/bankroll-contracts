@@ -263,5 +263,7 @@ contract LPPov is Test {
         bankroll.depositFunds(LPsUSDTAmount);
         vm.stopPrank();
         assertEq(token.balanceOf(address(bankroll)), 40_085e6);
+
+        vm.prank
     }
 }
