@@ -55,7 +55,7 @@ contract LPPov is Test {
     address LP_3 = address(0x23);
     address LP_4 = address(0x24);
 
-    uint256 LPsUSDTAmount = 10000e6;
+    uint256 LPsUSDTAmount = 10_000e6;
     uint256 playerUSDTAmount = 100e6;
 
     uint256 maxRisk = 8_000;
@@ -156,15 +156,15 @@ contract LPPov is Test {
 
         token.approve(address(bankroll), LPsUSDTAmount);
 
-        bankroll.depositFunds(8000e6);
+        bankroll.depositFunds(8_000e6);
         vm.stopPrank();
 
-        assertEq(token.balanceOf(address(bankroll)), 8000e6);
+        assertEq(token.balanceOf(address(bankroll)), 80_00e6);
         assertNotEq(bankroll.sharesOf(LP_0), 0);
 
         vm.warp(block.timestamp + 2 days);
 
-        // Play and win some from player_0
+        // Play and win 20 USDT some from player_0
 
         vm.prank(player_0);
         token.transfer(admin, playerUSDTAmount);
@@ -177,9 +177,91 @@ contract LPPov is Test {
         vm.stopPrank();
 
         assertEq(token.balanceOf(player_0), 120e6);
-        assertEq(token.balanceOf(address(bankroll)), 7980e6);
+        assertEq(token.balanceOf(address(bankroll)), 7_980e6);
         assertEq(bankroll.GGR(), 0-20e6);
 
         vm.warp(block.timestamp + 3 hours);
+
+        // player_1 and player_2 both plays, player_2 wins 10 USDT, and player_1 loses everything
+
+        vm.prank(player_1);
+        token.transfer(admin, playerUSDTAmount);
+
+        vm.prank(player_2);
+        token.transfer(admin, playerUSDTAmount);
+
+        assertEq(token.balanceOf(admin), playerUSDTAmount * 2);
+
+        vm.startPrank(admin);
+        bankroll.credit(playerUSDTAmount, operator);
+        bankroll.creditAndDebit(playerUSDTAmount, 110e6, operator, player_2);
+        vm.stopPrank();
+
+        assertEq(token.balanceOf(admin), 0);
+        assertEq(token.balanceOf(player_1), 0);
+        assertEq(token.balanceOf(player_2), 110e6);
+        assertEq(bankroll.GGR(), 70e6);
+        assertEq(token.balanceOf(address(bankroll)), 8_070e6);
+
+        console.log(bankroll.getLpValue(LP_0));
+
+        vm.warp(30 hours);
+
+        // Deposit liquidity from LP_1
+        vm.startPrank(LP_1);
+
+        token.approve(address(bankroll), LPsUSDTAmount);
+
+        bankroll.depositFunds(LPsUSDTAmount);
+        vm.stopPrank();
+
+        vm.warp(4 hours);
+
+        // Deposit liquidity from LP_2
+        vm.startPrank(LP_2);
+
+        token.approve(address(bankroll), LPsUSDTAmount);
+
+        bankroll.depositFunds(LPsUSDTAmount);
+        vm.stopPrank();
+
+        assertEq(token.balanceOf(address(bankroll)), 28_070e6);
+
+        // player_0 and player 3 plays, player_0 loses 115 USDT and player3 wins 100usdt
+        vm.prank(player_0);
+        token.transfer(admin, 120e6);
+
+        vm.prank(player_3);
+        token.transfer(admin, playerUSDTAmount);
+
+        vm.startPrank(admin);
+        bankroll.creditAndDebit(120e6, 5e6, operator, player_0);
+        bankroll.creditAndDebit(playerUSDTAmount, 200e6, operator, player_3);
+        vm.stopPrank();
+
+        assertEq(token.balanceOf(address(bankroll)), 28_085e6);
+        assertEq(token.balanceOf(admin), 0);
+        assertEq(token.balanceOf(player_0), 5e6);
+        assertEq(token.balanceOf(player_3), 200e6);
+        assertEq(bankroll.GGR(), 85e6);
+
+        vm.warp(1 days);
+
+        // LP_0 decides to put all of his USDT into the contract
+        vm.startPrank(LP_0);
+
+        token.approve(address(bankroll), LPsUSDTAmount - 8_000e6);
+
+        bankroll.depositFunds(LPsUSDTAmount - 8_000e6);
+        vm.stopPrank();
+
+        // LP_0 decides to put all of his USDT into the contract
+        vm.startPrank(LP_3);
+
+        token.approve(address(bankroll), LPsUSDTAmount);
+
+        bankroll.depositFunds(LPsUSDTAmount);
+        vm.stopPrank();
+        assertEq(token.balanceOf(address(bankroll)), 40_085e6);
     }
 }
