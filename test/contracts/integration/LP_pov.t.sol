@@ -337,6 +337,8 @@ contract LPPov is Test {
         // LP_4 deposition time = 2 days and 4 hours
         vm.warp(block.timestamp + 2 hours + 2);
 
+        // Trying to withdraw from the LPs that havent provided liquidity for
+        // the minimum deposition time
         vm.expectRevert(DGErrors.MINIMUM_DEPOSITION_TIME_NOT_PASSED.selector);
         vm.prank(LP_0);
         bankroll.withdrawalStageOne(LPsUSDTAmount);
@@ -353,8 +355,39 @@ contract LPPov is Test {
         vm.prank(LP_4);
         bankroll.withdrawalStageOne(LPsUSDTAmount);
 
-        vm.prank(LP_1);
+        // Trying with the only one that has
+
+        assertEq(token.balanceOf(LP_1), 0);
+
+        vm.startPrank(LP_1);
         bankroll.withdrawalStageOne(LPsUSDTAmount);
 
+        vm.expectRevert(DGErrors.OUTSIDE_WITHDRAWAL_WINDOW.selector);
+        bankroll.withdrawalStageTwo();
+
+        vm.expectRevert(DGErrors.WITHDRAWAL_PROCESS_IN_STAGING.selector);
+        bankroll.withdrawalStageOne(LPsUSDTAmount);
+
+        // he misses first window....
+        vm.warp(block.timestamp + 10 minutes);
+
+        vm.expectRevert(DGErrors.OUTSIDE_WITHDRAWAL_WINDOW.selector);
+        bankroll.withdrawalStageTwo();
+
+        // LP_1 has to wait 1 hour until he can try again...
+        vm.expectRevert(DGErrors.WITHDRAWAL_TIMESTAMP_HASNT_PASSED.selector);
+        bankroll.withdrawalStageOne(LPsUSDTAmount);
+
+        vm.warp(block.timestamp + 50 minutes + 1);
+
+        bankroll.withdrawalStageOne(LPsUSDTAmount);
+
+        vm.warp(block.timestamp + 31);
+
+        bankroll.withdrawalStageTwo();
+
+        vm.stopPrank();
+
+        assertNotEq(token.balanceOf(LP_1), 0);
     }
 }
