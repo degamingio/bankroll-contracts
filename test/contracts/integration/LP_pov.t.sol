@@ -40,9 +40,25 @@ contract LPPov is Test {
     address public admin = address(0x1);
     address public deployer = address(0x2);
     address public operator = address(0x3);
-    //address public token = address(0x4);
 
-    uint256 maxRisk = 10_000;
+    // player addresses:
+    address player_0 = address(0x10);
+    address player_1 = address(0x11);
+    address player_2 = address(0x12);
+    address player_3 = address(0x13);
+    address player_4 = address(0x14);
+
+    // LP addresses
+    address LP_0 = address(0x20);
+    address LP_1 = address(0x21);
+    address LP_2 = address(0x22);
+    address LP_3 = address(0x23);
+    address LP_4 = address(0x24);
+
+    uint256 LPsUSDTAmount = 100e6;
+    uint256 playerUSDTAmount = 10000e6;
+
+    uint256 maxRisk = 8_000;
     uint256 threshold = 1000e6;
 
     MockToken token = new MockToken("Tether", "USDT");
@@ -119,6 +135,19 @@ contract LPPov is Test {
         bankroll.maxContractsApprove();
 
         vm.stopPrank();
+
+        token.mint(player_0, playerUSDTAmount);
+        token.mint(player_1, playerUSDTAmount);
+        token.mint(player_2, playerUSDTAmount);
+        token.mint(player_3, playerUSDTAmount);
+        token.mint(player_4, playerUSDTAmount);
+
+        token.mint(LP_0, LPsUSDTAmount);
+        token.mint(LP_1, LPsUSDTAmount);
+        token.mint(LP_2, LPsUSDTAmount);
+        token.mint(LP_3, LPsUSDTAmount);
+        token.mint(LP_4, LPsUSDTAmount);
+
     }
 
     function test_working() external view {
