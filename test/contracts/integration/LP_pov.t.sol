@@ -55,8 +55,8 @@ contract LPPov is Test {
     address LP_3 = address(0x23);
     address LP_4 = address(0x24);
 
-    uint256 LPsUSDTAmount = 100e6;
-    uint256 playerUSDTAmount = 10000e6;
+    uint256 LPsUSDTAmount = 10000e6;
+    uint256 playerUSDTAmount = 100e6;
 
     uint256 maxRisk = 8_000;
     uint256 threshold = 1000e6;
@@ -150,7 +150,36 @@ contract LPPov is Test {
 
     }
 
-    function test_working() external view {
-        console.log(bankroll.maxRiskPercentage());
+    function test_LPPov() external{
+        // Deposit liquidity from LP_0
+        vm.startPrank(LP_0);
+
+        token.approve(address(bankroll), LPsUSDTAmount);
+
+        bankroll.depositFunds(8000e6);
+        vm.stopPrank();
+
+        assertEq(token.balanceOf(address(bankroll)), 8000e6);
+        assertNotEq(bankroll.sharesOf(LP_0), 0);
+
+        vm.warp(block.timestamp + 2 days);
+
+        // Play and win some from player_0
+
+        vm.prank(player_0);
+        token.transfer(admin, playerUSDTAmount);
+
+        vm.startPrank(admin);
+        token.approve(address(bankroll), 1_000_000_000e6);
+
+        bankroll.creditAndDebit(playerUSDTAmount, 120e6, operator, player_0);
+
+        vm.stopPrank();
+
+        assertEq(token.balanceOf(player_0), 120e6);
+        assertEq(token.balanceOf(address(bankroll)), 7980e6);
+        assertEq(bankroll.GGR(), 0-20e6);
+
+        vm.warp(block.timestamp + 3 hours);
     }
 }
