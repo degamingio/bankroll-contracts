@@ -272,7 +272,7 @@ contract LPPov is Test {
         // LP_0 deposition time = 0 + 40 hours = 1 days + 16 hours
         // LP_1 deposition time = 1 days + 44 hours = 2 days and 20 hour
         // LP_2 deposition time = 1 days + 40 hours = 2 days and 16 hours
-        vm.warp(40 hours);
+        vm.warp(block.timestamp + 40 hours);
 
         // LP_3 eposits
         // COUNTDOWN (1 weeks) minimumDepositionTime FOR LP_3 STARTS HERE
@@ -327,10 +327,34 @@ contract LPPov is Test {
 
         // Degaming calls the claim profit function
 
-        vm.startPrank(admin);
+        vm.prank(admin);
         dgBankrollManager.claimProfit(address(bankroll));
 
-        console.log(bankroll.getLpValue(LP_0));
-        console.log(bankroll.getLpValue(LP_4));
+        // LP_0 deposition time = 5 days + 20 hours
+        // LP_1 deposition time = 7 days = 1 weeks - SHOULD BE THE ONLY WALLET THAT CAN WITHDRAW
+        // LP_2 deposition time = 6 days and 20 hours
+        // LP_3 deposition time = 4 days and 4 hours
+        // LP_4 deposition time = 2 days and 4 hours
+        vm.warp(block.timestamp + 2 hours + 2);
+
+        vm.expectRevert(DGErrors.MINIMUM_DEPOSITION_TIME_NOT_PASSED.selector);
+        vm.prank(LP_0);
+        bankroll.withdrawalStageOne(LPsUSDTAmount);
+
+        vm.expectRevert(DGErrors.MINIMUM_DEPOSITION_TIME_NOT_PASSED.selector);
+        vm.prank(LP_2);
+        bankroll.withdrawalStageOne(LPsUSDTAmount);
+
+        vm.expectRevert(DGErrors.MINIMUM_DEPOSITION_TIME_NOT_PASSED.selector);
+        vm.prank(LP_3);
+        bankroll.withdrawalStageOne(LPsUSDTAmount);
+
+        vm.expectRevert(DGErrors.MINIMUM_DEPOSITION_TIME_NOT_PASSED.selector);
+        vm.prank(LP_4);
+        bankroll.withdrawalStageOne(LPsUSDTAmount);
+
+        vm.prank(LP_1);
+        bankroll.withdrawalStageOne(LPsUSDTAmount);
+
     }
 }
