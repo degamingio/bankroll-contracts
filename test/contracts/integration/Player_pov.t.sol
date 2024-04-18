@@ -251,9 +251,23 @@ contract PlayerPov is Test {
         dgEscrow.releaseFunds(abi.encode(entry_1));
 
         // leave player 2s funds unaddressed
-        vm.warp(block.timestamp + 2 days);
+        vm.warp(block.timestamp + 1 days);
 
         vm.stopPrank();
 
+        // trying to claim before event period is passed
+        vm.expectRevert(DGErrors.EVENT_PERIOD_NOT_PASSED.selector);
+        vm.prank(player_2);
+        dgEscrow.claimUnaddressed(abi.encode(entry_2));
+
+        vm.warp(block.timestamp + 1 weeks);
+
+        vm.expectRevert(DGErrors.UNAUTHORIZED_CLAIM.selector);
+        // Trying to claim with the wrong player (player_2 is the correctt claimer)
+        vm.prank(player_1);
+        dgEscrow.claimUnaddressed(abi.encode(entry_2));
+
+        vm.prank(player_2);
+        dgEscrow.claimUnaddressed(abi.encode(entry_2));
     }
 }
