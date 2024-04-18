@@ -202,8 +202,6 @@ contract PlayerPov is Test {
         // player_4 lost it all...
         bankroll.credit(1_000e6, operator);
 
-        vm.stopPrank();
-
         DGDataTypes.EscrowEntry memory entry_0 = DGDataTypes.EscrowEntry(
             address(bankroll),
             operator,
@@ -230,5 +228,32 @@ contract PlayerPov is Test {
             block.timestamp,
             2
         );
+        
+        DGDataTypes.EscrowEntry memory faultyEntry = DGDataTypes.EscrowEntry(
+            address(bankroll),
+            operator,
+            player_2,
+            address(token),
+            block.timestamp,
+            0
+        );
+
+        vm.expectRevert(DGErrors.NOTHING_TO_CLAIM.selector);
+        dgEscrow.revertFunds(abi.encode(faultyEntry));
+
+        vm.expectRevert(DGErrors.NOTHING_TO_CLAIM.selector);
+        dgEscrow.releaseFunds(abi.encode(faultyEntry));
+
+        // Revert player 0s funds back into the bankroll
+        dgEscrow.revertFunds(abi.encode(entry_0));
+
+        // release player 1s funds to them
+        dgEscrow.releaseFunds(abi.encode(entry_1));
+
+        // leave player 2s funds unaddressed
+        vm.warp(block.timestamp + 2 days);
+
+        vm.stopPrank();
+
     }
 }
