@@ -21,7 +21,7 @@ import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
 import {MockToken} from "test/mock/MockToken.sol";
 
 
-contract LPPov is Test {
+contract PlayerPov is Test {
     TransparentUpgradeableProxy public bankrollFactoryProxy;
     TransparentUpgradeableProxy public bankrollProxy;
     TransparentUpgradeableProxy public escrowProxy;
@@ -49,17 +49,13 @@ contract LPPov is Test {
     address player_4 = address(0x14);
 
     // LP addresses
-    address LP_0 = address(0x20);
-    address LP_1 = address(0x21);
-    address LP_2 = address(0x22);
-    address LP_3 = address(0x23);
-    address LP_4 = address(0x24);
+    address LP = address(0x20);
 
-    uint256 LPsUSDTAmount = 10000e6;
-    uint256 playerUSDTAmount = 10000e6;
+    uint256 LPsUSDTAmount = 10_000e6;
+    uint256 playerUSDTAmount = 5_000e6;
 
     uint256 maxRisk = 8_000;
-    uint256 threshold = 1000e6;
+    uint256 threshold = 1_000e6;
 
     MockToken token = new MockToken("Tether", "USDT");
 
@@ -142,15 +138,97 @@ contract LPPov is Test {
         token.mint(player_3, playerUSDTAmount);
         token.mint(player_4, playerUSDTAmount);
 
-        token.mint(LP_0, LPsUSDTAmount);
-        token.mint(LP_1, LPsUSDTAmount);
-        token.mint(LP_2, LPsUSDTAmount);
-        token.mint(LP_3, LPsUSDTAmount);
-        token.mint(LP_4, LPsUSDTAmount);
-
+        token.mint(LP, LPsUSDTAmount);
     }
 
-    function test_PlayerPov() external view {
-        console.log(bankroll.maxRiskPercentage());
+    function test_PlayerPov() external {
+        vm.startPrank(LP);
+        token.approve(address(bankroll), 10_000e6);
+        bankroll.depositFunds(10_000e6);
+        vm.stopPrank();
+
+        vm.warp(block.timestamp + 83 hours);
+
+        assertEq(token.balanceOf(LP), 0);
+        assertEq(token.balanceOf(address(bankroll)), 10_000e6);
+
+        vm.warp(block.timestamp + 3 days);
+
+        vm.prank(player_0);
+        token.transfer(admin, 2_000e6);
+
+        assertEq(token.balanceOf(admin), 2_000e6);
+        vm.warp(block.timestamp + 2 hours);
+
+        vm.prank(player_1);
+        token.transfer(admin, 2_000e6);
+
+        assertEq(token.balanceOf(admin), 4_000e6);
+        vm.warp(block.timestamp + 20 minutes);
+
+        vm.prank(player_2);
+        token.transfer(admin, 2_000e6);
+
+        assertEq(token.balanceOf(admin), 6_000e6);
+        vm.warp(block.timestamp + 4 hours);
+
+        vm.prank(player_3);
+        token.transfer(admin, 1_000e6);
+
+        assertEq(token.balanceOf(admin), 7_000e6);
+        vm.warp(block.timestamp + 233 minutes);
+
+        vm.prank(player_4);
+        token.transfer(admin, 1_000e6);
+
+        assertEq(token.balanceOf(admin), 8_000e6);
+        vm.warp(block.timestamp + 3 hours);
+
+        vm.startPrank(admin);
+
+        token.approve(address(bankroll), 1_000_000_000e6);
+
+        bankroll.creditAndDebit(2_000e6, 2_500e6, operator, player_0);
+        assertEq(token.balanceOf(address(dgEscrow)), 2_500e6);
+
+        bankroll.creditAndDebit(2_000e6, 3_000e6, operator, player_1);
+        assertEq(token.balanceOf(address(dgEscrow)), 5_500e6);
+
+        bankroll.creditAndDebit(2_000e6, 2_200e6, operator, player_2);
+        assertEq(token.balanceOf(address(dgEscrow)), 7_700e6);
+
+        bankroll.creditAndDebit(1_000e6, 20e6, operator, player_3);
+
+        // player_4 lost it all...
+        bankroll.credit(1_000e6, operator);
+
+        vm.stopPrank();
+
+        DGDataTypes.EscrowEntry memory entry_0 = DGDataTypes.EscrowEntry(
+            address(bankroll),
+            operator,
+            player_0,
+            address(token),
+            block.timestamp,
+            0
+        );
+        
+        DGDataTypes.EscrowEntry memory entry_1 = DGDataTypes.EscrowEntry(
+            address(bankroll),
+            operator,
+            player_1,
+            address(token),
+            block.timestamp,
+            1
+        );
+
+        DGDataTypes.EscrowEntry memory entry_2 = DGDataTypes.EscrowEntry(
+            address(bankroll),
+            operator,
+            player_2,
+            address(token),
+            block.timestamp,
+            2
+        );
     }
 }
