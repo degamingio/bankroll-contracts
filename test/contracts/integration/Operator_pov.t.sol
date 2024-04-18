@@ -43,6 +43,7 @@ contract OperatorPov is Test {
     address public admin = address(0x1);
     address public deployer = address(0x2);
     address public operator = address(0x3);
+    address public badOperator = address(0x4);
 
     // player addresses:
     address player_0 = address(0x10);
@@ -128,6 +129,7 @@ contract OperatorPov is Test {
         address bankrollAddress_2 = dgBankrollFactory.bankrolls(dgBankrollFactory.bankrollCount() - 1);
 
         dgBankrollManager.addOperator(operator);
+        dgBankrollManager.addOperator(badOperator);
 
         dgBankrollManager.approveBankroll(bankrollAddress_0, 650);
         dgBankrollManager.approveBankroll(bankrollAddress_1, 650);
@@ -135,7 +137,10 @@ contract OperatorPov is Test {
 
         dgBankrollManager.setOperatorToBankroll(bankrollAddress_0, operator);
         dgBankrollManager.setOperatorToBankroll(bankrollAddress_1, operator);
+
+        // Bankroll_2 is a shared bankroll
         dgBankrollManager.setOperatorToBankroll(bankrollAddress_2, operator);
+        dgBankrollManager.setOperatorToBankroll(bankrollAddress_2, badOperator);
 
         bankroll_0 = Bankroll(bankrollAddress_0);
         bankroll_1 = Bankroll(bankrollAddress_1);
@@ -246,12 +251,54 @@ contract OperatorPov is Test {
         assertEq(token.balanceOf(player_3), 0);
         assertEq(token.balanceOf(address(bankroll_0)), 11_005e6);
 
-        bankroll_2.creditAndDebit(1000e6, 5e6, operator, player_4);
+        bankroll_2.creditAndDebit(1_000e6, 5e6, operator, player_4);
 
-        assertEq(token.balanceOf(admin), 1_000e6);
-        assertEq(token.balanceOf(player_3), 0);
-        assertEq(token.balanceOf(address(bankroll_0)), 11_005e6);
+        assertEq(token.balanceOf(admin), 0);
+        assertEq(token.balanceOf(player_4), 5e6);
+        assertEq(token.balanceOf(address(bankroll_2)), 10_495e6);
 
         vm.stopPrank();
+
+        vm.warp(block.timestamp + 123 minutes);
+
+        // Play with bad operator as well
+        vm.prank(player_2);
+        token.transfer(admin, 1_200e6);
+
+        vm.prank(admin);
+        bankroll_2.creditAndDebit(1_200e6, 783, badOperator, player_2);
+
+        vm.warp(block.timestamp + 2 days);
+
+        // bad operator has done something bad and broken agreements
+        vm.prank(admin);
+        dgBankrollManager.blockOperator(badOperator);
+
+        // Player 1 want to try to play with the bad operator
+        // but this call should get reverted from here on
+
+        vm.startPrank(player_1);
+        token.transfer(admin, 100e6);
+
+        vm.startPrank(admin);
+        vm.expectRevert(DGErrors.NOT_AN_OPERATOR.selector);
+        bankroll_2.creditAndDebit(100e6, 95e6, badOperator, player_1);
+
+        // just to make sure other calls work
+        bankroll_2.creditAndDebit(100e6, 95e6, operator, player_1);
+
+        vm.warp(block.timestamp + 3 days);
+
+        // Also make sure that claim profit works
+
+        dgBankrollManager.claimProfit(address(bankroll_0));
+        dgBankrollManager.claimProfit(address(bankroll_1));
+        dgBankrollManager.claimProfit(address(bankroll_2));
+
+        vm.stopPrank();
+
+        assertEq(bankroll_0.getLpValue(LP) > 10_000e6, true);
+        assertEq(bankroll_1.getLpValue(LP) > 10_000e6, true);
+        assertEq(bankroll_2.getLpValue(LP) > 10_000e6, true);
     }
 }
