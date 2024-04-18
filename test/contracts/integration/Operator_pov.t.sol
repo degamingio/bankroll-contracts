@@ -21,7 +21,7 @@ import {DGDataTypes} from "src/libraries/DGDataTypes.sol";
 import {MockToken} from "test/mock/MockToken.sol";
 
 
-contract LPPov is Test {
+contract OperatorPov is Test {
     TransparentUpgradeableProxy public bankrollFactoryProxy;
     TransparentUpgradeableProxy public bankrollProxy;
     TransparentUpgradeableProxy public escrowProxy;
@@ -33,6 +33,9 @@ contract LPPov is Test {
     DGBankrollManager public dgBankrollManager;
     DGEscrow public dgEscrow;
     Bankroll public bankroll;
+    Bankroll public bankroll_0;
+    Bankroll public bankroll_1;
+    Bankroll public bankroll_2;
 
     address deGaming = address(0x0);
 
@@ -49,17 +52,13 @@ contract LPPov is Test {
     address player_4 = address(0x14);
 
     // LP addresses
-    address LP_0 = address(0x20);
-    address LP_1 = address(0x21);
-    address LP_2 = address(0x22);
-    address LP_3 = address(0x23);
-    address LP_4 = address(0x24);
+    address LP = address(0x20);
 
-    uint256 LPsUSDTAmount = 100e6;
-    uint256 playerUSDTAmount = 10000e6;
+    uint256 LPsUSDTAmount = 30_000e6;
+    uint256 playerUSDTAmount = 1_000e6;
 
     uint256 maxRisk = 8_000;
-    uint256 threshold = 1000e6;
+    uint256 threshold = 1_000e6;
 
     MockToken token = new MockToken("Tether", "USDT");
 
@@ -116,23 +115,39 @@ contract LPPov is Test {
 
         dgEscrow.grantRole(keccak256("ADMIN"), admin);
 
+        // Deploy bankroll 0 for the operator
         dgBankrollFactory.deployBankroll(address(token), maxRisk, threshold, "0x0");
+        address bankrollAddress_0 = dgBankrollFactory.bankrolls(dgBankrollFactory.bankrollCount() - 1);
 
-        address bankrollAddress = dgBankrollFactory.bankrolls(dgBankrollFactory.bankrollCount() - 1);
+        // Deploy bankroll 1 for the operator
+        dgBankrollFactory.deployBankroll(address(token), maxRisk, threshold, "0x1");
+        address bankrollAddress_1 = dgBankrollFactory.bankrolls(dgBankrollFactory.bankrollCount() - 1);
+
+        // Deploy bankroll 2 for the operator
+        dgBankrollFactory.deployBankroll(address(token), maxRisk, threshold, "0x2");
+        address bankrollAddress_2 = dgBankrollFactory.bankrolls(dgBankrollFactory.bankrollCount() - 1);
 
         dgBankrollManager.addOperator(operator);
 
-        dgBankrollManager.approveBankroll(bankrollAddress, 650);
+        dgBankrollManager.approveBankroll(bankrollAddress_0, 650);
+        dgBankrollManager.approveBankroll(bankrollAddress_1, 650);
+        dgBankrollManager.approveBankroll(bankrollAddress_2, 650);
 
-        dgBankrollManager.setOperatorToBankroll(bankrollAddress, operator);
+        dgBankrollManager.setOperatorToBankroll(bankrollAddress_0, operator);
+        dgBankrollManager.setOperatorToBankroll(bankrollAddress_1, operator);
+        dgBankrollManager.setOperatorToBankroll(bankrollAddress_2, operator);
 
-        bankroll = Bankroll(bankrollAddress);
+        bankroll_0 = Bankroll(bankrollAddress_0);
+        bankroll_1 = Bankroll(bankrollAddress_1);
+        bankroll_2 = Bankroll(bankrollAddress_2);
 
         vm.stopPrank();
 
         vm.startPrank(admin);
 
-        bankroll.maxContractsApprove();
+        bankroll_0.maxContractsApprove();
+        bankroll_1.maxContractsApprove();
+        bankroll_2.maxContractsApprove();
 
         vm.stopPrank();
 
@@ -142,15 +157,19 @@ contract LPPov is Test {
         token.mint(player_3, playerUSDTAmount);
         token.mint(player_4, playerUSDTAmount);
 
-        token.mint(LP_0, LPsUSDTAmount);
-        token.mint(LP_1, LPsUSDTAmount);
-        token.mint(LP_2, LPsUSDTAmount);
-        token.mint(LP_3, LPsUSDTAmount);
-        token.mint(LP_4, LPsUSDTAmount);
-
+        token.mint(LP, LPsUSDTAmount);
     }
 
-    function test_working() external view {
-        console.log(bankroll.maxRiskPercentage());
+    function test_operatorPov() external {
+        vm.startPrank(LP);
+        token.approve(address(bankroll_0), 10_000e6);
+        token.approve(address(bankroll_1), 10_000e6);
+        token.approve(address(bankroll_2), 10_000e6);
+
+        bankroll_0.depositFunds(10_000e6);
+        bankroll_1.depositFunds(10_000e6);
+        bankroll_2.depositFunds(10_000e6);
+
+        vm.stopPrank();
     }
 }
