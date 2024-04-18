@@ -171,5 +171,87 @@ contract OperatorPov is Test {
         bankroll_2.depositFunds(10_000e6);
 
         vm.stopPrank();
+
+        assertEq(token.balanceOf(LP), 0);
+        assertEq(token.balanceOf(address(bankroll_0)), 10_000e6);
+        assertEq(token.balanceOf(address(bankroll_1)), 10_000e6);
+        assertEq(token.balanceOf(address(bankroll_2)), 10_000e6);
+
+        vm.warp(block.timestamp + 2 days);
+
+        vm.prank(player_0);
+        token.transfer(admin, 1_000e6);
+
+        assertEq(token.balanceOf(admin), 1_000e6);
+        vm.warp(block.timestamp + 2 hours);
+
+        vm.prank(player_1);
+        token.transfer(admin, 1_000e6);
+
+        assertEq(token.balanceOf(admin), 2_000e6);
+        vm.warp(block.timestamp + 20 minutes);
+
+        vm.prank(player_2);
+        token.transfer(admin, 1_000e6);
+
+        assertEq(token.balanceOf(admin), 3_000e6);
+        vm.warp(block.timestamp + 4 hours);
+
+        vm.prank(player_3);
+        token.transfer(admin, 1_000e6);
+
+        assertEq(token.balanceOf(admin), 4_000e6);
+        vm.warp(block.timestamp + 233 minutes);
+
+        vm.prank(player_4);
+        token.transfer(admin, 1_000e6);
+
+        assertEq(token.balanceOf(admin), 5_000e6);
+        vm.warp(block.timestamp + 3 hours);
+
+        vm.startPrank(admin);
+
+        token.approve(address(bankroll_0), 1_000_000_000e6);
+        token.approve(address(bankroll_1), 1_000_000_000e6);
+        token.approve(address(bankroll_2), 1_000_000_000e6);
+
+        bankroll_0.creditAndDebit(1_000e6, 995e6, operator, player_0);
+
+        assertEq(token.balanceOf(admin), 4_000e6);
+        assertEq(token.balanceOf(player_0), 995e6);
+        assertEq(token.balanceOf(address(bankroll_0)), 10_005e6);
+
+        bankroll_1.creditAndDebit(1_000e6, 333e6, operator, player_1);
+
+        assertEq(token.balanceOf(admin), 3_000e6);
+        assertEq(token.balanceOf(player_1), 333e6);
+        assertEq(token.balanceOf(address(bankroll_1)), 10_667e6);
+
+        bankroll_2.creditAndDebit(500e6, 1_000e6, operator, player_2);
+
+        assertEq(token.balanceOf(admin), 2_500e6);
+        assertEq(token.balanceOf(player_2), 1_000e6);
+        assertEq(token.balanceOf(address(bankroll_2)), 9_500e6);
+
+        bankroll_1.creditAndDebit(500e6, 200e6, operator, player_2);
+
+        assertEq(token.balanceOf(admin), 2_000e6);
+        assertEq(token.balanceOf(player_2), 1_200e6);
+        assertEq(token.balanceOf(address(bankroll_1)), 10_967e6);
+
+        // on  behalf of player 3
+        bankroll_0.credit(1_000e6, operator);
+
+        assertEq(token.balanceOf(admin), 1_000e6);
+        assertEq(token.balanceOf(player_3), 0);
+        assertEq(token.balanceOf(address(bankroll_0)), 11_005e6);
+
+        bankroll_2.creditAndDebit(1000e6, 5e6, operator, player_4);
+
+        assertEq(token.balanceOf(admin), 1_000e6);
+        assertEq(token.balanceOf(player_3), 0);
+        assertEq(token.balanceOf(address(bankroll_0)), 11_005e6);
+
+        vm.stopPrank();
     }
 }
