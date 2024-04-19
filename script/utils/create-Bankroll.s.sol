@@ -58,7 +58,7 @@ contract CreateBankroll is Script {
     string public BANKROLL_PATH = string.concat(PATH_PREFIX, "/Bankroll/address");
 
     uint256 maxRisk = 8_000;
-    uint256 threshold = 5_000;
+    uint256 threshold = 1_000e6;
 
     function run() public {
         vm.startBroadcast(deployerPrivateKey);

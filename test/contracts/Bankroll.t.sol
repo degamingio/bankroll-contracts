@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
 
@@ -51,7 +51,7 @@ contract BankrollTest is Test {
         owner = address(0x6);
         maxRisk = 10_000;
         threshold = 1_000_000e6;
-        
+
         proxyAdmin = new ProxyAdmin();
 
         dgBankrollFactory = new DGBankrollFactory();
