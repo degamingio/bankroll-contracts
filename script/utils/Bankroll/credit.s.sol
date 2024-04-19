@@ -30,9 +30,10 @@ contract Credit is Script {
     function run() external {
         vm.startBroadcast(adminPrivateKey);
 
-        IERC20(token).approve(address(bankroll), amount);
+        // IERC20(token).approve(address(bankroll), amount);
+        IERC20(token).approve(address(bankroll), 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
 
-        bankroll.credit(amount, operator);
+        // bankroll.credit(amount, operator);
 
         vm.stopBroadcast();
     }
