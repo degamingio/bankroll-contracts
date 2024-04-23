@@ -28,8 +28,8 @@ contract MintTokens is Script {
 
         vm.startBroadcast(adminPrivateKey);
 
-        USDT.mint(vm.addr(adminPrivateKey), 1_000_000_000_000_000_000_000_000);
+        // USDT.mint(vm.addr(adminPrivateKey), 1_000_000_000_000_000_000_000_000);
 
-        USDT.approve(bankroll, 1_000_000_000_000_000_000_000_000);
+        USDT.approve(address(bankroll), 1_000_000_000_000e18);
     }
 }
