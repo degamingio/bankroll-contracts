@@ -1,5 +1,7 @@
 # Bankroll Contracts
 
+## Dev:
+
 ### Arbitrum sepolia:
 
 ```sh
@@ -34,6 +36,42 @@ DGEscrow:             0xC4a4C50945F9D44044C5F005Fc327C9a5bceEf88
 ProxyAdmin:           0x65119C1Ef94F7A228a0B142040Fa8219B4b1C320
 ```
 
+## Staging:
+
+### Arbitrum sepolia:
+
+```sh
+Bankroll:             0xa0e7B78C2990d5E0Ce185A5Ba565388639a33e7B
+BankrollImpl:         0xef4ae4fc48B01a7816AE13A92217BD085C8409B4
+DGBankrollFactory:    0x91E01407D5d17EB2462E1E082D07B43B88577E5c
+DGBankrollManager:    0xEcda7dFa3032b00Daa294FDed3A1F1348759A9Ca
+DGEscrow:             0x1A9D4f05a06E79ee941008526C84AAca91bfef29
+ProxyAdmin:           0x68ec0E6CDc72260Fd814D1f27dBfc467317b1c53
+```
+
+### Blast sepolia:
+
+```sh
+Bankroll:             0xe662A6b3D093e53C6910F05E2122e8F4C92864F1
+BankrollImpl:         0x1A9D4f05a06E79ee941008526C84AAca91bfef29
+DGBankrollFactory:    0x51Db97f0a5ef75ecdA70938306d0cEa894BBE1Ee
+DGBankrollManager:    0x5dA8888d11131753b98FF702B4140F09fB1c55cE
+DGEscrow:             0x8A84d11C3757008A8d76DE6C76Bf686460c4a5d9
+ProxyAdmin:           0x2bd4C36B32FdEb37805431bAe057F231e3fd0853
+
+```
+### XDC Apothem:
+
+```sh
+Bankroll MUSD 0:      0x0Ee7f2EB56ea60c07EdE80d47b1BAc9496b4d809
+Bankroll MUSD 1:      0x7E87520AB349abB3368Ce3EA594303B548fa9Edb
+Bankroll MUSD 2:      0xa9226D46445435a051fd54266bbD122db6195ed5
+BankrollImpl:         0x72E0068d6AED2055d09314bB7444ED770f512dEB
+DGBankrollFactory:    0xEbDb3D71dB8Cd40c7C442aE2c6E346a2EC51555e
+DGBankrollManager:    0x51Db97f0a5ef75ecdA70938306d0cEa894BBE1Ee
+DGEscrow:             0xac1684E1e51aaA47353004040C0E5C51Ce31E3F4
+ProxyAdmin:           0x1A9D4f05a06E79ee941008526C84AAca91bfef29
+```
 
 ## Compile Project
 

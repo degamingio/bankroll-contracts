@@ -1,0 +1,59 @@
+{
+  "transactions": [
+    {
+      "hash": "0x894af4152ce96c09fec82238b8bd2404db8b0724b46d82f527a9fd9680d633a3",
+      "transactionType": "CALL",
+      "contractName": null,
+      "contractAddress": "0xfBA6CED88170e86DA9F49902055cF80A62F1AC4a",
+      "function": "mint(address,uint256)",
+      "arguments": [
+        "0x8d76dB34CcCA356fA805f5A277EFFf53aaC5af88",
+        "1000000000000000000000000"
+      ],
+      "transaction": {
+        "type": "0x00",
+        "from": "0x8d76db34ccca356fa805f5a277efff53aac5af88",
+        "to": "0xfba6ced88170e86da9f49902055cf80a62f1ac4a",
+        "gas": "0xc391",
+        "value": "0x0",
+        "data": "0x40c10f190000000000000000000000008d76db34ccca356fa805f5a277efff53aac5af8800000000000000000000000000000000000000000000d3c21bcecceda1000000",
+        "nonce": "0x63"
+      },
+      "additionalContracts": [],
+      "isFixedGasLimit": false
+    },
+    {
+      "hash": "0xdab6ce972c859f0c79f1c0bc5d0d1dc16d525aa6c6b1bed8eb5db5defd7abba0",
+      "transactionType": "CALL",
+      "contractName": null,
+      "contractAddress": "0xfBA6CED88170e86DA9F49902055cF80A62F1AC4a",
+      "function": "approve(address,uint256)",
+      "arguments": [
+        "0xB58e49823f1E539b84Eda034f506E5e30CdDff21",
+        "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+      ],
+      "transaction": {
+        "type": "0x00",
+        "from": "0x8d76db34ccca356fa805f5a277efff53aac5af88",
+        "to": "0xfba6ced88170e86da9f49902055cf80a62f1ac4a",
+        "gas": "0x10ab1",
+        "value": "0x0",
+        "data": "0x095ea7b3000000000000000000000000b58e49823f1e539b84eda034f506e5e30cddff21ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "nonce": "0x64"
+      },
+      "additionalContracts": [],
+      "isFixedGasLimit": false
+    }
+  ],
+  "receipts": [],
+  "libraries": [],
+  "pending": [
+    "0x894af4152ce96c09fec82238b8bd2404db8b0724b46d82f527a9fd9680d633a3",
+    "0xdab6ce972c859f0c79f1c0bc5d0d1dc16d525aa6c6b1bed8eb5db5defd7abba0"
+  ],
+  "returns": {},
+  "timestamp": 1713795349,
+  "chain": 51,
+  "multi": false,
+  "commit": "4f905cc"
+}

@@ -28,7 +28,7 @@ contract DepositFunds is Script {
 
     Bankroll bankroll = Bankroll(vm.parseAddress(vm.readFile(BANKROLL_PATH)));
 
-    uint256 constant amount = 1_000e18;
+    uint256 constant amount = 300e18;
 
     function run() external {
 
