@@ -433,6 +433,7 @@ contract Bankroll is IBankroll, AccessControlUpgradeable, ReentrancyGuardUpgrade
     function creditAndDebit(uint256 _creditAmount, uint256 _debitAmount, address _operator, address _player) external onlyRole(ADMIN) {
         // Credit function call
         credit(_creditAmount, _operator);
+
         // Debit function call
         debit(_player, _debitAmount, _operator);
     }
