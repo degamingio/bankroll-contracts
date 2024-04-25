@@ -1,5 +1,18 @@
 # Bankroll Contracts
 
+## Prod:
+
+### Arbitrum:
+
+```sh
+Bankroll:             0xaa7904F6DF856e681FeA8DaC17D70038B9b1e312
+BankrollImpl:         0xAA89FaccA3483A6434aC422D24Cc17148AbA7695
+DGBankrollFactory:    0x54Aa9fD70Bf24A6a88a324D0745abC93B9982343
+DGBankrollManager:    0x7D389AF6F4d5F9288Fb52e4f79C0ba0dA085e216
+DGEscrow:             0x7711BEEEb2eD3fb49c5c3C5760de95A98dd065D5
+ProxyAdmin:           0xE8F4827214AE5E98e9Ecb37F902D49727eb61D45
+```
+
 ## Dev:
 
 ### Arbitrum sepolia:
@@ -163,7 +176,7 @@ Make sure to have added __Blast__ and __Arbitrum__ etherscan api keys to the [.e
 This is the first step which deploys the bankroll environment but not the actual bankroll
 
 ```sh
-forge script script/deploy-Platform.s.sol --broadcast --rpc-url blast --verify
+forge script script/deploy-Platform.s.sol --broadcast --legacy --rpc-url blast --verify
 
 forge script script/deploy-Platform.s.sol --broadcast --rpc-url blast-sepolia --verify
 ```
@@ -180,7 +193,7 @@ __third bankroll:__  "0x2"
 etc...  
 
 ```sh
-forge script script/utils/create-Bankroll.s.sol --broadcast --rpc-url blast --verify
+forge script script/utils/create-Bankroll.s.sol --broadcast --legacy --rpc-url blast --verify
 
 forge script script/utils/create-Bankroll.s.sol --broadcast --rpc-url blast-sepolia --verify
 ```
