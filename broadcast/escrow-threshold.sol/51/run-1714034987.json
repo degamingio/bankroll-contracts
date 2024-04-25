@@ -1,0 +1,35 @@
+{
+  "transactions": [
+    {
+      "hash": "0x66400a5fe94ee81396af7e4816e31bcc3f3f73cd9663e58eb2eb839aa9d7e916",
+      "transactionType": "CALL",
+      "contractName": null,
+      "contractAddress": "0xa9226D46445435a051fd54266bbD122db6195ed5",
+      "function": "changeEscrowThreshold(uint256)",
+      "arguments": [
+        "10000000000000000000000"
+      ],
+      "transaction": {
+        "type": "0x00",
+        "from": "0x632a7cf953c3127606aadccd832e9d480b81f7c0",
+        "to": "0xa9226d46445435a051fd54266bbd122db6195ed5",
+        "gas": "0xaae7",
+        "value": "0x0",
+        "data": "0x55f6002400000000000000000000000000000000000000000000021e19e0c9bab2400000",
+        "nonce": "0xb"
+      },
+      "additionalContracts": [],
+      "isFixedGasLimit": false
+    }
+  ],
+  "receipts": [],
+  "libraries": [],
+  "pending": [
+    "0x66400a5fe94ee81396af7e4816e31bcc3f3f73cd9663e58eb2eb839aa9d7e916"
+  ],
+  "returns": {},
+  "timestamp": 1714034987,
+  "chain": 51,
+  "multi": false,
+  "commit": "1f0e831"
+}
