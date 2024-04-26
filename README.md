@@ -24,6 +24,17 @@ DGEscrow:             0x5f0D8A3e8e5990CFb23795645e6849b83fc60726
 ProxyAdmin:           0xE6e10A8a573f68A24A53DEbCFe6546821a04E6f9
 ```
 
+### XDC:
+
+```sh
+Bankroll:             0x4d57a0743cd79F15B63E509e618B8f9BF193A265
+BankrollImpl:         0x3CF4F73356f2f46B4DBC40Bc3e5405fbC7509717
+DGBankrollFactory:    0x836Fb23d69c0fa1f195d1FDB25742E30ded5A328
+DGBankrollManager:    0x5A44Ad2BEdb5f4CE6041706aCAcfF8755D7a96d8
+DGEscrow:             0xa37ec425f96D9531dD597Ec8932Df8c484B8Eaf2
+ProxyAdmin:           0x76e5195c7d09C2fCeAB4CB8EA6a54b362De655da
+```
+
 ## Dev:
 
 ### Arbitrum sepolia:
