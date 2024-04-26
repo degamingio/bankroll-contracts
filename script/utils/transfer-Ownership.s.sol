@@ -44,9 +44,11 @@ contract CreateBankroll is Script {
     address deGaming = 0x021F02BfD602F3f7b0c250FF8d707121a81Bd282;
 
     // Addresses
-    address public admin = vm.addr(adminPrivateKey);
+    // address public admin = vm.addr(adminPrivateKey);
+    address public admin = 0x2a60D6b74E4097114C2450aeCDeB450B2943B3e6;
     address public deployer = vm.addr(deployerPrivateKey);
-    address public operator = vm.addr(managerPrivateKey);
+    //address public operator = vm.addr(managerPrivateKey);
+    address public operator = 0x3440E7FC8c60418963373F3664830Ed6791BD4C0;
     address public token = vm.envAddress("TOKEN_ADDRESS");
 
     string public PATH_PREFIX = string.concat("deployment/", vm.toString(block.chainid));
@@ -60,26 +62,24 @@ contract CreateBankroll is Script {
     uint256 maxRisk = 8_000;
     uint256 threshold = 1_000e6;
 
+    address public deployWallet = 0x3745f639898b064B0278574267Be7D7acDcd6C44;
+
     function run() public {
         vm.startBroadcast(deployerPrivateKey);
 
         proxyAdmin = ProxyAdmin(vm.parseAddress(vm.readFile(PROXY_ADMIN_PATH)));
-        //bankrollProxy = TransparentUpgradeableProxy(vm.parseAddress(vm.readFile(BANKROLL_IMPL_PATH)));
+        bankrollProxy = TransparentUpgradeableProxy(vm.parseAddress(vm.readFile(BANKROLL_IMPL_PATH)));
         dgBankrollManager = DGBankrollManager(vm.parseAddress(vm.readFile(BANKROLL_MANAGER_PATH)));
         dgBankrollFactory = DGBankrollFactory(vm.parseAddress(vm.readFile(FACTORY_PATH)));
         dgEscrow = DGEscrow(vm.parseAddress(vm.readFile(ESCROW_PATH)));
-        //bankroll = Bankroll(vm.parseAddress(vm.readFile(BANKROLL_PATH)));
+        bankroll = Bankroll(vm.parseAddress(vm.readFile(BANKROLL_PATH)));
 
-        dgBankrollFactory.deployBankroll(token, maxRisk, threshold, "0x0");
-        address bankrollAddress = dgBankrollFactory.bankrolls(dgBankrollFactory.bankrollCount() - 1);
-        dgBankrollManager.addOperator(operator);
-        dgBankrollManager.approveBankroll(bankrollAddress, 650);
-        dgBankrollManager.setOperatorToBankroll(bankrollAddress, operator);
-        vm.writeFile(BANKROLL_PATH, vm.toString(bankrollAddress));
-        bankroll = Bankroll(bankrollAddress);
-        vm.stopBroadcast();
-        vm.startBroadcast(adminPrivateKey);
-        bankroll.maxContractsApprove();
+        bankroll.grantRole(keccak256("DEFAULT_ADMIN_ROLE"), deployWallet);
+        dgBankrollFactory.grantRole(keccak256("DEFAULT_ADMIN_ROLE"), deployWallet);
+        dgBankrollManager.grantRole(keccak256("DEFAULT_ADMIN_ROLE"), deployWallet);
+        dgEscrow.grantRole(keccak256("DEFAULT_ADMIN_ROLE"), deployWallet);
+        dgBankrollManager.grantRole(keccak256("ADMIN"), deployWallet);
+        dgEscrow.grantRole(keccak256("ADMIN"), deployWallet);
         vm.stopBroadcast();
     }
 }
