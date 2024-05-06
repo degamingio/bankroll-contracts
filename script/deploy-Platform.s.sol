@@ -46,7 +46,8 @@ contract DeployPlatform is Script {
     address deGaming = 0x021F02BfD602F3f7b0c250FF8d707121a81Bd282;
 
     // Addresses
-    address public admin = vm.addr(adminPrivateKey);
+    // address public admin = vm.addr(adminPrivateKey);
+    address public admin = 0x2a60D6b74E4097114C2450aeCDeB450B2943B3e6;
     address public deployer = vm.addr(deployerPrivateKey);
     address public operator = vm.addr(managerPrivateKey);
     address public token = vm.envAddress("TOKEN_ADDRESS");

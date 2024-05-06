@@ -46,7 +46,8 @@ contract CreateBankroll is Script {
     // Addresses
     address public admin = vm.addr(adminPrivateKey);
     address public deployer = vm.addr(deployerPrivateKey);
-    address public operator = vm.addr(managerPrivateKey);
+    //address public operator = vm.addr(managerPrivateKey);
+    address public operator = 0x4F0498083a062CeC309db349c45d88e1c62E93f2;
     address public token = vm.envAddress("TOKEN_ADDRESS");
 
     string public PATH_PREFIX = string.concat("deployment/", vm.toString(block.chainid));
@@ -58,7 +59,7 @@ contract CreateBankroll is Script {
     string public BANKROLL_PATH = string.concat(PATH_PREFIX, "/Bankroll/address");
 
     uint256 maxRisk = 8_000;
-    uint256 threshold = 1_000e6;
+    uint256 threshold = 10_000e6;
 
     function run() public {
         vm.startBroadcast(deployerPrivateKey);
@@ -78,8 +79,8 @@ contract CreateBankroll is Script {
         vm.writeFile(BANKROLL_PATH, vm.toString(bankrollAddress));
         bankroll = Bankroll(bankrollAddress);
         vm.stopBroadcast();
-        vm.startBroadcast(adminPrivateKey);
-        bankroll.maxContractsApprove();
-        vm.stopBroadcast();
+        // vm.startBroadcast(adminPrivateKey);
+        // bankroll.maxContractsApprove();
+        // vm.stopBroadcast();
     }
 }
