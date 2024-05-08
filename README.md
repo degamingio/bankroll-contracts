@@ -5,7 +5,7 @@
 ### Base:
 
 ```sh
-Bankroll:             0x---
+Bankroll WAGMI:       0xd824d295Cb5B16d68E4d5901B09D45782bFc37FE
 BankrollImpl:         0xDB8aa4f087c7954cDc4aF6c241a8A99e15dD8fE3
 DGBankrollFactory:    0xB0465168B7F278F38cF4b4Cf89227CeF24611b5d
 DGBankrollManager:    0x2C8dB7776Abe62fA6B51CF404c8af7B527c3D984
