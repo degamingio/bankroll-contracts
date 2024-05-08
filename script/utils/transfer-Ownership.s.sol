@@ -68,13 +68,13 @@ contract CreateBankroll is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         proxyAdmin = ProxyAdmin(vm.parseAddress(vm.readFile(PROXY_ADMIN_PATH)));
-        bankrollProxy = TransparentUpgradeableProxy(vm.parseAddress(vm.readFile(BANKROLL_IMPL_PATH)));
+        //bankrollProxy = TransparentUpgradeableProxy(vm.parseAddress(vm.readFile(BANKROLL_IMPL_PATH)));
         dgBankrollManager = DGBankrollManager(vm.parseAddress(vm.readFile(BANKROLL_MANAGER_PATH)));
         dgBankrollFactory = DGBankrollFactory(vm.parseAddress(vm.readFile(FACTORY_PATH)));
         dgEscrow = DGEscrow(vm.parseAddress(vm.readFile(ESCROW_PATH)));
         bankroll = Bankroll(vm.parseAddress(vm.readFile(BANKROLL_PATH)));
 
-        bankroll.grantRole(keccak256("DEFAULT_ADMIN_ROLE"), deployWallet);
+        // bankroll.grantRole(keccak256("DEFAULT_ADMIN_ROLE"), deployWallet);
         dgBankrollFactory.grantRole(keccak256("DEFAULT_ADMIN_ROLE"), deployWallet);
         dgBankrollManager.grantRole(keccak256("DEFAULT_ADMIN_ROLE"), deployWallet);
         dgEscrow.grantRole(keccak256("DEFAULT_ADMIN_ROLE"), deployWallet);
