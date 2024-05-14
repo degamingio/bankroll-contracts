@@ -74,10 +74,11 @@ contract CreateBankroll is Script {
         dgEscrow = DGEscrow(vm.parseAddress(vm.readFile(ESCROW_PATH)));
         bankroll = Bankroll(vm.parseAddress(vm.readFile(BANKROLL_PATH)));
 
-        // bankroll.grantRole(keccak256("DEFAULT_ADMIN_ROLE"), deployWallet);
-        dgBankrollFactory.grantRole(keccak256("DEFAULT_ADMIN_ROLE"), deployWallet);
-        dgBankrollManager.grantRole(keccak256("DEFAULT_ADMIN_ROLE"), deployWallet);
-        dgEscrow.grantRole(keccak256("DEFAULT_ADMIN_ROLE"), deployWallet);
+        // Granting DEFAULT ADMIN ROLE
+        dgBankrollFactory.grantRole(0x00, deployWallet);
+        dgBankrollManager.grantRole(0x00, deployWallet);
+        dgEscrow.grantRole(0x00, deployWallet);
+        // Granting ADMIN
         dgBankrollManager.grantRole(keccak256("ADMIN"), deployWallet);
         dgEscrow.grantRole(keccak256("ADMIN"), deployWallet);
         vm.stopBroadcast();
