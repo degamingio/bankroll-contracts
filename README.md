@@ -2,6 +2,16 @@
 
 ## Prod:
 
+### Mode
+```sh
+Bankroll:             0x3C046e16494cbeA2e92ab6BaA95d5a5e0fD66930
+BankrollImpl:         0x953C49d2A2678Eb9c52D00601ff31579Daad6885
+DGBankrollFactory:    0x34A13c722E2b6247EA431E605a145Ca0DEdD2977
+DGBankrollManager:    0xFB75F39166C006254931d314A24397979440dE73
+DGEscrow:             0xd245C96879E3d7115ac7d9c667B3070a531CB439
+ProxyAdmin:           0x9eFCb65C3287f1206102708277689983877fE10b
+```
+
 ### Base:
 
 ```sh

@@ -16,6 +16,7 @@ arbitrum-sepolia = "${ARBITRUM_SEPOLIA_RPC}"
 blast = "${BLAST_MAINNET_RPC}"
 blast-sepolia = "${BLAST_SEPOLIA_RPC}"
 base = "${BASE_MAINNET_RPC}"
+mode = "${MODE_MAINNET_RPC}"
 
 [etherscan]
 arbitrum-sepolia = { key = "${ARBITRUM_ETHERSCAN_API_KEY}", chain = 421614, url = "https://api-sepolia.arbiscan.io/api" }
