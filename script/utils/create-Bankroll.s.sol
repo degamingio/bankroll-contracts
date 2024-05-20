@@ -47,7 +47,8 @@ contract CreateBankroll is Script {
     address public admin = vm.addr(adminPrivateKey);
     address public deployer = vm.addr(deployerPrivateKey);
     //address public operator = vm.addr(managerPrivateKey);
-    address public operator = 0x4F0498083a062CeC309db349c45d88e1c62E93f2;
+    //address public operator = 0x4F0498083a062CeC309db349c45d88e1c62E93f2;
+    address public operator = 0x32FaBBCc31B478DCdDD76200a49a9390b684ea2b;
     address public token = vm.envAddress("TOKEN_ADDRESS");
 
     string public PATH_PREFIX = string.concat("deployment/", vm.toString(block.chainid));
@@ -71,7 +72,7 @@ contract CreateBankroll is Script {
         dgEscrow = DGEscrow(vm.parseAddress(vm.readFile(ESCROW_PATH)));
         //bankroll = Bankroll(vm.parseAddress(vm.readFile(BANKROLL_PATH)));
 
-        dgBankrollFactory.deployBankroll(token, maxRisk, threshold, "0x0");
+        dgBankrollFactory.deployBankroll(token, maxRisk, threshold, "0x1");
         address bankrollAddress = dgBankrollFactory.bankrolls(dgBankrollFactory.bankrollCount() - 1);
         dgBankrollManager.addOperator(operator);
         dgBankrollManager.approveBankroll(bankrollAddress, 650);
