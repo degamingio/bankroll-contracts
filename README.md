@@ -1,4 +1,7 @@
-# DeGaming Bankroll Contracts repository
+# DeGaming Bankroll Contracts
+
+This is the repository of DeGamings bankroll contracts.
+Please see our [audit](/audit/) or head straight to our [contracts](/src/) for more information. Contributions are welcome.
 
 ## Compile Project
 
