@@ -1,4 +1,50 @@
-# Bankroll Contracts
+# DeGaming Bankroll Contracts
+
+This is the repository of DeGamings bankroll contracts.
+Please see our [audit](/audit/) or head straight to our [contracts](/src/) for more information. Contributions are welcome.
+
+## Compile Project
+
+```sh
+forge build
+```
+
+## Execute Tests
+
+```sh
+forge test -vvv
+```
+
+## Deploy Contracts
+
+Initialize `.env` file
+
+```sh
+source .env
+```
+
+## Steps to deploy bankroll:
+
+### Deploy Platform:
+
+This is the first step which deploys the bankroll environment but not the actual bankroll
+
+```sh
+forge script script/deploy-Platform.s.sol --broadcast --legacy --verify --slow --rpc-url <NETWORK>
+
+```
+
+### Deploy Bankroll:
+
+After the platform in created, 
+
+
+```sh
+forge script script/utils/create-Bankroll.s.sol --broadcast --legacy --slow --rpc-url <NETWORK>
+```
+
+## The Deployment folder
+The latest deployment addresses one each chain will be stored in the [deployment folder](/deployment/). This way you can copy these addresses to a local file or paste it into the readme to keep track of deployment, as well as using the [util scripts](/script/utils/) for admin tasks as long as the correct addresses are in the deployment folder
 
 ## Prod:
 
@@ -131,117 +177,3 @@ DGEscrow:             0xac1684E1e51aaA47353004040C0E5C51Ce31E3F4
 ProxyAdmin:           0x1A9D4f05a06E79ee941008526C84AAca91bfef29
 ```
 
-## Compile Project
-
-```sh
-forge build
-```
-
-## Execute Tests
-
-```sh
-forge test -vvv
-```
-
-## Deploy Contracts
-
-Initialize `.env` file
-
-```sh
-source .env
-```
-
-## Steps to deploy bankroll:
-
-### XDC
-#### Deploy Platform:
-
-This is the first step which deploys the bankroll environment but not the actual bankroll
-
-```sh
-forge script script/deploy-Platform.s.sol --broadcast --legacy --rpc-url xdc-mainnet
-
-forge script script/deploy-Platform.s.sol --broadcast --legacy --rpc-url xdc-apothem
-```
-
-#### Deploy Bankroll:
-
-This is the step required to deploy the actuall bankroll  
-__IMPORTANT!!!__  
-If you are deploying multiple bankrolls on one chain from the same environment (sharing bankroll manager, escrow etc)
-make sure to go to the file [create-Bankroll](script/utils/create-Bankroll.s.sol) line 73 and increment the hex salt:  
-__first bankroll:__  "0x0"  
-__second bankroll:__ "0x1"  
-__third bankroll:__  "0x2"  
-etc...  
-
-```sh
-forge script script/utils/create-Bankroll.s.sol --broadcast --legacy --rpc-url xdc-mainnet
-
-forge script script/utils/create-Bankroll.s.sol --broadcast --legacy --rpc-url xdc-apothem
-```
-
-### Arbitrum
-#### Note:
-Make sure to have added __Blast__ and __Arbitrum__ etherscan api keys to the [.env file](.env.example) prior to deploying on these chains for the easiest contract verification
-
-#### Deploy Platform:
-
-This is the first step which deploys the bankroll environment but not the actual bankroll
-
-```sh
-forge script script/deploy-Platform.s.sol --broadcast --rpc-url arbitrum --verify
-
-forge script script/deploy-Platform.s.sol --broadcast --rpc-url arbitrum-sepolia --verify
-```
-
-#### Deploy Bankroll:
-
-This is the step required to deploy the actuall bankroll  
-__IMPORTANT!!!__  
-If you are deploying multiple bankrolls on one chain from the same environment (sharing bankroll manager, escrow etc)
-make sure to go to the file [create-Bankroll](script/utils/create-Bankroll.s.sol) line 73 and increment the hex salt:  
-__first bankroll:__  "0x0"  
-__second bankroll:__ "0x1"  
-__third bankroll:__  "0x2"  
-etc...  
-
-```sh
-forge script script/utils/create-Bankroll.s.sol --broadcast --rpc-url arbitrum --verify
-
-forge script script/utils/create-Bankroll.s.sol --broadcast --rpc-url arbitrum-sepolia --verify
-```
-
-### Blast
-#### Note:
-Make sure to have added __Blast__ and __Arbitrum__ etherscan api keys to the [.env file](.env.example) prior to deploying on these chains for the easiest contract verification
-
-#### Deploy Platform:
-
-This is the first step which deploys the bankroll environment but not the actual bankroll
-
-```sh
-forge script script/deploy-Platform.s.sol --broadcast --legacy --slow --rpc-url blast --verify
-
-forge script script/deploy-Platform.s.sol --broadcast --legacy --slow --rpc-url blast-sepolia --verify
-```
-
-#### Deploy Bankroll:
-
-This is the step required to deploy the actuall bankroll  
-__IMPORTANT!!!__  
-If you are deploying multiple bankrolls on one chain from the same environment (sharing bankroll manager, escrow etc)
-make sure to go to the file [create-Bankroll](script/utils/create-Bankroll.s.sol) line 73 and increment the hex salt:  
-__first bankroll:__  "0x0"  
-__second bankroll:__ "0x1"  
-__third bankroll:__  "0x2"  
-etc...  
-
-```sh
-forge script script/utils/create-Bankroll.s.sol --broadcast --legacy --rpc-url blast --verify
-
-forge script script/utils/create-Bankroll.s.sol --broadcast --rpc-url blast-sepolia --verify
-```
-
-## The Deployment folder
-The latest deployment addresses one each chain will be stored in the [deployment folder](/deployment/). This way you can copy these addresses to a local file or paste it into the readme to keep track of deployment, as well as using the [util scripts](/script/utils/) for admin tasks as long as the correct addresses are in the deployment folder
